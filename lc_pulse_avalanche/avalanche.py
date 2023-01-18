@@ -242,10 +242,10 @@ class LC(object):
         
         if return_array:
             for p in self._lc_params:
-                norms    = np.append(norms, p['norm'])
+                norms    = np.append(norms,    p['norm'])
                 t_delays = np.append(t_delays, p['t_delay'])
-                taus     = np.append(taus, p['tau'])
-                tau_rs   = np.append(tau_rs, p['tau_r'])
+                taus     = np.append(taus,     p['tau'])
+                tau_rs   = np.append(tau_rs,   p['tau_r'])
                 
             return norms, t_delays, taus, tau_rs, self._peak_value
         
@@ -277,9 +277,9 @@ class LC(object):
             
         if show_duration:
                 plt.axvline(x=self._t_start, color='blue')
-                plt.axvline(x=self._t_stop, color='blue')
-                plt.axvline(x=self._t90_i, color='red')
-                plt.axvline(x=self._t90_f, color='red')
+                plt.axvline(x=self._t_stop,  color='blue')
+                plt.axvline(x=self._t90_i,   color='red')
+                plt.axvline(x=self._t90_f,   color='red')
           
         if save:
             plt.savefig(name)
@@ -300,7 +300,7 @@ class LC(object):
         self._aux_lc    = self._plot_lc[self._aux_index[0][0]:self._aux_index[0][-1]]
 
         self._t_start = self._times[self._aux_index[0][0]]
-#         self._t_stop = self._times[self._aux_index[0][-1]+1]
+#       self._t_stop = self._times[self._aux_index[0][-1]+1]
         self._t_stop = self._times[self._aux_index[0][-1]]
             
         self._t100 = self._t_stop - self._t_start
@@ -371,10 +371,10 @@ class LC(object):
         self._raw_lc = np.zeros(len(self._times))
         
         for par in self._lc_params:
-            norm = par['norm']
-            t_delay = par['t_delay']
-            tau = par['tau']
-            tau_r = par['tau_r']
+            norm          = par['norm']
+            t_delay       = par['t_delay']
+            tau           = par['tau']
+            tau_r         = par['tau_r']
             self._raw_lc += self.norris_pulse(norm, t_delay, tau, tau_r) #
 
         self._plot_lc =  self._raw_lc * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
