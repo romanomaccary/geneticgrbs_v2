@@ -227,7 +227,7 @@ class LC(object):
         
         self._peak_value = self._max_raw_pcr * ampl
         
-#         lc from avalanche scaled + Poissonian bg added
+        # lc from avalanche scaled + Poissonian bg added
         self._plot_lc = self._raw_lc * ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
 
         self._get_lc_properties()
@@ -294,14 +294,14 @@ class LC(object):
         """
         
         self._aux_index = np.where(self._raw_lc>self._raw_lc.max()*1e-4)
-#         self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
+        # self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
         self._max_snr   = ((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5).max()
         self._aux_times = self._times[self._aux_index[0][0]:self._aux_index[0][-1]] # +1 in the index
         self._aux_lc    = self._plot_lc[self._aux_index[0][0]:self._aux_index[0][-1]]
 
         self._t_start = self._times[self._aux_index[0][0]]
-#       self._t_stop = self._times[self._aux_index[0][-1]+1]
-        self._t_stop = self._times[self._aux_index[0][-1]]
+#       self._t_stop  = self._times[self._aux_index[0][-1]+1]
+        self._t_stop  = self._times[self._aux_index[0][-1]]
             
         self._t100 = self._t_stop - self._t_start
         
