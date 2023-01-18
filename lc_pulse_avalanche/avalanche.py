@@ -7,28 +7,46 @@ from numpy.random import exponential, lognormal, normal, uniform
 from scipy.stats import loguniform
 import os, h5py
 
+"""
+The 7 free parameters to be optimized are:
+    - mu: average value of the exponential distribution that samples the 
+          number of child pulses, which is mu_b
+    - alpha: delay parameter
+    - delta1: lower boundary of log-normal probability distribution of tau
+             (time constant of baby pulse)
+    - delta2: upper boundary of log-normal probability distribution of tau
+    - mu_0: average value of the exponential distribution that samples the 
+            number of primary pulses, which is mu_s
+    - tau_min: lower boundary of log-normal probability distribution of tau_0 
+               (time constant of spontaneous pulse); should be smaller than res
+    - tau_max: upper boundary of log-normal probability distribution of tau_0
+"""
+
 class LC(object):
     """
-    A class to generate gamma-ray burst light curves (GRB LCs) using a pulse avalance model ('chain reaction') 
-    proposed by Stern & Svensson, ApJ, 469: L109 (1996).
+    A class to generate gamma-ray burst light curves (GRB LCs) using a pulse
+    avalanche model ('chain reaction') proposed by Stern & Svensson, ApJ, 
+    469: L109 (1996).
     
     :mu: average number of baby pulses
     :mu0: average number of spontaneous (initial) pulses
     :alpha: delay parameter
-    :delta1: lower boundary of log-normal probability distribution of tau (time constant of baby pulse)
+    :delta1: lower boundary of log-normal probability distribution of tau
+             (time constant of baby pulse)
     :delta2: upper boundary of log-normal probability distribution of tau
-    :tau_min: lower boundary of log-normal probability distribution of tau_0 (time constant of spontaneous pulse);
-             should be smaller than res
+    :tau_min: lower boundary of log-normal probability distribution of tau_0 
+              (time constant of spontaneous pulse); should be smaller than res
     :tau_max: upper boundary of log-normal probability distribution of tau_0
     :t_min: GRB LC start time
     :t_max: GRB LC stop time
     :res: GRB LC time resolution
     :eff_area: effective area of instrument (cm2)
-    :bg_level: backgrounf level (cnt/cm2/s)
-    :min_photon_rate: left boundary of -3/2 log N - log S distrubution (ph/cm2/s)
-    :max_photon_rate: right boundary of -3/2 log N - log S distrubution (ph/cm2/s)
+    :bg_level: background level (cnt/cm2/s)
+    :min_photon_rate: left boundary of -3/2 log N - log S distribution (ph/cm2/s)
+    :max_photon_rate: right boundary of -3/2 log N - log S distribution (ph/cm2/s)
     :sigma: signal above background level
-    :n_cut: maximum number of pulses in avalanche (useful to speed up the simulations but in odds with the "classic" approach)
+    :n_cut: maximum number of pulses in avalanche (useful to speed up the 
+            simulations but in odds with the "classic" approach)
     """
     
     def __init__(self, mu=1.2, mu0=1, alpha=4, delta1=-0.5, delta2=0, tau_min=0.2, tau_max=26,
@@ -68,7 +86,7 @@ class LC(object):
      
     def norris_pulse(self, norm, tp, tau, tau_r):
         """
-        Computes a single pulse according to Norris te al., ApJ, 459, 393 (1996)
+        Computes a single pulse according to Norris et al., ApJ, 459, 393 (1996)
         
         :t: times (lc x-axis), vector
         :tp: pulse peak time, scalar
@@ -148,7 +166,8 @@ class LC(object):
         Generates pulse avalanche
         
         :seed: random seed
-        :return_array: if True returns arrays of parameters, if False - a dict with parameters for each pulse
+        :return_array: if True returns arrays of parameters, if False, a dict
+                       with parameters for each pulse
         :returns: set of parameters for the generated avalanche
         """
         
@@ -202,9 +221,9 @@ class LC(object):
 
         self._max_raw_pcr = self._raw_lc.max()
         population = np.geomspace(self._min_photon_rate , self._max_photon_rate, 1000)
-        weights = list(map(lambda x: x**(-3/2), population))
-        weights = weights / np.sum(weights)
-        ampl = np.random.choice(population, p=weights) / self._max_raw_pcr
+        weights    = list(map(lambda x: x**(-3/2), population))
+        weights    = weights / np.sum(weights)
+        ampl       = np.random.choice(population, p=weights) / self._max_raw_pcr
         
         self._peak_value = self._max_raw_pcr * ampl
         
@@ -216,17 +235,17 @@ class LC(object):
         for p in self._lc_params:
             p['norm'] *= ampl
         
-        norms = np.empty((0,))
+        norms    = np.empty((0,))
         t_delays = np.empty((0,))
-        taus = np.empty((0,))
-        tau_rs = np.empty((0,))
+        taus     = np.empty((0,))
+        tau_rs   = np.empty((0,))
         
         if return_array:
             for p in self._lc_params:
-                norms = np.append(norms, p['norm'])
+                norms    = np.append(norms, p['norm'])
                 t_delays = np.append(t_delays, p['t_delay'])
-                taus = np.append(taus, p['tau'])
-                tau_rs = np.append(tau_rs, p['tau_r'])
+                taus     = np.append(taus, p['tau'])
+                tau_rs   = np.append(tau_rs, p['tau_r'])
                 
             return norms, t_delays, taus, tau_rs, self._peak_value
         
@@ -276,9 +295,9 @@ class LC(object):
         
         self._aux_index = np.where(self._raw_lc>self._raw_lc.max()*1e-4)
 #         self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
-        self._max_snr = ((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5).max()
+        self._max_snr   = ((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5).max()
         self._aux_times = self._times[self._aux_index[0][0]:self._aux_index[0][-1]] # +1 in the index
-        self._aux_lc = self._plot_lc[self._aux_index[0][0]:self._aux_index[0][-1]]
+        self._aux_lc    = self._plot_lc[self._aux_index[0][0]:self._aux_index[0][-1]]
 
         self._t_start = self._times[self._aux_index[0][0]]
 #         self._t_stop = self._times[self._aux_index[0][-1]+1]
@@ -311,9 +330,9 @@ class LC(object):
             assert self._t90_i < self._t90_f
             
         except:
-            self._t90 = self._t100
-            self._t90_i = self._t_start
-            self._t90_f = self._t_stop
+            self._t90      = self._t100
+            self._t90_i    = self._t_start
+            self._t90_f    = self._t_stop
             self._t90_cnts = self._total_cnts
            
 
