@@ -9,18 +9,17 @@ import os, h5py
 
 """
 The 7 free parameters to be optimized are:
-    - mu: average value of the exponential distribution that samples the 
-          number of child pulses, which is mu_b
-    - alpha: delay parameter
-    - delta1: lower boundary of log-normal probability distribution of tau
-             (time constant of baby pulse)
-    - delta2: upper boundary of log-normal probability distribution of tau
-    - mu_0: average value of the exponential distribution that samples the 
-            number of primary pulses, which is mu_s
-    - tau_min: lower boundary of log-normal probability distribution of tau_0 
-               (time constant of spontaneous pulse); should be smaller than res
-    - tau_max: upper boundary of log-normal probability distribution of tau_0
+    - mu
+    - mu0
+    - alpha
+    - delta1
+    - delta2
+    - tau_min
+    - tau_max
 """
+#==============================================================================#
+# Define the class LC describing the light curve.                              #
+#==============================================================================#
 
 class LC(object):
     """
@@ -28,8 +27,11 @@ class LC(object):
     avalanche model ('chain reaction') proposed by Stern & Svensson, ApJ, 
     469: L109 (1996).
     
-    :mu: average number of baby pulses
-    :mu0: average number of spontaneous (initial) pulses
+    :mu: average value of the exponential distribution that samples the 
+         number of child pulses, which is mu_b; average number of baby pulses
+    :mu0: average value of the exponential distribution that samples the 
+          number of primary pulses, which is mu_s;
+          average number of spontaneous (initial) pulses per GRB
     :alpha: delay parameter
     :delta1: lower boundary of log-normal probability distribution of tau
              (time constant of baby pulse)
@@ -38,24 +40,25 @@ class LC(object):
               (time constant of spontaneous pulse); should be smaller than res
     :tau_max: upper boundary of log-normal probability distribution of tau_0
     :t_min: GRB LC start time
-    :t_max: GRB LC stop time
+    :t_max: GRB LC stop  time
     :res: GRB LC time resolution
     :eff_area: effective area of instrument (cm2)
     :bg_level: background level (cnt/cm2/s)
-    :min_photon_rate: left boundary of -3/2 log N - log S distribution (ph/cm2/s)
+    :min_photon_rate: left  boundary of -3/2 log N - log S distribution (ph/cm2/s)
     :max_photon_rate: right boundary of -3/2 log N - log S distribution (ph/cm2/s)
     :sigma: signal above background level
     :n_cut: maximum number of pulses in avalanche (useful to speed up the 
             simulations but in odds with the "classic" approach)
     """
     
-    def __init__(self, mu=1.2, mu0=1, alpha=4, delta1=-0.5, delta2=0, tau_min=0.2, tau_max=26,
-                 t_min=-10, t_max=1000, res=0.256, eff_area=3600, bg_level=10.67, min_photon_rate=1.3,
-                 max_photon_rate=1300, sigma=5, n_cut=None, verbose=False):
+    def __init__(self, mu=1.2, mu0=1, alpha=4, delta1=-0.5, delta2=0, 
+                 tau_min=0.2, tau_max=26, t_min=-10, t_max=1000, res=0.256, 
+                 eff_area=3600, bg_level=10.67, min_photon_rate=1.3,
+                 max_photon_rate=1300, sigma=5, n_cut=None, verbose=True):
         
-        self._mu = mu # mu~1 => critical runaway regime
-        self._mu0 = mu0 # average number of spontaneous pulses per GRB
-        self._alpha = alpha # delay parameter
+        self._mu = mu # mu~1 --> critical runaway regime
+        self._mu0 = mu0 
+        self._alpha = alpha 
         self._delta1 = delta1
         self._delta2 = delta2
         if tau_min > res and not isinstance(self, Restored_LC):
@@ -83,6 +86,7 @@ class LC(object):
         if self._verbose:
             print("Time resolution: ", self._step)
                 
+    #--------------------------------------------------------------------------#
      
     def norris_pulse(self, norm, tp, tau, tau_r):
         """
@@ -90,8 +94,9 @@ class LC(object):
         
         :t: times (lc x-axis), vector
         :tp: pulse peak time, scalar
-        :tau: pulse width (decay rime), scalar
+        :tau: pulse width (decay time), scalar
         tau_r: rise time, scalar
+
         :returns: an array of count rates
         """
 
@@ -100,15 +105,16 @@ class LC(object):
         if self._verbose:
             print("Generating a new pulse with tau={:0.3f}".format(tau))
 
-        t = self._times 
+        t   = self._times 
         _tp = np.ones(len(t))*tp
         
         if tau_r == 0 or tau == 0: 
             return np.zeros(len(t))
         
         return np.append(norm * np.exp(-(t[t<=tp]-_tp[t<=tp])**2/tau_r**2), \
-                         norm * np.exp(-(t[t>tp]-_tp[t>tp])/tau))
+                         norm * np.exp(-(t[t>tp] -_tp[t>tp])/tau))
 
+    #--------------------------------------------------------------------------#
    
     def _rec_gen_pulse(self, tau1, t_shift):
         """
@@ -116,11 +122,24 @@ class LC(object):
         
         :tau1: parent pulse width (decay rime), scalar
         :t_shift: time delay relative to the parent pulse
-        
+
+        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        @AF: dimmi se ti torna il ragionamento; mi pare che la definizione di t_shift data due righe sopra non sia corretta
+        cioe' mi pare che ogni volta che chiami la funzione ricorsiva devi passare il delay TOTALE, ovvero la somma di tutti
+        i delay dei pulses genitori, e non solo il delay di quello prima!
+
+        LB: 't_shift' should be the time delay of the immediate parent pulse with 
+        respect to the initial invisible trigger event; the time delay of the 
+        child pulse w.r.t the parent event instead is computed here below.
+        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA       
+
         :returns: an array of count rates
         """
             
-        # number of baby pulses: p2(mu_b) = exp(-mu_b/mu)/mu, mu - the average, mu_b - number of baby pulses
+        # the number of baby pulses is given by: 
+        #     p2(mu_b) = exp(-mu_b/mu)/mu
+        # mu: average, 
+        # mu_b: actual number of baby pulses.
         mu_b = round(exponential(scale=self._mu))
                 
         if self._verbose:
@@ -129,15 +148,20 @@ class LC(object):
         
         for i in range(mu_b):
            
-            # time const of the baby pulse: p4(tau/tau1) = 1/(delta2 - delta1), tau1 - time const of the parent pulse
+            # the time const of the baby pulse (tau) is given by:
+            #     p4(tau/tau1) = 1/(delta2 - delta1), tau1 - time const of the parent pulse
             tau = tau1 * exp(uniform(low=self._delta1, high=self._delta2))
             
+            # rise time
             tau_r = 0.5 * tau
             
-            # time delay of baby pulse: p3(delta_t) = exp(-delta_t/(alpha*tau))/(alpha*tau) with respect to the parent pulse, 
-            # alpha - delay parameter, tau - time const of the baby pulse
-            delta_t = exponential(scale=self._alpha*tau) + t_shift
+            # the time delay (delta_t) of baby pulse (with respect to the parent
+            # pulse) is given by:
+            #     p3(delta_t) = exp(-delta_t/(alpha*tau))/(alpha*tau) 
+            delta_t = t_shift + exponential(scale=self._alpha*tau)
             
+            # the amplitude (A) of each pulse is given by:
+            #     p1(A) = 1, in [0, 1]
             norm = uniform(low=0.0, high=1)
             
             self._rates += self.norris_pulse(norm, delta_t, tau, tau_r) 
@@ -152,6 +176,7 @@ class LC(object):
                 print("--------------------------------------------------------------------------")
                 
             if tau > self._res:
+                # continue avalanche (otherwise, stop this chain)
                 if self._n_cut is None:
                     self._rec_gen_pulse(tau, delta_t)
                 else:
@@ -160,6 +185,7 @@ class LC(object):
 
         return self._rates
         
+    #--------------------------------------------------------------------------#
         
     def generate_avalanche(self, seed=12345, return_array=False):
         """
@@ -178,29 +204,35 @@ class LC(object):
             inspect.getdoc(self.generate_avalanche)
             
         """
-        Starting pulse avalanche
+        Start pulse avalanche
         """
    
-        # number of spontaneous primary pulses: p5(mu_s) = exp(-mu_s/mu0)/mu0
+        # the number of spontaneous primary pulses (mu_s) is given by: 
+        #     p5(mu_s) = exp(-mu_s/mu0)/mu0
         mu_s = round(exponential(scale=self._mu0))
-        if mu_s == 0:  mu_s = 1 
+        if mu_s == 0:  
+            mu_s = 1 
             
         if self._verbose:
             print("Number of spontaneous pulses:", mu_s)
             print("--------------------------------------------------------------------------")
         
+        # for each _parent_ pulse, generate his child pulses
         for i in range(mu_s):
-            # time constant of spontaneous pulses: p6(log tau0) = 1/(log tau_max - log tau_min)
-            # decay time
+            # the time constant of spontaneous pulses (decay time tau0) is given by: 
+            #     p6(log tau0) = 1/(log tau_max - log tau_min)
             tau0 = exp(uniform(low=log(self._tau_max), high=log(self._tau_min)))
 
             # rise time
             tau_r = 0.5 * tau0
 
-            # time delay of spontaneous primary pulses: p7(t) = exp(-t/(alpha*tau0))/(alpha*tau0)
+            # the time delay (t_delay) of each spontaneous primary pulses with
+            # respect to a common invisible trigger event is given by:
+            #     p7(t) = exp(-t/(alpha*tau0))/(alpha*tau0)
             t_delay = exponential(scale=self._alpha*tau0)
 
-            # pulse amplitude: p1(A) = 1 in [0, 1]
+            # the amplitude (A) of each pulse is given by:
+            #     p1(A) = 1, in [0, 1]
             norm = uniform(low=0.0, high=1) 
                      
             if self._verbose:
@@ -210,13 +242,29 @@ class LC(object):
                 print("Rise time of spontaneous pulse: {:0.3f}".format(tau_r))
                 print("--------------------------------------------------------------------------")
                 
+            # generate the pulse, and sum it into the array 'self._sp_pulse'
             self._sp_pulse += self.norris_pulse(norm, t_delay, tau0, tau_r)
             
-            self._lc_params.append(dict(norm=norm, t_delay=t_delay, tau=tau0, tau_r=tau_r))
+            # save a dictionary with the 4 parameters of the pulse:
+            #     A (norm)
+            #     t_p (t_delay) 
+            #     tau_0 (tau) 
+            #     tau_r (tau_r) 
+            # in Stern & Svensson, ApJ, 469: L109 (1996), pag 2
+            self._lc_params.append(dict(norm=norm, 
+                                        t_delay=t_delay, 
+                                        tau=tau0, 
+                                        tau_r=tau_r))
             
+            # generate the avalanche of child pulses.
+            # it takes as input the tau of the parent pulse (tau0) and the time
+            # delay of the parent pulse (t_delay). 
+            # N.B. the time constant of the parent pulse il called 'tau1' in 
+            # the paper by Stern & Svensson, on page 2.
             self._rec_gen_pulse(tau0, t_delay)
         
-        # lc directly from the avalanche
+        # lc directly from the avalanche;
+        # sum the lc of the parents (_sp_pulse) and the lc of the childs (_rates)
         self._raw_lc = self._sp_pulse + self._rates
 
         self._max_raw_pcr = self._raw_lc.max()
@@ -252,7 +300,8 @@ class LC(object):
         else:
             return self._lc_params
 
-   
+    #--------------------------------------------------------------------------#
+
     def plot_lc(self, rescale=True, save=True, name="./plot_lc.pdf", show_duration=False):
         """
         Plots GRB light curve
@@ -285,7 +334,8 @@ class LC(object):
             plt.savefig(name)
         
         plt.show()
-            
+
+    #--------------------------------------------------------------------------#
     
     def _get_lc_properties(self):
         """
@@ -293,7 +343,7 @@ class LC(object):
         mean, max, and background count rates
         """
         
-        self._aux_index = np.where(self._raw_lc>self._raw_lc.max()*1e-4)
+        self._aux_index   = np.where(self._raw_lc>self._raw_lc.max()*1e-4)
         # self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
         self._max_snr   = ((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5).max()
         self._aux_times = self._times[self._aux_index[0][0]:self._aux_index[0][-1]] # +1 in the index
@@ -335,6 +385,7 @@ class LC(object):
             self._t90_f    = self._t_stop
             self._t90_cnts = self._total_cnts
            
+    #--------------------------------------------------------------------------#
 
     @property
     def T90(self):
@@ -364,6 +415,7 @@ class LC(object):
     def max_snr(self):
         return "{:0.2f}".format(self._max_snr)
     
+    #--------------------------------------------------------------------------#
     
     def _restore_lc(self):
         """Restores GRB LC from avalanche parameters"""
@@ -381,7 +433,8 @@ class LC(object):
 
         self._get_lc_properties()
         
-        
+    #--------------------------------------------------------------------------#
+
     def hdf5_lc_generation(self, outfile, overwrite=False, seed=12345):
         """
         Generates a new avalanche and writes it to an hdf5 file
@@ -412,6 +465,7 @@ class LC(object):
 
         self._f.close()
         
+    #--------------------------------------------------------------------------#
         
     def aux_hdf5(self, seed):
         norms, t_delays, taus, tau_rs, peak_value = self.generate_avalanche(seed=seed, return_array=True)
@@ -430,6 +484,10 @@ class LC(object):
         self._f[f'GRB_PARAMETERS/GRB_{self._grb_counter}'].attrs['N_PULSES'] = n_pulses
         self._grb_counter += 1
 
+
+#==============================================================================#
+# Define the class Restore_LC
+#==============================================================================#
     
 class Restored_LC(LC):
     """
@@ -451,3 +509,6 @@ class Restored_LC(LC):
             
  
         self._restore_lc()
+
+#==============================================================================#
+#==============================================================================#
