@@ -54,7 +54,7 @@ class LC(object):
     def __init__(self, mu=1.2, mu0=1, alpha=4, delta1=-0.5, delta2=0, 
                  tau_min=0.2, tau_max=26, t_min=-10, t_max=1000, res=0.256, 
                  eff_area=3600, bg_level=10.67, min_photon_rate=1.3,
-                 max_photon_rate=1300, sigma=5, n_cut=None, verbose=True):
+                 max_photon_rate=1300, sigma=5, n_cut=None, verbose=False):
         
         self._mu = mu # mu~1 --> critical runaway regime
         self._mu0 = mu0 
@@ -136,26 +136,26 @@ class LC(object):
         :returns: an array of count rates
         """
             
-        # the number of baby pulses is given by: 
+        # the number of child pulses is given by: 
         #     p2(mu_b) = exp(-mu_b/mu)/mu
         # mu: average, 
-        # mu_b: actual number of baby pulses.
+        # mu_b: actual number of child pulses.
         mu_b = round(exponential(scale=self._mu))
                 
         if self._verbose:
-            print("Number of pulses:", mu_b)
+            print("Number of child pulses:", mu_b)
             print("--------------------------------------------------------------------------")
         
         for i in range(mu_b):
            
-            # the time const of the baby pulse (tau) is given by:
+            # the time const of the child pulse (tau) is given by:
             #     p4(tau/tau1) = 1/(delta2 - delta1), tau1 - time const of the parent pulse
             tau = tau1 * exp(uniform(low=self._delta1, high=self._delta2))
             
             # rise time
             tau_r = 0.5 * tau
             
-            # the time delay (delta_t) of baby pulse (with respect to the parent
+            # the time delay (delta_t) of child pulse (with respect to the parent
             # pulse) is given by:
             #     p3(delta_t) = exp(-delta_t/(alpha*tau))/(alpha*tau) 
             delta_t = t_shift + exponential(scale=self._alpha*tau)
@@ -214,7 +214,7 @@ class LC(object):
             mu_s = 1 
             
         if self._verbose:
-            print("Number of spontaneous pulses:", mu_s)
+            print("Number of spontaneous (primary) pulses:", mu_s)
             print("--------------------------------------------------------------------------")
         
         # for each _parent_ pulse, generate his child pulses
@@ -262,7 +262,13 @@ class LC(object):
             # N.B. the time constant of the parent pulse il called 'tau1' in 
             # the paper by Stern & Svensson, on page 2.
             self._rec_gen_pulse(tau0, t_delay)
-        
+
+        print("Number of spontaneous (primary) pulses:", mu_s)
+        print("Total number of child pulses          :", self._n_pulses-mu_s)
+        print("---")
+        print("Total number of pulses                :", self._n_pulses)
+        print("--------------------------------------------------------------------------")
+
         # lc directly from the avalanche;
         # sum the lc of the parents (_sp_pulse) and the lc of the childs (_rates)
         self._raw_lc = self._sp_pulse + self._rates
