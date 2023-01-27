@@ -53,8 +53,9 @@ class LC(object):
     
     def __init__(self, mu=1.2, mu0=1, alpha=4, delta1=-0.5, delta2=0, 
                  tau_min=0.2, tau_max=26, t_min=-10, t_max=1000, res=0.256, 
-                 eff_area=3600, bg_level=10.67, min_photon_rate=1.3,
-                 max_photon_rate=1300, sigma=5, n_cut=None, verbose=False):
+                 eff_area=3600, bg_level=10.67, with_bg=True, 
+                 min_photon_rate=1.3, max_photon_rate=1300, sigma=5, 
+                 n_cut=None, verbose=False):
         
         self._mu = mu # mu~1 --> critical runaway regime
         self._mu0 = mu0 
@@ -71,9 +72,9 @@ class LC(object):
         self._max_photon_rate = max_photon_rate 
         self._verbose = verbose
         self._res = res # s
-        self._n = int(np.ceil((t_max - t_min)/self._res)) + 1
-        self._t_min = t_min
-        self._t_max = (self._n - 1) * self._res + self._t_min
+        self._n = int(np.ceil((t_max - t_min)/self._res)) + 1 # time steps
+        self._t_min = t_min # ms
+        self._t_max = (self._n - 1) * self._res + self._t_min # ms
         self._times, self._step = np.linspace(self._t_min, self._t_max, self._n, retstep=True)
         self._rates = np.zeros(len(self._times))
         self._sp_pulse = np.zeros(len(self._times))
@@ -82,6 +83,7 @@ class LC(object):
         self._sigma = sigma
         self._n_cut = n_cut
         self._n_pulses = 0
+        self._with_bg = with_bg
         
         if self._verbose:
             print("Time resolution: ", self._step)
@@ -124,9 +126,10 @@ class LC(object):
         :t_shift: time delay relative to the parent pulse
 
         AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-        @AF: dimmi se ti torna il ragionamento; mi pare che la definizione di t_shift data due righe sopra non sia corretta
-        cioe' mi pare che ogni volta che chiami la funzione ricorsiva devi passare il delay TOTALE, ovvero la somma di tutti
-        i delay dei pulses genitori, e non solo il delay di quello prima!
+        Mi sembra che la definizione di t_shift data due righe sopra non sia 
+        corretta, cioe' mi pare che ogni volta che chiami la funzione ricorsiva
+        devi passare il delay TOTALE, ovvero la somma di tutti i delay dei
+        pulses genitori!
 
         LB: 't_shift' should be the time delay of the immediate parent pulse with 
         respect to the initial invisible trigger event; the time delay of the 
@@ -278,31 +281,37 @@ class LC(object):
         weights    = list(map(lambda x: x**(-3/2), population))
         weights    = weights / np.sum(weights)
         ampl       = np.random.choice(population, p=weights) / self._max_raw_pcr
-        
+
+        self._ampl = ampl
+
         self._peak_value = self._max_raw_pcr * ampl
-        
+
         # lc from avalanche scaled + Poissonian bg added
-        self._plot_lc = self._raw_lc * ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+        if self._with_bg: # with    background
+            self._plot_lc = self._raw_lc * ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+        else:             # without background
+            self._plot_lc = self._raw_lc * ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            self._plot_lc = self._plot_lc - self._bg
 
         self._get_lc_properties()
-        
+
         for p in self._lc_params:
             p['norm'] *= ampl
-        
+
         norms    = np.empty((0,))
         t_delays = np.empty((0,))
         taus     = np.empty((0,))
         tau_rs   = np.empty((0,))
-        
+
         if return_array:
             for p in self._lc_params:
                 norms    = np.append(norms,    p['norm'])
                 t_delays = np.append(t_delays, p['t_delay'])
                 taus     = np.append(taus,     p['tau'])
                 tau_rs   = np.append(tau_rs,   p['tau_r'])
-                
+
             return norms, t_delays, taus, tau_rs, self._peak_value
-        
+
         else:
             return self._lc_params
 
@@ -319,11 +328,15 @@ class LC(object):
         
         plt.xlabel('T-T0 (s)')
         plt.ylabel('Count rate (cnt/s)')
-                
+
         self._restore_lc()
         
         plt.step(self._times, self._plot_lc, where='post')
-        plt.plot(np.linspace(self._t_min, self._t_max, num=2, endpoint=True), [self._bg, self._bg], 'r--')
+
+        if self._with_bg:
+            plt.plot(np.linspace(self._t_min, self._t_max, num=2, endpoint=True), [self._bg, self._bg], 'r--')
+        else:
+            plt.plot(np.linspace(self._t_min, self._t_max, num=2, endpoint=True), [       0,        0], 'r--')
         
         if rescale:
             t_i = max(self._t_start - 0.5*self._t100, self._t_min)
@@ -433,9 +446,19 @@ class LC(object):
             t_delay       = par['t_delay']
             tau           = par['tau']
             tau_r         = par['tau_r']
-            self._raw_lc += self.norris_pulse(norm, t_delay, tau, tau_r) #
+            self._raw_lc += self.norris_pulse(norm, t_delay, tau, tau_r)
 
-        self._plot_lc =  self._raw_lc * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+        # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        # Here the multiplicative factor 'ampl' was missing! 
+        # Ask Anastasia why!
+        # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        if self._with_bg:
+            #self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            self._plot_lc = self._raw_lc * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+        else:
+            #self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            self._plot_lc = self._raw_lc * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            self._plot_lc = self._plot_lc - self._bg
 
         self._get_lc_properties()
         
@@ -512,7 +535,6 @@ class Restored_LC(LC):
             raise TypeError("The avalanche parameters should be a list of dictionaries")
         else:
             self._lc_params = par_list
-            
  
         self._restore_lc()
 
