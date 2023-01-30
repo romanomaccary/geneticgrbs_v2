@@ -7,6 +7,9 @@ from numpy.random import exponential, lognormal, normal, uniform
 from scipy.stats import loguniform
 import os, h5py
 
+SEED=42
+np.random.seed(SEED)
+
 """
 The 7 free parameters to be optimized are:
     - mu
@@ -190,7 +193,7 @@ class LC(object):
         
     #--------------------------------------------------------------------------#
         
-    def generate_avalanche(self, seed=12345, return_array=False):
+    def generate_avalanche(self, seed=SEED, return_array=False):
         """
         Generates pulse avalanche
         
@@ -464,7 +467,7 @@ class LC(object):
         
     #--------------------------------------------------------------------------#
 
-    def hdf5_lc_generation(self, outfile, overwrite=False, seed=12345):
+    def hdf5_lc_generation(self, outfile, overwrite=False, seed=SEED):
         """
         Generates a new avalanche and writes it to an hdf5 file
         
