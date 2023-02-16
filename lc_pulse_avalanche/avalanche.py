@@ -292,8 +292,10 @@ class LC(object):
         # lc from avalanche scaled + Poissonian bg added
         if self._with_bg: # with    background
             self._plot_lc = self._raw_lc * ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            self._err_lc  = np.sqrt(self._plot_lc)
         else:             # without background
             self._plot_lc = self._raw_lc * ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            self._err_lc  = np.sqrt(self._plot_lc)
             self._plot_lc = self._plot_lc - self._bg
 
         self._get_lc_properties()
@@ -339,7 +341,7 @@ class LC(object):
         if self._with_bg:
             plt.plot(np.linspace(self._t_min, self._t_max, num=2, endpoint=True), [self._bg, self._bg], 'r--')
         else:
-            plt.plot(np.linspace(self._t_min, self._t_max, num=2, endpoint=True), [       0,        0], 'r--')
+            pass#plt.plot(np.linspace(self._t_min, self._t_max, num=2, endpoint=True), [       0,        0], 'r--')
         
         if rescale:
             t_i = max(self._t_start - 0.5*self._t100, self._t_min)
