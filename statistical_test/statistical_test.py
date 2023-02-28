@@ -171,15 +171,16 @@ def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
                       the constraints described above;
     """
     # load only the GRBs that are already classified as 'long'
-    all_grb_list_batse = [grb_num.rstrip('\n') for grb_num in open(path + 'alltrig_long.list').readlines()]
+    long_list_file     = 'alltrig_long.list'
+    all_grb_list_batse = [grb_num.rstrip('\n') for grb_num in open(path+long_list_file).readlines()]
     # load T90s
     t90data = np.loadtxt(path+'T90_full.dat')
 
     t_f=150 # seconds
     grb_list_batse = []
     for grb_name in tqdm(all_grb_list_batse):
-        t90 = t90data[t90data[:,0] == float(grb_name),1]
         times, counts, errs = np.loadtxt(path+grb_name+'_all_bs.out', unpack=True)
+        t90     = t90data[t90data[:,0] == float(grb_name),1]
         times   = np.float32(times)
         counts  = np.float32(counts)
         errs    = np.float32(errs)
@@ -203,6 +204,79 @@ def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
     print("Total number of GRBs in BATSE catalogue: ", len(all_grb_list_batse))
     print("Selected GRBs: ", len(grb_list_batse))
     return grb_list_batse
+
+################################################################################
+
+def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
+    """
+    Load the Swift light curves, and put each of them in an object inside
+    a list. Since in the analysis we consider only the long GRBs, we load 
+    only the light curves listed in the 'merged_lien16-GCN_long_noshortEE_t90.dat'
+    file. Then, we take only the light curves satisfying the following constraints:
+    - T90 > t90_threshold (2 sec);
+    - GRB signal S2N > sn_threshold;
+    - the measurement lasts at least for t_f = 150 sec after the peak;
+    Input:
+    - path: path to the folder that contains a folder for each Swift GRB named
+            with the name of the GRB, and the file containing all the T90s;
+    - sn_threshold;
+    - t90_threshold;
+    - bin_time: temporal bin size of Swift [s];
+    Output:
+    - grb_list_swift: list of objects, where each object is a GRB that satisfies
+                      the constraints described above;
+    """
+
+    #--------------------------------------------------------------------------#
+    # OLD
+    # load light curves
+    # The command 'next(os.walk(swift_path))' list all the directories and sub-
+    # directories of the given directory 'path'. Then [1] means that we list 
+    # only the immediate directories present in 'path', NOT also the sub-directories.
+    # list_dir           = next(os.walk(path))[1] 
+    # all_grb_list_swift = [direc for direc in list_dir if direc.startswith('GRB')]
+    #--------------------------------------------------------------------------#
+
+    # load only the GRBs that are already classified as 'long'
+    long_list_file     = 'merged_lien16-GCN_long_noshortEE_t90.dat'
+    #long_list_file    = 'merged_lien16-GCN_long_noshortEE_t90_SMALL.dat' 
+    all_grb_list_swift = []
+    t90_dic            = {}
+    with open(swift_path+long_list_file) as f:
+        for line in f:
+            grb_name = line.split()[0]
+            t90      = line.split()[1]
+            all_grb_list_swift.append(grb_name)
+            t90_dic[grb_name] = np.float32(t90)
+
+    t_f=150 # seconds
+    grb_list_swift = []
+    for grb_name in tqdm(all_grb_list_swift):
+        times, counts, errs = np.loadtxt(path+'/'+grb_name+'/'+'all_3col.out', unpack=True)
+        t90     = t90_dic[grb_name]
+        times   = np.float32(times)
+        counts  = np.float32(counts)
+        errs    = np.float32(errs)
+        t90     = np.float32(t90)
+        i_c_max = np.argmax(counts)
+        s_n     = evaluateGRB_SN(times=times, 
+                                 counts=counts, 
+                                 errs=errs, 
+                                 t90=t90,
+                                 bin_time=bin_time)
+        #s_n_peak = evaluateGRB_SN_peak(counts=counts, 
+        #                               errs=errs)
+        cond_1 = t90>t90_threshold
+        cond_2 = s_n>sn_threshold
+        #cond_2 = s_n_peak>sn_threshold
+        cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
+        if ( cond_1 and cond_2 and cond_3 ):
+            grb = GRB(grb_name, times, counts, errs, t90)
+            grb_list_swift.append(grb)
+
+    print("Total number of GRBs in Swift catalogue: ", len(all_grb_list_swift))
+    print("Selected GRBs: ", len(grb_list_swift))
+    return grb_list_swift
 
 ################################################################################
 
