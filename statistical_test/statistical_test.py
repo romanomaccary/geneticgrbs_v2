@@ -1,0 +1,565 @@
+################################################################################
+# IMPORT LIBRARIES
+################################################################################
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import savgol_filter
+from scipy import signal
+from tqdm import tqdm
+
+import seaborn as sns
+sns.set_style('darkgrid')
+
+from matplotlib import rc
+rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+rc('text', usetex=True)
+
+SEED=42
+np.random.seed(SEED)
+
+################################################################################
+
+class GRB:
+    """
+    Class for GRBs where to store their properties.
+    """
+    def __init__(self, grb_name, times, counts, errs, t90):
+        self.name   = grb_name
+        self.times  = times
+        self.counts = counts
+        self.errs   = errs
+        self.t90    = t90
+
+################################################################################
+
+# def evaluateT90(times, counts):
+#     """
+#     Compute the T90 of a GRB, i.e., the 90% duration of the burst in seconds.
+#     T90 measures the duration of the time interval during which 90% of the 
+#     total observed counts have been detected. The start of the T90 interval
+#     is defined by the time at which 5% of the total counts have been detected,
+#     and the end of the T90 interval is defined by the time at which 95% of the
+#     total counts have been detected (definition from: 
+#     https://heasarc.gsfc.nasa.gov/grbcat/notes.html).
+#     N.B. For BATSE, all the T90s of the GRBs have been already evaluated by
+#     CG. The file is uploaded on the repository for easier access here:
+#     /astrodata/guidorzi/CGRO_BATSE/T90_full.dat.
+#     Inputs:
+#       - times: time values of the bins of the light-curve;
+#       - counts: counts per bin of the GRB;
+#     Output:
+#       - t90: T90 of the GRB
+#     """
+#     cumulative_counts = np.cumsum(counts)
+#     total_counts = cumulative_counts[-1]
+#     t_5_counts   = 0.05 * total_counts
+#     t_95_counts  = 0.95 * total_counts
+#     t_5_index    = np.where(cumulative_counts <=  t_5_counts )[0][-1]
+#     t_95_index   = np.where(cumulative_counts >=  t_95_counts)[0][ 0]
+#     t_5  = times[t_5_index]
+#     t_95 = times[t_95_index]
+#     t90  = t_95-t_5
+#     assert t90>0
+#     return t90
+
+################################################################################
+
+def evaluateDuration20(times, counts, filter=False, t90=None, bin_time=None):
+    """
+    Compute the duration of the GRB event as described in [Stern et al., 1996].
+    We define the starting time when the signal reaches the 20% of the value of
+    the peak, and analogously for the ending time. The difference of those two
+    times is taken as definition of the duration of the GRBs (T20%).
+    If filter==True, then before computing the T20% we smooth the signal using
+    a Savitzky-Golay filter on the light curves.
+    Inputs:
+      - times: time values of the bins of the light-curve;
+      - counts: counts per bin of the GRB;
+      - filter: boolean variable. Activate/deactivate the smoothing filter 
+                before computing the T20% duration;
+      - t90: T90 duration of the GRB;
+      - bin_time: temporal bin size of BATSE [s];
+    Output:
+      - duration: T20%, that is, the duration at 20% level;
+    """
+    if filter:
+        t90_frac = 5.
+        window   = int(t90/t90_frac/bin_time)
+        window   = window if window%2==1 else window+1
+        counts   = savgol_filter(x=counts, 
+                                 window_length=window, 
+                                 polyorder=2)
+
+    threshold_level = 0.2
+    c_max           = np.max(counts)
+    c_threshold     = c_max * threshold_level
+    selected_times  = times[counts >= c_threshold]
+    tstart          = selected_times[ 0]
+    tstop           = selected_times[-1]
+    duration        = tstop - tstart
+    assert duration>0
+
+    return np.array( [duration, tstart, tstop] )
+
+################################################################################
+
+def evaluateGRB_SN(times, counts, errs, t90, bin_time):
+    """
+    Compute the S/N ratio between the total signal from a GRB and the background
+    in a time interval equal to the GRB duration, as defined in Stern+96, i.e.,
+    the time interval between the first and the last moments in which the signal
+    reaches the 20% of the peak (T20%). The S2N ratio is defined in the 
+    following way: we sum of the signal inside the time window defined by the 
+    T20%, and we divide it by the square root of the squared sum of the errors
+    in the same time interval.
+    Input:
+     - times: array of times;
+     - counts: counts of the event;
+     - errs: errors over the counts;
+     - t90: T90 of the GRB;
+     - bin_time: temporal bin size of BATSE [s];
+    Output:
+     - s2n: signal to noise ratio;
+    """
+    _, tstart, tstop = evaluateDuration20(times=times, 
+                                          counts=counts, 
+                                          filter=True, 
+                                          t90=t90, 
+                                          bin_time=bin_time)
+    
+    event_times_mask = np.logical_and(times>=tstart, times<=tstop)
+    sum_grb_counts   = np.sum( counts[event_times_mask] )
+    sum_errs         = np.sqrt( np.sum(errs[event_times_mask]**2) )
+    s2n              = np.abs( sum_grb_counts/sum_errs )
+    return s2n
+
+
+def evaluateGRB_SN_peak(counts, errs):
+    """
+    Compute the S/N ratio of the peak of the GRB.
+    Input:
+     - counts: counts of the event;
+     - errs: errors over the counts;
+    Output:
+     - s2n: signal to noise ratio of the peak;
+    """
+    c_max    = np.max(counts)
+    i_c_max  = np.argmax(counts)
+    s_n_peak = c_max / errs[i_c_max]
+    return s_n_peak
+
+################################################################################
+
+def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
+    """
+    Load the BATSE light curves, and put each of them in an object inside
+    a list. Since in the analysis we consider only the long GRBs, we load 
+    only the light curves listed in the 'alltrig_long.list' file. Then, we 
+    take only the light curves satisfying the following constraints:
+    - T90 > t90_threshold (2 sec);
+    - GRB signal S2N > sn_threshold;
+    - the measurement lasts at least for t_f = 150 sec after the peak;
+    Input:
+    - path: path to the folder that contains a file for each BATSE GRB and the
+            file containing all the T90s;
+    - sn_threshold;
+    - t90_threshold;
+    - bin_time: temporal bin size of BATSE [s];
+    Output:
+    - grb_list_batse: list of objects, where each object is a GRB that satisfies
+                      the constraints described above;
+    """
+    # load only the GRBs that are already classified as 'long'
+    all_grb_list_batse = [grb_num.rstrip('\n') for grb_num in open(path + 'alltrig_long.list').readlines()]
+    # load T90s
+    t90data = np.loadtxt(path+'T90_full.dat')
+
+    t_f=150 # seconds
+    grb_list_batse = []
+    for grb_name in tqdm(all_grb_list_batse):
+        t90 = t90data[t90data[:,0] == float(grb_name),1]
+        times, counts, errs = np.loadtxt(path+grb_name+'_all_bs.out', unpack=True)
+        times   = np.float32(times)
+        counts  = np.float32(counts)
+        errs    = np.float32(errs)
+        t90     = np.float32(t90)
+        i_c_max = np.argmax(counts)
+        s_n     = evaluateGRB_SN(times=times, 
+                                 counts=counts, 
+                                 errs=errs, 
+                                 t90=t90,
+                                 bin_time=bin_time)
+        #s_n_peak = evaluateGRB_SN_peak(counts=counts, 
+        #                               errs=errs)
+        cond_1 = t90>t90_threshold
+        cond_2 = s_n>sn_threshold
+        #cond_2 = s_n_peak>sn_threshold
+        cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
+        if ( cond_1 and cond_2 and cond_3 ):
+            grb = GRB(grb_name, times, counts, errs, t90)
+            grb_list_batse.append(grb)
+
+    print("Total number of GRBs in BATSE catalogue: ", len(all_grb_list_batse))
+    print("Selected GRBs: ", len(grb_list_batse))
+    return grb_list_batse
+
+################################################################################
+
+def load_lc_sim(path, sn_threshold, t90_threshold=2, bin_time=0.064):
+    """
+    Load the simulated light curves, and put each of them in an object inside
+    a list. We take only the light curves satisfying the following constraints:
+    - T90 > t90_threshold (2 sec);
+    - GRB signal S2N > sn_threshold;
+    Input:
+    - path: path to the folder that contains a file for each simulated GRB;
+    - sn_threshold;
+    - t90_threshold;
+    - bin_time: temporal bin size of BATSE [s];
+    Output: 
+    - grb_list_sim: list of objects, where each object is a GRB that satisfies
+                    the constraints described above;
+    """
+    grb_sim_names = os.listdir(path)
+    grb_list_sim  = []
+    for grb_file in tqdm(grb_sim_names):
+        left_idx  = grb_file.find('lc') + len('lc')
+        right_idx = grb_file.find('.txt')
+        grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string
+        times, counts, errs, t90 = np.loadtxt(path + grb_file, unpack=True)
+        times  = np.float32(times)
+        counts = np.float32(counts)
+        errs   = np.float32(errs)
+        t90    = np.float32(t90)
+        s_n    = evaluateGRB_SN(times=times, 
+                                counts=counts, 
+                                errs=errs, 
+                                t90=t90[0],
+                                bin_time=bin_time)
+        #s_n_peak = evaluateGRB_SN_peak(counts=counts, 
+        #                               errs=errs)
+        cond_1 = t90[0]>t90_threshold
+        cond_2 = s_n>sn_threshold
+        #cond_2 = s_n_peak>sn_threshold
+        if ( cond_1 and cond_2 ):
+            grb = GRB(grb_name, times, counts, errs, t90[0])
+            grb_list_sim.append(grb)
+            
+    print("Total number of simulated GRBs: ", len(grb_sim_names))
+    print("Selected GRBs: ", len(grb_list_sim)) 
+    return grb_list_sim
+
+################################################################################
+
+# def rebinFunction(x, y, erry, s_n_threshold=5, bin_reb_max=100):
+#     """
+#     Rebins the arrays x, y and erry (errors on the y) with the constraint that 
+#     all the bins of the rebinned vectors must have a S/N bigger than a given 
+#     threshold.
+#     Input:
+#       - x: x-array of the data
+#       - y: y-array of the data
+#       - erry: errors on the y
+#       - s_n_threshold: acceptance threshold on the S/N ratio.
+#       - bin_reb_max: maximum number of bins that can be rebinned together. We 
+#                      define a limit on the maximum number of bins which can be 
+#                      rebinned together to stop the algorithm from looping 
+#                      forever if we reach a region in which the background 
+#                      dominates the signal completely;
+#     Output:
+#       - reb_x: rebinned x-array
+#       - reb_y: rebinned y-array
+#       - reb_err: rebinned errors on the y
+#     """
+#     n_bins = 1
+#     reb_x, reb_y, reb_err = [x[0]], [y[0]], [erry[0]]
+#     for i in range(1,len(y)):
+#         new_x       = x[i]
+#         bin_sum     = y[i]
+#         err_bin_sum = erry[i]
+#         sn = bin_sum/err_bin_sum
+#         while(sn < s_n_threshold and n_bins <= bin_reb_max):
+#             n_bins += 1
+#             new_x       = np.mean(x[i:i+n_bins])
+#             bin_sum     = np.sum(y[i:i+n_bins])
+#             err_bin_sum = np.sqrt(np.sum(erry[i:i+n_bins])**2)
+#             sn = np.abs(bin_sum/err_bin_sum)
+#         reb_x.append(new_x)
+#         reb_y.append(bin_sum/n_bins)
+#         reb_err.append(err_bin_sum)
+#         i += n_bins
+#         n_bins = 1
+#     #shift_x = reb_x[0] - x[0]
+#     #reb_x -= shift_x
+#     #shift_y = reb_y[0] - y[0]
+#     #reb_y -= shift_y
+#     return np.array(reb_x), np.array(reb_y), np.array(reb_err)
+
+
+
+# def roughRebin(vec, reb_factor, with_mean = True):
+#     """
+#     Rebins a vector of a given _constant_ factor.
+#     Input:
+#       - vec: vector to rebin
+#       - reb_factor: rebin factor, i. e. the number of points to rebin together
+#       - with_mean: boolean value. If true, the value of the points of the 
+#                    rebinned vector are evaluated as the average of the points
+#                    of the original vector that where to be rebinned together.  
+#     Output:
+#       - reb_vec: rebinned vector
+#     """
+#     if with_mean:
+#         reb_vec = np.array( [np.mean(vec[i:i+reb_factor]) for i in np.arange(0,len(vec),reb_factor)] )
+#     else:
+#         reb_vec = np.array( [np.sum(vec[i:i+reb_factor])  for i in np.arange(0,len(vec),reb_factor)] )
+#     return reb_vec
+
+################################################################################
+
+def compute_average_quantities(grb_list, t_f=150, bin_time=0.064, filter=True):
+    """
+    Compute the averaged peak-aligned fluxes of the GRBs needed in the final
+    plot. We follow the technique described in [Mitrofanov et al., 1996]. We 
+    need only the signal _after_ the peak, which we extract and average over 
+    all the light curves. Finally, we cut these averages at t_f = 150 sec (to
+    reproduce the plot in [Stern et al., 1996] we need only the signal up to 
+    150 sec after the peak).
+    If filter==True, then we smooth the final curve using a Savitzky-Golay
+    filter.
+    Input:
+    - grb_list: list containing each GRB as an object;
+    - t_f: range of time over which we compute the averaged fluxes;
+    - bin_time: temporal bin size of BATSE [s];
+    Output: 
+    - averaged_fluxes:        <(F/F_p)>
+    - averaged_fluxes_cube:   <(F/F_p)^3>
+    - averaged_fluxes_rms : ( <(F/F_p)^2> - <F/F_p>^2 )^(1/2)
+    """
+    n_steps=int(t_f/bin_time)
+    averaged_fluxes        = np.zeros(n_steps)
+    averaged_fluxes_square = np.zeros(n_steps)
+    averaged_fluxes_cube   = np.zeros(n_steps)
+
+    for grb in tqdm(grb_list):
+        c_max         = np.max(grb.counts)
+        i_c_max       = np.argmax(grb.counts)
+        fluxes_to_sum = grb.counts[i_c_max:i_c_max+n_steps] / c_max
+        assert np.isclose(fluxes_to_sum[0], 1, atol=1e-06), "ERROR: The peak is not aligned correctly..."
+        
+        averaged_fluxes        += fluxes_to_sum
+        averaged_fluxes_square += fluxes_to_sum**2
+        averaged_fluxes_cube   += fluxes_to_sum**3
+
+    averaged_fluxes        /= len(grb_list)
+    averaged_fluxes_square /= len(grb_list)
+    averaged_fluxes_cube   /= len(grb_list)
+    averaged_fluxes_rms     = np.sqrt(averaged_fluxes_square - averaged_fluxes**2)
+
+    if filter:
+        averaged_fluxes      = savgol_filter(x=averaged_fluxes,      
+                                             window_length=21, 
+                                             polyorder=2)
+        averaged_fluxes_rms  = savgol_filter(x=averaged_fluxes_rms,  
+                                             window_length=21, 
+                                             polyorder=2)
+        averaged_fluxes_cube = savgol_filter(x=averaged_fluxes_cube, 
+                                             window_length=21, 
+                                             polyorder=2)
+
+    return averaged_fluxes, averaged_fluxes_cube, averaged_fluxes_rms 
+
+################################################################################
+
+def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, bin_time=0.064, mode='scipy'):
+    """
+    Compute the autocorrelation (ACF) of the GRBs. The ACF is computed up to
+    a shift of the light curve of t_max = 150 seconds. 
+    Inputs:
+    - grb_list: list of GRB objects;
+    - N_lim: max number of GRBs with which we compute the average ACF;
+    - t_min: min time lag for the autocorrelation [s]; set equal to zero;
+    - t_max: max time lag for the autocorrelation [s];
+    - bin_time: temporal bin size of BATSE [s];
+    - mode: choose the method to compute the ACF between:
+            'scipy': use the scipy.signal.correlate() function. method='auto' 
+            automatically chooses direct or Fourier method based on an estimate
+            of which is faster.
+            'link93': use the method described in Link et al., 1993;
+    Outputs:
+    - steps: time lags of the autocorrelation;
+    - acf_scipy: autocorrelation computed with scipy.signal.correlate function;
+    - acf_link: autocorrelation computed as in Link et al., 1993;
+    """
+
+    steps = int((t_max-t_min)/bin_time) # number of steps for ACF
+    if mode=='link93':
+        acf_link   = np.zeros(steps)
+        steps_link = np.arange(steps) 
+    elif mode=='scipy':
+        acf_scipy  = np.zeros(steps)
+
+    # Evaluate ACF
+    for grb in tqdm(grb_list[:N_lim]):
+        counts = grb.counts
+        errs   = grb.errs
+        if mode=='scipy':
+            acf   = signal.correlate(in1=counts, in2=counts, method='auto')
+            acf   = acf / np.max(acf)
+            lags  = signal.correlation_lags(in1_len=len(counts), in2_len=len(counts))
+            idx_i = np.where(lags*bin_time==t_min)[0][ 0] # select the index corresponding to t=0 s
+            idx_f = np.where(lags*bin_time<=t_max)[0][-1] # select the index corresponding to t=150 s
+            assert lags[idx_i]==t_min, "ERROR: The left limit of the autocorrelation is not computed correctly..."
+            assert np.isclose(lags[idx_f]*bin_time, t_max, atol=1e-1), "ERROR: The right limit of the autocorrelation is not computed correctly..."         
+            acf       = acf[idx_i:idx_f] # select only the autocorrelation up to a shift of t_max = 150 sec
+            acf_scipy = acf_scipy + acf
+        elif mode=='link93':
+            # errs=0
+            acf      = [np.sum((np.roll(counts, u) * counts)[u:]) / np.sum(counts**2 - errs**2) for u in range(steps)]
+            acf_link = acf_link + acf
+
+    del(acf)
+    if mode=='scipy':
+        acf    = acf_scipy
+        steps  = lags[idx_i:idx_f]
+    elif mode=='link93':
+        acf    = acf_link   
+        acf   /= N_lim
+        acf[0] = 1
+        steps  = steps_link 
+
+    return steps, acf
+
+################################################################################
+
+def make_plot(test_times, 
+              averaged_fluxes_batse, averaged_fluxes_sim,
+              averaged_fluxes_rms_batse, averaged_fluxes_rms_sim,
+              averaged_fluxes_cube_batse, averaged_fluxes_cube_sim,
+              steps_batse, steps_sim, bin_time, acf_batse, acf_sim,
+              duration_batse, duration_sim):
+              
+    fig, ax = plt.subplots(2, 2, figsize=(14,12))
+
+    #--------------------------------------------------------------------------#
+    # <(F/F_p)>
+    #--------------------------------------------------------------------------#
+
+    print('- plotting <(F/F_p)>...')
+    ax[0,0].set_axisbelow(True)
+    ax[0,0].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',                   size=18)
+    ax[0,0].set_ylabel(r'$\log F_{rms},\quad \log \langle F/F_p\rangle$', size=18)
+    #
+    ax[0,0].plot(test_times**(1/3),     np.log10(averaged_fluxes_batse),         color = 'b', alpha=1.00, label = r'BATSE')
+    ax[0,0].plot(test_times**(1/3),     np.log10(averaged_fluxes_sim),           color = 'r', alpha=0.75, label = r'Simulated')
+    ax[0,0].plot(test_times[1:]**(1/3), np.log10(averaged_fluxes_rms_batse[1:]), color = 'b', alpha=1.00)
+    ax[0,0].plot(test_times[1:]**(1/3), np.log10(averaged_fluxes_rms_sim[1:]),   color = 'r', alpha=0.75)
+    #
+    ax[0,0].set_xlim(0,5)
+    ax[0,0].set_ylim(-3,0)
+    ax[0,0].text(3,   -0.7, r'$F_{rms}$',              fontsize=20)
+    ax[0,0].text(2.2, -1.7, r'$\langle F/F_p\rangle$', fontsize=20)
+    ax[0,0].xaxis.set_tick_params(labelsize=14)
+    ax[0,0].yaxis.set_tick_params(labelsize=14)
+    ax[0,0].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
+    print('\tdone')
+
+    #--------------------------------------------------------------------------#
+    # <(F/F_p)^3>
+    #--------------------------------------------------------------------------#
+
+    print('- plotting <(F/F_p)^3>...')
+    ax[0,1].set_axisbelow(True)
+    ax[0,1].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',     size=18)
+    ax[0,1].set_ylabel(r'$\log \langle (F/F_p)^3 \rangle$', size=18)
+    ax[0,1].plot(test_times**(1/3), np.log10(averaged_fluxes_cube_batse), color='b', label='BATSE')
+    ax[0,1].plot(test_times**(1/3), np.log10(averaged_fluxes_cube_sim),   color='r', label='Simulated', alpha=0.75)
+    ax[0,1].set_xlim(0,5)
+    ax[0,1].set_ylim(-4,0)
+    ax[0,1].xaxis.set_tick_params(labelsize=14)
+    ax[0,1].yaxis.set_tick_params(labelsize=14)
+    ax[0,1].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
+    print('\tdone')
+
+    #--------------------------------------------------------------------------#
+    # AUTOCORRELATION
+    #--------------------------------------------------------------------------#
+
+    print('- plotting the autocorrelation...')
+    ax[1,0].plot((steps_batse*bin_time)**(1/3), np.log10(acf_batse), color='b', label='BATSE')
+    ax[1,0].plot((steps_sim  *bin_time)**(1/3), np.log10(acf_sim),   color='r', label='Simulated', alpha=0.75)
+    ax[1,0].set_xlabel(r'$(\mathrm{timelag}\ [s])^{1/3}$', size=18)
+    ax[1,0].set_ylabel(r'$\log \langle ACF \rangle$',      size=18)
+    #ax[1,0].set_xlim(0,5)
+    #ax[1,0].set_ylim(-2,0.2)
+    ax[1,0].xaxis.set_tick_params(labelsize=14)
+    ax[1,0].yaxis.set_tick_params(labelsize=14)
+    ax[1,0].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
+    print('\tdone')
+
+    #--------------------------------------------------------------------------#
+    # HISTOGRAM OF DURATIONS
+    #--------------------------------------------------------------------------#
+
+    print('- plotting the histogram of the durations...')
+    ax[1,1].set_axisbelow(True)
+    ax[1,1].set_ylabel('Number of events', size=18)
+    ax[1,1].set_xlabel(r'$\log\mathrm{duration}$ [s]', size=18)
+
+    n_bins=30
+    n, bins, patches = ax[1,1].hist(x=np.log10(duration_batse),
+                                    bins=n_bins,
+                                    alpha=1.00,
+                                    label='BATSE', 
+                                    color='b',
+                                    histtype='step',
+                                    linewidth=4,
+                                    density=True)
+
+    n, bins, patches = ax[1,1].hist(x=np.log10(duration_sim),
+                                    bins=n_bins,
+                                    alpha=0.75,
+                                    label='Simulated', 
+                                    color='r',
+                                    histtype='step',
+                                    linewidth=4,
+                                    density=True)
+
+    #ax[1,1].set_xlim(-2,3)
+    #ax[1,1].set_ylim(0,30)
+    ax[1,1].xaxis.set_tick_params(labelsize=14)
+    ax[1,1].yaxis.set_tick_params(labelsize=14)
+    ax[1,1].legend(prop={'size':15}, loc="upper left", facecolor='white', framealpha=0.5)
+    print('\tdone')
+
+    #--------------------------------------------------------------------------#
+    #--------------------------------------------------------------------------#
+
+    plt.show()
+
+################################################################################
+
+
+
+################################################################################
+
+
+
+################################################################################
+
+
+
+################################################################################
+
+
+
+################################################################################
+
+
+
+################################################################################
+
+
+
+################################################################################
