@@ -3,12 +3,10 @@ Come funziona:
 2) Creare il file python clib.py. Dentro al codice py: l'istruzione ctypes.CDLL(path) apre
 la libreria .c desiderata. E' necessario che il path sia un path assoluto, altrimenti si bugga
 e non riesce ad aprire il file
-3) Compilare il codice in maniera position idependent (PIC) con il seguente comando:
+3) Compilare il codice in maniera position independent (PIC) con il seguente comando:
 	gcc -c -Wall -Wno-error -fpic clib.c
 4) Creare una shared library dal file compilato:
 	gcc -shared -o clib.so clib.o
-(Nota: suppongo che queste due istruzioni possano essere messe dentro ad un Makefile, ma non sono
-molto ferrato sul comando make, quindi le ho date da console)
 5) Eseguire lo script di Python
 
 Vedi dentro i clib.c e clib.py per qualche commento sul codice usato (ho copiaincollato dal tutorial).
