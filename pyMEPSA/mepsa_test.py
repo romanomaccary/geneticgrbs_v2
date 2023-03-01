@@ -14,15 +14,15 @@ peak_find.argtypes = ctypes.c_int, ctypes.POINTER(ctypes.c_char_p)
 # C. Invoke function
 test_grb = b'test/input_lc.dat'
 exp_file = b'excess_pattern_MEPSA_v0.dat'
-reb = b'16'
+reb      = b'16'
 grb_name = 'grb12345'
 out_file = (grb_name + '.dat').encode('ascii')
-print(out_file)
+#print(out_file)
 argv = (ctypes.c_char_p * 5) (b'pyMepsa', test_grb, exp_file, reb, out_file)
 
 start_peak_find = datetime.now()
 peak_find(len(argv), argv)
 end_time = datetime.now()
 
-print("Time to load the library: ", (start_peak_find - start_program))
-print("Time to execute MEPSA: ", (end_time - start_peak_find))
+print("Time to load the libraries: ", (start_peak_find - start_program)  )
+print("Time to execute MEPSA:      ", (end_time        - start_peak_find))

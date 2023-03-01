@@ -74,6 +74,7 @@ main(int argc, char *argv[])
       puts("1. input time series (3 columns: time, rate, error on rate)");
       puts("2. excess patterns' file");
       puts("3. maximum rebin factor to be searched\n");
+      puts("4. name of the file to be saved with the results\n");
 
       puts("Argument 2 is provided together with the present C code.");
       puts("This could be changed by users themselves according to their need. In this");
@@ -286,36 +287,49 @@ main(int argc, char *argv[])
   free(tempo);
   free(conteggi_bs);
   free(errori_bs);
-
-  ////////////////////////////WRITE ON FILE (Modified by us)
-  FILE *fptr;
-  //fprintf(stdout, "%s %s %s %s", argv[0], argv[1], argv[2], argv[3]);
-
-   fptr = fopen(argv[4],"w");
-
-   if(fptr == NULL)
-   {
-      printf("Error!");   
-      exit(1);             
-   }
-
-  // WRITE 
+  
+  // WRITE ON STANDARD OUTPUT
   if(final_peak_c) {
     pos = (int *) malloc(sizeof(int)*final_peak_c);
     for(i=0; i<final_peak_c; ++i) *(pos+i) = i;
     k = final_peak_c;
     qsort(pos, k, sizeof(int), &cmp_pos);
-    fprintf(fptr,"#Peak RebF BinPhase\tPeakT     BinT\t   PeakR    EPeakR     SNR\tCriterium Nadiac\n");
+    fprintf(stdout,"#Peak RebF BinPhase\tPeakT     BinT\t   PeakR    EPeakR     SNR\tCriterium Nadiac\n");
     for(i=0; i<final_peak_c; ++i) {
-      fprintf(fptr,"%3d  %3d  %3d\t%10.3f %8.3f\t%10.5f %9.5f  %6.2f\t%2d %2d\n",i+1,\
+      fprintf(stdout,"%3d  %3d  %3d\t%10.3f %8.3f\t%10.5f %9.5f  %6.2f\t%2d %2d\n",i+1,\
 	      final_peak_rebin[pos[i]],\
 	      final_peak_phase[pos[i]],final_peak_t[pos[i]]+final_bint[pos[i]]/2.0,final_bint[pos[i]],\
 	      final_peak[pos[i]],final_epeak[pos[i]],final_peak[pos[i]]/final_epeak[pos[i]],\
 	      final_peak_criteria[pos[i]], final_peak_nadiac[pos[i]]);
     }
   }
-  fclose(fptr);
-  //////////////////////////////////////////////////////////////////////7
+  
+  // WRITE ON FILE
+  int save_file=1;
+  if(save_file){
+    FILE *fptr;
+    fptr = fopen(argv[4],"w");
+    if(fptr==NULL){
+      printf("ERROR in the definition of the pointer to the file; closing...!");   
+      exit(1);             
+    }
+    if(final_peak_c) {
+      pos = (int *) malloc(sizeof(int)*final_peak_c);
+      for(i=0; i<final_peak_c; ++i) *(pos+i) = i;
+      k = final_peak_c;
+      qsort(pos, k, sizeof(int), &cmp_pos);
+      fprintf(fptr,"#Peak RebF BinPhase\tPeakT     BinT\t   PeakR    EPeakR     SNR\tCriterium Nadiac\n");
+      for(i=0; i<final_peak_c; ++i) {
+        fprintf(fptr,"%3d  %3d  %3d\t%10.3f %8.3f\t%10.5f %9.5f  %6.2f\t%2d %2d\n",i+1,\
+          final_peak_rebin[pos[i]],\
+          final_peak_phase[pos[i]],final_peak_t[pos[i]]+final_bint[pos[i]]/2.0,final_bint[pos[i]],\
+          final_peak[pos[i]],final_epeak[pos[i]],final_peak[pos[i]]/final_epeak[pos[i]],\
+          final_peak_criteria[pos[i]], final_peak_nadiac[pos[i]]);
+      }
+    }
+    fclose(fptr);
+  }
+
 }
 /***********************************************************************/
 
