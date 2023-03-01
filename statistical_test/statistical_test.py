@@ -178,8 +178,14 @@ def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
 
     t_f=150 # seconds
     grb_list_batse = []
+    grb_not_found  = []
     for grb_name in tqdm(all_grb_list_batse):
-        times, counts, errs = np.loadtxt(path+grb_name+'_all_bs.out', unpack=True)
+        try:
+            times, counts, errs = np.loadtxt(path+grb_name+'_all_bs.out', unpack=True)
+        except:
+            # print(grb_name, ' not found!')
+            grb_not_found.append(grb_name)
+            continue
         t90     = t90data[t90data[:,0] == float(grb_name),1]
         times   = np.float32(times)
         counts  = np.float32(counts)
@@ -202,6 +208,7 @@ def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
             grb_list_batse.append(grb)
 
     print("Total number of GRBs in BATSE catalogue: ", len(all_grb_list_batse))
+    print("GRBs in the catalogue which are not present in the data folder: ", len(grb_not_found))
     print("Selected GRBs: ", len(grb_list_batse))
     return grb_list_batse
 
@@ -239,7 +246,6 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
 
     # load only the GRBs that are already classified as 'long'
     long_list_file     = 'merged_lien16-GCN_long_noshortEE_t90.dat'
-    #long_list_file    = 'merged_lien16-GCN_long_noshortEE_t90_SMALL.dat' 
     all_grb_list_swift = []
     t90_dic            = {}
     with open(path+long_list_file) as f:
@@ -251,8 +257,14 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
 
     t_f=150 # seconds
     grb_list_swift = []
+    grb_not_found  = []
     for grb_name in tqdm(all_grb_list_swift):
-        times, counts, errs = np.loadtxt(path+grb_name+'/'+'all_3col.out', unpack=True)
+        try:
+            times, counts, errs = np.loadtxt(path+grb_name+'/'+'all_3col.out', unpack=True)
+        except:
+            # print(grb_name, ' not found!')
+            grb_not_found.append(grb_name)
+            continue
         t90     = t90_dic[grb_name]
         times   = np.float32(times)
         counts  = np.float32(counts)
@@ -275,6 +287,7 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
             grb_list_swift.append(grb)
 
     print("Total number of GRBs in Swift catalogue: ", len(all_grb_list_swift))
+    print("GRBs in the catalogue which are not present in the data folder: ", len(grb_not_found))
     print("Selected GRBs: ", len(grb_list_swift))
     return grb_list_swift
 
