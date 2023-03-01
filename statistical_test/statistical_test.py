@@ -230,9 +230,9 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
     #--------------------------------------------------------------------------#
     # OLD
     # load light curves
-    # The command 'next(os.walk(swift_path))' list all the directories and sub-
-    # directories of the given directory 'path'. Then [1] means that we list 
-    # only the immediate directories present in 'path', NOT also the sub-directories.
+    # The command 'next(os.walk(path))' list all the directories and sub-directories
+    # of the given directory 'path'. Then [1] means that we list only the immediate
+    # directories present in 'path', NOT also the sub-directories.
     # list_dir           = next(os.walk(path))[1] 
     # all_grb_list_swift = [direc for direc in list_dir if direc.startswith('GRB')]
     #--------------------------------------------------------------------------#
@@ -242,7 +242,7 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
     #long_list_file    = 'merged_lien16-GCN_long_noshortEE_t90_SMALL.dat' 
     all_grb_list_swift = []
     t90_dic            = {}
-    with open(swift_path+long_list_file) as f:
+    with open(path+long_list_file) as f:
         for line in f:
             grb_name = line.split()[0]
             t90      = line.split()[1]
@@ -252,7 +252,7 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
     t_f=150 # seconds
     grb_list_swift = []
     for grb_name in tqdm(all_grb_list_swift):
-        times, counts, errs = np.loadtxt(path+'/'+grb_name+'/'+'all_3col.out', unpack=True)
+        times, counts, errs = np.loadtxt(path+grb_name+'/'+'all_3col.out', unpack=True)
         t90     = t90_dic[grb_name]
         times   = np.float32(times)
         counts  = np.float32(counts)
