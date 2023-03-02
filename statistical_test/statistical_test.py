@@ -42,9 +42,12 @@ class GRB:
 #     and the end of the T90 interval is defined by the time at which 95% of the
 #     total counts have been detected (definition from: 
 #     https://heasarc.gsfc.nasa.gov/grbcat/notes.html).
-#     N.B. For BATSE, all the T90s of the GRBs have been already evaluated by
-#     CG. The file is uploaded on the repository for easier access here:
-#     /astrodata/guidorzi/CGRO_BATSE/T90_full.dat.
+#     - for BATSE, the T90 of the GRBs have been already evaluated, see here:
+#         /astrodata/guidorzi/CGRO_BATSE/T90_full.dat
+#     - for Swift, the T90 of the GRBs have been already evaluated, see here:
+#         /astrodata/guidorzi/Swift_BAT/merged_lien16-GCN_long_noshortEE_t90.dat
+#     - for BeppoSAX, the T90 of the GRBs have been already evaluated, see here:
+#         /astrodata/guidorzi/BeppoSAX_GRBM/saxgrbm_t90.dat
 #     Inputs:
 #       - times: time values of the bins of the light-curve;
 #       - counts: counts per bin of the GRB;
@@ -71,15 +74,15 @@ def evaluateDuration20(times, counts, filter=False, t90=None, bin_time=None):
     We define the starting time when the signal reaches the 20% of the value of
     the peak, and analogously for the ending time. The difference of those two
     times is taken as definition of the duration of the GRBs (T20%).
-    If filter==True, then before computing the T20% we smooth the signal using
-    a Savitzky-Golay filter on the light curves.
+    If filter==True, we smooth the signal using a Savitzky-Golay filter on the
+    light curves before computing the T20%.
     Inputs:
       - times: time values of the bins of the light-curve;
       - counts: counts per bin of the GRB;
       - filter: boolean variable. Activate/deactivate the smoothing filter 
                 before computing the T20% duration;
       - t90: T90 duration of the GRB;
-      - bin_time: temporal bin size of BATSE [s];
+      - bin_time: temporal bin size of the instrument [s];
     Output:
       - duration: T20%, that is, the duration at 20% level;
     """
@@ -118,7 +121,7 @@ def evaluateGRB_SN(times, counts, errs, t90, bin_time):
      - counts: counts of the event;
      - errs: errors over the counts;
      - t90: T90 of the GRB;
-     - bin_time: temporal bin size of BATSE [s];
+     - bin_time: temporal bin size of the instrument [s];
     Output:
      - s2n: signal to noise ratio;
     """
@@ -303,7 +306,7 @@ def load_lc_sim(path, sn_threshold, t90_threshold=2, bin_time=0.064):
     - path: path to the folder that contains a file for each simulated GRB;
     - sn_threshold;
     - t90_threshold;
-    - bin_time: temporal bin size of BATSE [s];
+    - bin_time: temporal bin size of the simulated instrument [s] (0.064 is BATSE);
     Output: 
     - grb_list_sim: list of objects, where each object is a GRB that satisfies
                     the constraints described above;
@@ -384,7 +387,6 @@ def load_lc_sim(path, sn_threshold, t90_threshold=2, bin_time=0.064):
 #     return np.array(reb_x), np.array(reb_y), np.array(reb_err)
 
 
-
 # def roughRebin(vec, reb_factor, with_mean = True):
 #     """
 #     Rebins a vector of a given _constant_ factor.
@@ -407,18 +409,17 @@ def load_lc_sim(path, sn_threshold, t90_threshold=2, bin_time=0.064):
 
 def compute_average_quantities(grb_list, t_f=150, bin_time=0.064, filter=True):
     """
-    Compute the averaged peak-aligned fluxes of the GRBs needed in the final
-    plot. We follow the technique described in [Mitrofanov et al., 1996]. We 
-    need only the signal _after_ the peak, which we extract and average over 
-    all the light curves. Finally, we cut these averages at t_f = 150 sec (to
-    reproduce the plot in [Stern et al., 1996] we need only the signal up to 
-    150 sec after the peak).
-    If filter==True, then we smooth the final curve using a Savitzky-Golay
-    filter.
+    Compute the averaged peak-aligned fluxes of the GRBs, following the 
+    technique described in [Mitrofanov et al., 1996]. We need only the signal
+    _after_ the peak, so we cut the lc at his maximum value, neglecting the lc
+    in previous times. After extracting the peak-aligned curves, we average over 
+    all the light curves in 'grb_list'. Finally, we cut these averages at
+    t_f = 150 sec, as shown in the plot by [Stern et al., 1996].
+    If filter==True, we smooth the final curve using a Savitzky-Golay filter.
     Input:
     - grb_list: list containing each GRB as an object;
     - t_f: range of time over which we compute the averaged fluxes;
-    - bin_time: temporal bin size of BATSE [s];
+    - bin_time: temporal bin size of the instrument [s] (0.064 is BATSE);
     Output: 
     - averaged_fluxes:        <(F/F_p)>
     - averaged_fluxes_cube:   <(F/F_p)^3>
@@ -466,9 +467,9 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, bin_time=0.064,
     Inputs:
     - grb_list: list of GRB objects;
     - N_lim: max number of GRBs with which we compute the average ACF;
-    - t_min: min time lag for the autocorrelation [s]; set equal to zero;
+    - t_min: min time lag for the autocorrelation [s], set by default to zero;
     - t_max: max time lag for the autocorrelation [s];
-    - bin_time: temporal bin size of BATSE [s];
+    - bin_time: temporal bin size of the instrument [s];
     - mode: choose the method to compute the ACF between:
             'scipy': use the scipy.signal.correlate() function. method='auto' 
             automatically chooses direct or Fourier method based on an estimate
