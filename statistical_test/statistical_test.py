@@ -4,6 +4,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import ctypes
 from scipy.signal import savgol_filter
 from scipy import signal
 from tqdm import tqdm
@@ -628,7 +629,29 @@ def make_plot(test_times,
 
 ################################################################################
 
+def runMEPSA(mepsa_path, ex_pattern_file_path, grb_file_path, nbins, grb_name, sn_level):
+    mepsa_lib = ctypes.CDLL(mepsa_path)
+    peak_find = mepsa_lib.main
+    peak_find.argtypes = ctypes.c_int, ctypes.POINTER(ctypes.c_char_p)
+    peak_find.restype  = ctypes.c_int
 
+    grb_file_path = grb_file_path.encode('ascii')
+    exp_file = ex_pattern_file_path.encode('ascii')
+    reb      = str(nbins).encode('ascii')
+    out_file = (grb_name + '.dat').encode('ascii')
+
+    argv     = (ctypes.c_char_p * 5) (b'pyMEPSA', grb_file_path, exp_file, reb, out_file)
+    peak_find(len(argv), argv)
+
+    with open(out_file, 'r') as result_file:
+        result_file.readline()
+        number_of_significative_peaks = 0
+        for line in result_file:
+            res_tmp = line.split()
+            if res_tmp[7] >= sn_level:
+                number_of_significative_peaks += 1
+
+    return number_of_significative_peaks
 
 ################################################################################
 
