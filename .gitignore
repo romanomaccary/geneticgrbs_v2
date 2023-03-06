@@ -1,3 +1,6 @@
 #Ipython Notebook
 .ipynb_checkpoints
 statistical_test/__pycache__/statistical_test.cpython-37.pyc
+pyMEPSA/a.exe
+pyMEPSA/mepsa.o
+pyMEPSA/mepsa.so

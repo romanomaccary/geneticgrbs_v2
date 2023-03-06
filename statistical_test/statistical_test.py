@@ -630,7 +630,7 @@ def make_plot(test_times,
 
 ################################################################################
 
-def runMEPSA(mepsa_path, ex_pattern_file_path, grb_file_path, nbins, grb_name, sn_level):
+def runMEPSA(mepsa_path, ex_pattern_file_path, grb_file_path, nbins, grb_name, sn_level = 5):
     mepsa_lib = ctypes.CDLL(mepsa_path)
     peak_find = mepsa_lib.main
     peak_find.argtypes = ctypes.c_int, ctypes.POINTER(ctypes.c_char_p)
@@ -649,7 +649,7 @@ def runMEPSA(mepsa_path, ex_pattern_file_path, grb_file_path, nbins, grb_name, s
         number_of_significative_peaks = 0
         for line in result_file:
             res_tmp = line.split()
-            if res_tmp[7] >= sn_level:
+            if float(res_tmp[7]) >= sn_level:
                 number_of_significative_peaks += 1
 
     return number_of_significative_peaks
