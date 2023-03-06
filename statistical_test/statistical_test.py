@@ -25,12 +25,13 @@ class GRB:
     """
     Class for GRBs where to store their properties.
     """
-    def __init__(self, grb_name, times, counts, errs, t90):
+    def __init__(self, grb_name, times, counts, errs, t90, grb_data_file_path):
         self.name   = grb_name
         self.times  = times
         self.counts = counts
         self.errs   = errs
         self.t90    = t90
+        self.data_file_path = grb_data_file_path
 
 ################################################################################
 
@@ -208,7 +209,7 @@ def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
         #cond_2 = s_n_peak>sn_threshold
         cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
         if ( cond_1 and cond_2 and cond_3 ):
-            grb = GRB(grb_name, times, counts, errs, t90)
+            grb = GRB(grb_name, times, counts, errs, t90, path+grb_name+'_all_bs.out')
             grb_list_batse.append(grb)
 
     print("Total number of GRBs in BATSE catalogue: ", len(all_grb_list_batse))
@@ -287,7 +288,7 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
         #cond_2 = s_n_peak>sn_threshold
         cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
         if ( cond_1 and cond_2 and cond_3 ):
-            grb = GRB(grb_name, times, counts, errs, t90)
+            grb = GRB(grb_name, times, counts, errs, t90, path+grb_name+'/'+'all_3col.out')
             grb_list_swift.append(grb)
 
     print("Total number of GRBs in Swift catalogue: ", len(all_grb_list_swift))
@@ -334,7 +335,7 @@ def load_lc_sim(path, sn_threshold, t90_threshold=2, bin_time=0.064):
         cond_2 = s_n>sn_threshold
         #cond_2 = s_n_peak>sn_threshold
         if ( cond_1 and cond_2 ):
-            grb = GRB(grb_name, times, counts, errs, t90[0])
+            grb = GRB(grb_name, times, counts, errs, t90[0], path + grb_file)
             grb_list_sim.append(grb)
             
     print("Total number of simulated GRBs: ", len(grb_sim_names))
