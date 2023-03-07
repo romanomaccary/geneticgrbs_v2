@@ -92,9 +92,15 @@ def evaluateDuration20(times, counts, filter=False, t90=None, bin_time=None):
         t90_frac = 5.
         window   = int(t90/t90_frac/bin_time)
         window   = window if window%2==1 else window+1
-        counts   = savgol_filter(x=counts, 
-                                 window_length=window, 
-                                 polyorder=2)
+        try:
+            counts = savgol_filter(x=counts,
+                                   window_length=window,
+                                   polyorder=2)
+        except:
+            #print('window_length =', window)
+            print('Error in "evaluateDuration20()" during the "savgol_filter()"...')
+            exit()
+
 
     threshold_level = 0.2
     c_max           = np.max(counts)
@@ -630,7 +636,19 @@ def make_plot(test_times,
 
 ################################################################################
 
-def runMEPSA(mepsa_path, ex_pattern_file_path, grb_file_path, nbins, grb_name, sn_level = 5):
+def runMEPSA(mepsa_path, ex_pattern_file_path, grb_file_path, nbins, grb_name, sn_level=5):
+    """
+    AAA
+    Input:
+    - mepsa_path:
+    - ex_pattern_file_path:
+    - grb_file_path:
+    - nbins:
+    - grb_name:
+    - sn_level:
+    Output:
+    - signif_peaks: number of significative peaks
+    """
     mepsa_lib = ctypes.CDLL(mepsa_path)
     peak_find = mepsa_lib.main
     peak_find.argtypes = ctypes.c_int, ctypes.POINTER(ctypes.c_char_p)
@@ -640,19 +658,18 @@ def runMEPSA(mepsa_path, ex_pattern_file_path, grb_file_path, nbins, grb_name, s
     exp_file = ex_pattern_file_path.encode('ascii')
     reb      = str(nbins).encode('ascii')
     out_file = (grb_name + '.dat').encode('ascii')
-
     argv     = (ctypes.c_char_p * 5) (b'pyMEPSA', grb_file_path, exp_file, reb, out_file)
     peak_find(len(argv), argv)
 
     with open(out_file, 'r') as result_file:
         result_file.readline()
-        number_of_significative_peaks = 0
+        signif_peaks=0  # number of significative peaks
         for line in result_file:
             res_tmp = line.split()
             if float(res_tmp[7]) >= sn_level:
-                number_of_significative_peaks += 1
+                signif_peaks  += 1
 
-    return number_of_significative_peaks
+    return signif_peaks
 
 ################################################################################
 
