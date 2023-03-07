@@ -694,13 +694,14 @@ def readMEPSAresBATSE(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level
     all_signif_peaks = []
 
     for mepsa_out_file in mepsa_out_file_list:
-        signif_peaks = 0
-        mepsa_out_file.readline()
-        for line in mepsa_out_file:
-            res_tmp = line.split()
-            if res_tmp[0] !='#' and float(res_tmp[1]) <= maximum_reb_factor and float(res_tmp[7]) >= sn_level:
-                signif_peaks  += 1
-        all_signif_peaks.append(signif_peaks)
+        with open(mepsa_out_file, 'r') as mepsa_out:
+            signif_peaks = 0
+            mepsa_out.readline()
+            for line in mepsa_out:
+                res_tmp = line.split()
+                if res_tmp[0] !='#' and float(res_tmp[1]) <= maximum_reb_factor and float(res_tmp[7]) >= sn_level:
+                    signif_peaks  += 1
+            all_signif_peaks.append(signif_peaks)
 
     return all_signif_peaks
 
