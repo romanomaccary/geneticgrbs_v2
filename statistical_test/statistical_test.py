@@ -219,7 +219,7 @@ def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
             grb_list_batse.append(grb)
 
     print("Total number of GRBs in BATSE catalogue: ", len(all_grb_list_batse))
-    print("GRBs in the catalogue which are not present in the data folder: ", len(grb_not_found))
+    print("GRBs in the catalogue which are NOT present in the data folder: ", len(grb_not_found))
     print("Selected GRBs: ", len(grb_list_batse))
     return grb_list_batse
 
@@ -298,7 +298,7 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
             grb_list_swift.append(grb)
 
     print("Total number of GRBs in Swift catalogue: ", len(all_grb_list_swift))
-    print("GRBs in the catalogue which are not present in the data folder: ", len(grb_not_found))
+    print("GRBs in the catalogue which are NOT present in the data folder: ", len(grb_not_found))
     print("Selected GRBs: ", len(grb_list_swift))
     return grb_list_swift
 
