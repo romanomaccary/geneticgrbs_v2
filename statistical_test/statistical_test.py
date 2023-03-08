@@ -304,6 +304,133 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=15
 
 ################################################################################
 
+def load_lc_sax(path, sn_threshold=70, t90_threshold=2, bin_time=1.0, t_f=150):
+    """
+    Load the BeppoSAX light curves, and put each of them in an object inside
+    a list. The GRBs are listed in the file 'formatted_catalogue_GRBM_paper.txt'.
+    Then, we take only the light curves satisfying the following constraints:
+    - T90 > t90_threshold (2 sec);
+    - GRB signal S2N > sn_threshold;
+    - the measurement lasts at least for t_f sec after the peak;
+    Moreover, we discard GBRs which are not fully covered by the HR data; since
+    the high res data last for 106 sec, we discard the GRBs which have a nominal
+    T90 greater than 106 sec.
+    Input:
+    - path: path to the folder that contains a folder for each Sax GRB named
+            with the name of the GRB, and the file containing all the T90s;
+    - sn_threshold;
+    - t90_threshold;
+    - bin_time: temporal bin size of Sax [s];
+    - t_f: time after the peak that we need the signal to last [seconds];
+    Output:
+    - grb_list_sax: list of objects, where each object is a GRB that satisfies
+                    the constraints described above;
+    """
+
+    def find_file(path, grb_name):
+        """
+        Given the name of a SAX GRB, find the name of the file containing the
+        light curve with the following properties:
+        - high-res ('h');
+        - channel zero ('0');
+        - background-subtracted ('bs');
+        Input:
+        - path: path containing the SAX GRBs;
+        - grb_name: name of the GBR;
+        Output:
+        - name of the file with the selected lc;
+        """
+        import fnmatch
+        list_h0_bs = []
+        for grb_filename in os.listdir(path+grb_name):
+            # select only lc with: high-res, channel 0, background-subtracted
+            if fnmatch.fnmatch(grb_filename, 'grb*_h0_bs.out'):
+                list_h0_bs.append(grb_filename) 
+        assert len(list_h0_bs)==1, 'The GRB "'+grb_name+'" does not have the high-res 0th channel light-curve...'
+        return list_h0_bs[0]
+ 
+    #--------------------------------------------------------------------------#
+
+    # load all the GRBs
+    list_file = 'formatted_catalogue_GRBM_paper.txt'
+    all_grb_list_sax     = []
+    all_grb_cat_list_sax = []
+    with open(path+list_file) as f:
+        for line in f:
+            grb_name     = line.split()[1]
+            grb_cat_name = line.split()[2]
+            all_grb_list_sax.append(grb_name)
+            all_grb_cat_list_sax.append(grb_cat_name)
+
+    # load T90
+    t90data = np.loadtxt(path+'saxgrbm_t90.dat', dtype='str', skiprows=1)
+
+    grb_no_h0=0
+    grb_list_sax  = []
+    grb_not_found = []
+    grb_no_t90    = []
+    grb_not_full  = []
+    for grb_name, grb_cat_name in zip(all_grb_list_sax, all_grb_cat_list_sax):
+        #
+        try:
+            hr0_grb = find_file(path, grb_name)
+        except AssertionError:
+            grb_no_h0+=1
+            continue
+        except:
+            print('ERROR: do not know what happened; check manually...')
+            exit()
+        #
+        try:
+            times, counts, errs = np.loadtxt(path+grb_name+'/'+hr0_grb, unpack=True)  
+            grb_cat_name        = grb_cat_name.replace("GRB", "")
+        except:
+            grb_not_found.append(grb_name)
+            continue
+        # for some GRBs we don't have the t90 in the file
+        t90 = t90data[t90data[:,0]==grb_cat_name][0][1]
+        if t90=='n.a.':
+            grb_no_t90.append(grb_name)
+            continue
+        t90    = t90.astype('float32')
+        times  = np.float32(times)
+        counts = np.float32(counts)
+        errs   = np.float32(errs)
+        t90    = np.float32(t90)
+        if (t90>106): # discard GBRs which are not fully covered by the HR data
+            grb_not_full.append(grb_name)
+            continue
+        i_c_max = np.argmax(counts)
+        s_n     = evaluateGRB_SN(times=times, 
+                                 counts=counts, 
+                                 errs=errs, 
+                                 t90=t90,
+                                 bin_time=bin_time)
+        #s_n_peak = evaluateGRB_SN_peak(counts=counts, 
+        #                               errs=errs)
+        cond_1 = t90>t90_threshold
+        cond_2 = s_n>sn_threshold
+        #cond_2 = s_n_peak>sn_threshold
+        cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
+        if ( cond_1 and cond_2 and cond_3 ):
+            grb = GRB(grb_name, 
+                      times, 
+                      counts, 
+                      errs, 
+                      t90, 
+                      path+grb_name+'/'+hr0_grb)
+            grb_list_sax.append(grb)
+
+    print("Total number of GRBs in BeppoSAX catalogue: ", len(all_grb_list_sax))
+    print('GRBs that have an high-res 0th channel lc:', len(all_grb_list_sax)-grb_no_h0)
+    print("GRBs in the catalogue which are NOT present in the data folder: ", len(grb_not_found))
+    print("GRBs in the catalogue which have a T90 greater than 106s: ", len(grb_not_full))
+    print("GRBs in the catalogue which are present in the data folder, but with no T90: ", len(grb_no_t90))
+    print("Selected GRBs: ", len(grb_list_sax))
+    return grb_list_sax
+
+################################################################################
+
 def load_lc_sim(path, sn_threshold, t90_threshold=2, bin_time=0.064):
     """
     Load the simulated light curves, and put each of them in an object inside
