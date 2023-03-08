@@ -162,7 +162,7 @@ def evaluateGRB_SN_peak(counts, errs):
 
 ################################################################################
 
-def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
+def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=150):
     """
     Load the BATSE light curves, and put each of them in an object inside
     a list. Since in the analysis we consider only the long GRBs, we load 
@@ -177,6 +177,7 @@ def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
     - sn_threshold;
     - t90_threshold;
     - bin_time: temporal bin size of BATSE [s];
+    - t_f: time after the peak that we need the signal to last [seconds];
     Output:
     - grb_list_batse: list of objects, where each object is a GRB that satisfies
                       the constraints described above;
@@ -187,7 +188,6 @@ def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
     # load T90s
     t90data = np.loadtxt(path+'T90_full.dat')
 
-    t_f=150 # seconds
     grb_list_batse = []
     grb_not_found  = []
     for grb_name in tqdm(all_grb_list_batse):
@@ -225,7 +225,7 @@ def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
 
 ################################################################################
 
-def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
+def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=150):
     """
     Load the Swift light curves, and put each of them in an object inside
     a list. Since in the analysis we consider only the long GRBs, we load 
@@ -240,6 +240,7 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
     - sn_threshold;
     - t90_threshold;
     - bin_time: temporal bin size of Swift [s];
+    - t_f: time after the peak that we need the signal to last [seconds];
     Output:
     - grb_list_swift: list of objects, where each object is a GRB that satisfies
                       the constraints described above;
@@ -266,7 +267,6 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064):
             all_grb_list_swift.append(grb_name)
             t90_dic[grb_name] = np.float32(t90)
 
-    t_f=150 # seconds
     grb_list_swift = []
     grb_not_found  = []
     for grb_name in tqdm(all_grb_list_swift):
