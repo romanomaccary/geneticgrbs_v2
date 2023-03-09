@@ -180,7 +180,10 @@ class LC(object):
                 print("Time constant (the decay time): {0:0.3f}".format(tau))
                 print("Rise time: {:0.3f}".format(tau_r))
                 print("--------------------------------------------------------------------------")
-                
+
+            # The avalanche stops when the time constant tau of the pulse goes 
+            # below the time resolution (_res), or when the number of total 
+            # pulses becomes greater than a given number of our choice (_n_cut)
             if tau > self._res:
                 # continue avalanche (otherwise, stop this chain)
                 if self._n_cut is None:
@@ -269,11 +272,11 @@ class LC(object):
             # the paper by Stern & Svensson, on page 2.
             self._rec_gen_pulse(tau0, t_delay)
 
+        print("--------------------------------------------------------------------------")
         print("Number of spontaneous (primary) pulses:", mu_s)
         print("Total number of child pulses          :", self._n_pulses-mu_s)
         print("---")
         print("Total number of pulses                :", self._n_pulses)
-        print("--------------------------------------------------------------------------")
 
         # lc directly from the avalanche;
         # sum the lc of the parents (_sp_pulse) and the lc of the childs (_rates)
