@@ -326,14 +326,39 @@ def load_lc_sax(path, sn_threshold=70, t90_threshold=2, bin_time=1.0, t_f=150):
     - grb_list_sax: list of objects, where each object is a GRB that satisfies
                     the constraints described above;
     """
+    #-------------------------------------------------------------------------#
+    # def find_file_OLD(path, grb_name):
+    #     """
+    #     Given the name of a SAX GRB, find the name of the file containing the
+    #     light curve with the following properties:
+    #     - high-res ('h');
+    #     - channel zero ('0');
+    #     - background-subtracted ('bs');
+    #     Input:
+    #     - path: path containing the SAX GRBs;
+    #     - grb_name: name of the GBR;
+    #     Output:
+    #     - name of the file with the selected lc;
+    #     """
+    #     import fnmatch
+    #     list_h0_bs = []
+    #     for grb_filename in os.listdir(path+grb_name):
+    #         # select only lc with: high-res, channel 0, background-subtracted
+    #         if fnmatch.fnmatch(grb_filename, 'grb*_h0_bs.out'):
+    #             list_h0_bs.append(grb_filename) 
+    #     assert len(list_h0_bs)==1, 'The GRB "'+grb_name+'" does not have the high-res 0th channel light-curve...'
+    #     return list_h0_bs[0]
+    #-------------------------------------------------------------------------#
 
     def find_file(path, grb_name):
         """
         Given the name of a SAX GRB, find the name of the file containing the
         light curve with the following properties:
         - high-res ('h');
-        - channel zero ('0');
         - background-subtracted ('bs');
+        - the channel is the one written in the 'best_grbm_snr.txt' file; if the
+            file with the 'best' channel is not present, we select the HR lc with 
+            the mixture of two channel (e.g., 12, 23, etc.);
         Input:
         - path: path containing the SAX GRBs;
         - grb_name: name of the GBR;
@@ -341,14 +366,44 @@ def load_lc_sax(path, sn_threshold=70, t90_threshold=2, bin_time=1.0, t_f=150):
         - name of the file with the selected lc;
         """
         import fnmatch
-        list_h0_bs = []
+
+        # check if there is the 'best_grbm_snr.txt', and extract the number of
+        # the corresponding channel
+        try:
+            best_idx=int(np.loadtxt(path+grb_name+'/best_grbm_snr.txt', unpack=True))
+        except:
+            raise FileNotFoundError
+
+        list_hr_bs_best     = []
+        list_hr_bs_not_best = []
         for grb_filename in os.listdir(path+grb_name):
-            # select only lc with: high-res, channel 0, background-subtracted
-            if fnmatch.fnmatch(grb_filename, 'grb*_h0_bs.out'):
-                list_h0_bs.append(grb_filename) 
-        assert len(list_h0_bs)==1, 'The GRB "'+grb_name+'" does not have the high-res 0th channel light-curve...'
-        return list_h0_bs[0]
- 
+            # check if the "best" GRB has the high-res lc
+            if fnmatch.fnmatch(grb_filename, 'grb*_h'+str(best_idx)+'_bs.out'):
+                list_hr_bs_best.append(grb_filename)
+        # if the 'best' HR channel is not present, take the mixture of 2 channels
+        if (len(list_hr_bs_best)==0):
+            list_h_bs = []
+            for grb_filename in os.listdir(path+grb_name):
+                if fnmatch.fnmatch(grb_filename, 'grb*_h*_bs.out'):
+                    list_h_bs.append(grb_filename)
+            pairs = ['h12', 'h13', 'h14', 'h23', 'h24', 'h34', 'h21', 'h31', 'h41', 'h32', 'h42', 'h43']
+            for el in pairs:        
+                list_hr_bs_best.append( [ grb for grb in list_h_bs if el in grb] )
+            list_hr_bs_best = [x for x in list_hr_bs_best if x] # remove empty elements
+            assert len(list_hr_bs_best)==1, 'The GRB "'+grb_name+'" has more than 1 mixed HR channel...'
+            list_hr_bs_best = list_hr_bs_best[0]
+
+        ## if the HR lc corresponding the the "best" channel is not found,
+        ## print all the _other_ HR lc in the folder
+        #if(len(list_hr_bs_best)==0):
+        #    for grb_filename in os.listdir(path+grb_name):
+        #            if fnmatch.fnmatch(grb_filename, 'grb*_h*_bs.out'):
+        #                list_hr_bs_not_best.append(grb_filename)
+
+        #print(list_hr_bs_not_best)
+        assert len(list_hr_bs_best)==1, 'The GRB "'+grb_name+'" does not have the high-res light-curve...'
+        return list_hr_bs_best[0]
+
     #--------------------------------------------------------------------------#
 
     # load all the GRBs
@@ -365,7 +420,7 @@ def load_lc_sax(path, sn_threshold=70, t90_threshold=2, bin_time=1.0, t_f=150):
     # load T90
     t90data = np.loadtxt(path+'saxgrbm_t90.dat', dtype='str', skiprows=1)
 
-    grb_no_h0=0
+    grb_no_hr=0
     grb_list_sax  = []
     grb_not_found = []
     grb_no_t90    = []
@@ -373,21 +428,25 @@ def load_lc_sax(path, sn_threshold=70, t90_threshold=2, bin_time=1.0, t_f=150):
     for grb_name, grb_cat_name in zip(all_grb_list_sax, all_grb_cat_list_sax):
         #
         try:
-            hr0_grb = find_file(path, grb_name)
+            hr_grb = find_file(path, grb_name)
+            #print(hr_grb)
         except AssertionError:
-            grb_no_h0+=1
+            grb_no_hr+=1
+            continue
+        except FileNotFoundError:
+            grb_no_hr+=1
             continue
         except:
             print('ERROR: do not know what happened; check manually...')
             exit()
         #
         try:
-            times, counts, errs = np.loadtxt(path+grb_name+'/'+hr0_grb, unpack=True)  
+            times, counts, errs = np.loadtxt(path+grb_name+'/'+hr_grb, unpack=True)  
             grb_cat_name        = grb_cat_name.replace("GRB", "")
         except:
             grb_not_found.append(grb_name)
             continue
-        # for some GRBs we don't have the t90 in the file
+        # for some GRBs we don't have the T90 in the file
         t90 = t90data[t90data[:,0]==grb_cat_name][0][1]
         if t90=='n.a.':
             grb_no_t90.append(grb_name)
@@ -418,11 +477,11 @@ def load_lc_sax(path, sn_threshold=70, t90_threshold=2, bin_time=1.0, t_f=150):
                       counts, 
                       errs, 
                       t90, 
-                      path+grb_name+'/'+hr0_grb)
+                      path+grb_name+'/'+hr_grb)
             grb_list_sax.append(grb)
 
     print("Total number of GRBs in BeppoSAX catalogue: ", len(all_grb_list_sax))
-    print('GRBs that have an high-res 0th channel lc:', len(all_grb_list_sax)-grb_no_h0)
+    print('GRBs that have an high-res "best" (or 2-mixed) channel lc:', len(all_grb_list_sax)-grb_no_hr)
     print("GRBs in the catalogue which are NOT present in the data folder: ", len(grb_not_found))
     print("GRBs in the catalogue which have a T90 greater than 106s: ", len(grb_not_full))
     print("GRBs in the catalogue which are present in the data folder, but with no T90: ", len(grb_no_t90))
