@@ -19,6 +19,20 @@ The 7 free parameters to be optimized are:
     - delta2
     - tau_min
     - tau_max
+
+Parameters BATSE:
+    - res      = 0.064 [s]
+    - eff_area = 3600 [cm2]
+    - bg_level = 10.67 [cnt/cm2/s]
+Parameters Swift:
+    - res      = 0.064 [s]
+    - eff_area = 1400 [cm2]  # https://swift.gsfc.nasa.gov/proposals/tech_appd/swiftta_v17/node27.html
+    - bg_level = 10000/eff_area = 10000/1400 [cnt/cm2/s]  # https://swift.gsfc.nasa.gov/proposals/tech_appd/swiftta_v17/node32.html
+Parameters BeppoSAX:
+    - res      = 1 [s]
+    - res (HR) = 0.0078125 [s]
+    - eff_area = ??? [cm2]
+    - bg_level = ??? [cnt/cm2/s]
 """
 #==============================================================================#
 # Define the class LC describing the light curve.                              #
@@ -44,7 +58,7 @@ class LC(object):
     :tau_max: upper boundary of log-normal probability distribution of tau_0
     :t_min: GRB LC start time
     :t_max: GRB LC stop  time
-    :res: GRB LC time resolution
+    :res: GRB LC time resolution (s)
     :eff_area: effective area of instrument (cm2)
     :bg_level: background level (cnt/cm2/s)
     :min_photon_rate: left  boundary of -3/2 log N - log S distribution (ph/cm2/s)
