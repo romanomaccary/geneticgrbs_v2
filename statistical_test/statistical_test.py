@@ -725,7 +725,9 @@ def make_plot(instrument,
               steps, steps_sim, bin_time, acf, acf_sim,
               duration, duration_sim,
               save_fig=False, name_fig='fig.pdf'):
-              
+    """
+    Make plot as in Stern et al., 1996.
+    """
     fig, ax = plt.subplots(2, 2, figsize=(14,12))
 
     if instrument=='batse':
@@ -836,6 +838,23 @@ def make_plot(instrument,
 
     plt.show()
 
+################################################################################
+
+def compute_loss(test_times,
+                 averaged_fluxes,      averaged_fluxes_sim,
+                 averaged_fluxes_rms,  averaged_fluxes_rms_sim,
+                 averaged_fluxes_cube, averaged_fluxes_cube_sim,
+                 steps, steps_sim, bin_time, acf, acf_sim,
+                 duration, duration_sim):
+    """
+    Compute the loss to be used in the Genetic Algorithm.
+    FOR SIMPLICITY, FOR THE MOMENT WE CONSIDER ONLY ONE OBSERVABLE!
+    """
+    averaged_fluxes     = np.log10(averaged_fluxes)
+    averaged_fluxes_sim = np.log10(averaged_fluxes_sim)
+    l2_loss = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
+    return l2_loss
+ 
 ################################################################################
 
 def runMEPSA(mepsa_path, ex_pattern_file_path, grb_file_path, nbins, grb_name, sn_level=5):
