@@ -715,14 +715,25 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, bin_time=0.064,
 
 ################################################################################
 
-def make_plot(test_times, 
-              averaged_fluxes_batse, averaged_fluxes_sim,
-              averaged_fluxes_rms_batse, averaged_fluxes_rms_sim,
-              averaged_fluxes_cube_batse, averaged_fluxes_cube_sim,
-              steps_batse, steps_sim, bin_time, acf_batse, acf_sim,
-              duration_batse, duration_sim):
+def make_plot(instrument, 
+              test_times, 
+              averaged_fluxes,      averaged_fluxes_sim,
+              averaged_fluxes_rms,  averaged_fluxes_rms_sim,
+              averaged_fluxes_cube, averaged_fluxes_cube_sim,
+              steps, steps_sim, bin_time, acf, acf_sim,
+              duration, duration_sim,
+              save_fig=False, name_fig='fig.pdf'):
               
     fig, ax = plt.subplots(2, 2, figsize=(14,12))
+
+    if instrument=='batse':
+        label_instr='BATSE'
+    elif instrument=='swift':
+        label_instr='Swift'
+    elif instrument=='sax':
+        label_instr='BeppoSAX'
+    else:
+        raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
     #--------------------------------------------------------------------------#
     # <(F/F_p)>
@@ -733,10 +744,10 @@ def make_plot(test_times,
     ax[0,0].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',                   size=18)
     ax[0,0].set_ylabel(r'$\log F_{rms},\quad \log \langle F/F_p\rangle$', size=18)
     #
-    ax[0,0].plot(test_times**(1/3),     np.log10(averaged_fluxes_batse),         color = 'b', alpha=1.00, label = r'BATSE')
-    ax[0,0].plot(test_times**(1/3),     np.log10(averaged_fluxes_sim),           color = 'r', alpha=0.75, label = r'Simulated')
-    ax[0,0].plot(test_times[1:]**(1/3), np.log10(averaged_fluxes_rms_batse[1:]), color = 'b', alpha=1.00)
-    ax[0,0].plot(test_times[1:]**(1/3), np.log10(averaged_fluxes_rms_sim[1:]),   color = 'r', alpha=0.75)
+    ax[0,0].plot(test_times**(1/3),     np.log10(averaged_fluxes),             color = 'b', alpha=1.00, label = label_instr)
+    ax[0,0].plot(test_times**(1/3),     np.log10(averaged_fluxes_sim),         color = 'r', alpha=0.75, label = r'Simulated')
+    ax[0,0].plot(test_times[1:]**(1/3), np.log10(averaged_fluxes_rms[1:]),     color = 'b', alpha=1.00)
+    ax[0,0].plot(test_times[1:]**(1/3), np.log10(averaged_fluxes_rms_sim[1:]), color = 'r', alpha=0.75)
     #
     ax[0,0].set_xlim(0,5)
     ax[0,0].set_ylim(-3,0)
@@ -755,8 +766,8 @@ def make_plot(test_times,
     ax[0,1].set_axisbelow(True)
     ax[0,1].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',     size=18)
     ax[0,1].set_ylabel(r'$\log \langle (F/F_p)^3 \rangle$', size=18)
-    ax[0,1].plot(test_times**(1/3), np.log10(averaged_fluxes_cube_batse), color='b', label='BATSE')
-    ax[0,1].plot(test_times**(1/3), np.log10(averaged_fluxes_cube_sim),   color='r', label='Simulated', alpha=0.75)
+    ax[0,1].plot(test_times**(1/3), np.log10(averaged_fluxes_cube),     color='b', label=label_instr)
+    ax[0,1].plot(test_times**(1/3), np.log10(averaged_fluxes_cube_sim), color='r', label='Simulated', alpha=0.75)
     ax[0,1].set_xlim(0,5)
     ax[0,1].set_ylim(-4,0)
     ax[0,1].xaxis.set_tick_params(labelsize=14)
@@ -769,8 +780,8 @@ def make_plot(test_times,
     #--------------------------------------------------------------------------#
 
     print('- plotting the autocorrelation...')
-    ax[1,0].plot((steps_batse*bin_time)**(1/3), np.log10(acf_batse), color='b', label='BATSE')
-    ax[1,0].plot((steps_sim  *bin_time)**(1/3), np.log10(acf_sim),   color='r', label='Simulated', alpha=0.75)
+    ax[1,0].plot((steps*bin_time)**(1/3),       np.log10(acf),     color='b', label=label_instr)
+    ax[1,0].plot((steps_sim  *bin_time)**(1/3), np.log10(acf_sim), color='r', label='Simulated', alpha=0.75)
     ax[1,0].set_xlabel(r'$(\mathrm{timelag}\ [s])^{1/3}$', size=18)
     ax[1,0].set_ylabel(r'$\log \langle ACF \rangle$',      size=18)
     #ax[1,0].set_xlim(0,5)
@@ -790,10 +801,10 @@ def make_plot(test_times,
     ax[1,1].set_xlabel(r'$\log\mathrm{duration}$ [s]', size=18)
 
     n_bins=30
-    n, bins, patches = ax[1,1].hist(x=np.log10(duration_batse),
+    n, bins, patches = ax[1,1].hist(x=np.log10(duration),
                                     bins=n_bins,
                                     alpha=1.00,
-                                    label='BATSE', 
+                                    label=label_instr, 
                                     color='b',
                                     histtype='step',
                                     linewidth=4,
@@ -817,6 +828,9 @@ def make_plot(test_times,
 
     #--------------------------------------------------------------------------#
     #--------------------------------------------------------------------------#
+
+    if(save_fig):
+        plt.savefig(name_fig)
 
     plt.show()
 
