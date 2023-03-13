@@ -803,7 +803,7 @@ def make_plot(instrument,
     ax[1,1].set_xlabel(r'$\log\mathrm{duration}$ [s]', size=18)
 
     n_bins=30
-    n, bins, patches = ax[1,1].hist(x=np.log10(duration),
+    n1, bins, patches = ax[1,1].hist(x=np.log10(duration),
                                     bins=n_bins,
                                     alpha=1.00,
                                     label=label_instr, 
@@ -812,7 +812,7 @@ def make_plot(instrument,
                                     linewidth=4,
                                     density=True)
 
-    n, bins, patches = ax[1,1].hist(x=np.log10(duration_sim),
+    n2, bins, patches = ax[1,1].hist(x=np.log10(duration_sim),
                                     bins=n_bins,
                                     alpha=0.75,
                                     label='Simulated', 
@@ -827,6 +827,13 @@ def make_plot(instrument,
     ax[1,1].yaxis.set_tick_params(labelsize=14)
     ax[1,1].legend(prop={'size':15}, loc="upper left", facecolor='white', framealpha=0.5)
     print('\tdone')
+
+    #from scipy.stats import ks_2samp
+    #ks_test_res = ks_2samp(n1, n2)
+    #print(ks_test_res)
+    #from scipy.stats import anderson_ksamp
+    #ad_res = anderson_ksamp([n1, n2])
+    #print(ad_res)
 
     #--------------------------------------------------------------------------#
     #--------------------------------------------------------------------------#
