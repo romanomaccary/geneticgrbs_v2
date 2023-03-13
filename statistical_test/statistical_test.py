@@ -269,6 +269,7 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=15
 
     grb_list_swift = []
     grb_not_found  = []
+    sn_levels = []
     for grb_name in tqdm(all_grb_list_swift):
         try:
             times, counts, errs = np.loadtxt(path+grb_name+'/'+'all_3col.out', unpack=True)
@@ -287,6 +288,7 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=15
                                  errs=errs, 
                                  t90=t90,
                                  bin_time=bin_time)
+        sn_levels.append(s_n)
         #s_n_peak = evaluateGRB_SN_peak(counts=counts, 
         #                               errs=errs)
         cond_1 = t90>t90_threshold
@@ -300,7 +302,7 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=15
     print("Total number of GRBs in Swift catalogue: ", len(all_grb_list_swift))
     print("GRBs in the catalogue which are NOT present in the data folder: ", len(grb_not_found))
     print("Selected GRBs: ", len(grb_list_swift))
-    return grb_list_swift
+    return grb_list_swift, sn_levels
 
 ################################################################################
 
