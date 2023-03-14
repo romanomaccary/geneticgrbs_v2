@@ -492,20 +492,17 @@ def load_lc_sax(path, sn_threshold=70, t90_threshold=2, bin_time=1.0, t_f=150):
 
 ################################################################################
 
-def load_lc_sim(path, sn_threshold, t90_threshold=2, bin_time=0.064):
+def load_lc_sim(path):
     """
-    Load the simulated light curves, and put each of them in an object inside
-    a list. We take only the light curves satisfying the following constraints:
-    - T90 > t90_threshold (2 sec);
-    - GRB signal S2N > sn_threshold;
+    Load the simulated light curves, which were previously generated and saved
+    as files, named 'lcXXX.txt', one file for each simulated GRB ('XXX' is the 
+    index of the GRB generated). The columns in the files are: 'times', 
+    'counts', 'errs', 't90'. We put each light curve in a 'GRB' object inside
+    a list. 
     Input:
     - path: path to the folder that contains a file for each simulated GRB;
-    - sn_threshold;
-    - t90_threshold;
-    - bin_time: temporal bin size of the simulated instrument [s] (0.064 is BATSE);
     Output: 
-    - grb_list_sim: list of objects, where each object is a GRB that satisfies
-                    the constraints described above;
+    - grb_list_sim: list of GRB objects;
     """
     grb_sim_names = os.listdir(path)
     grb_list_sim  = []
@@ -518,23 +515,56 @@ def load_lc_sim(path, sn_threshold, t90_threshold=2, bin_time=0.064):
         counts = np.float32(counts)
         errs   = np.float32(errs)
         t90    = np.float32(t90)
-        s_n    = evaluateGRB_SN(times=times, 
-                                counts=counts, 
-                                errs=errs, 
-                                t90=t90[0],
-                                bin_time=bin_time)
+        grb    = GRB(grb_name, times, counts, errs, t90[0], path+grb_file)
+        grb_list_sim.append(grb)
+
+    print("Total number of simulated GRBs: ", len(grb_sim_names))
+    return grb_list_sim
+
+
+
+def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f):
+    """
+    Given as input a list of GBR objects, the function outputs a list containing
+    only the GRBs that satisfy the following constraint:
+    - T90 > t90_threshold (2 sec);
+    - GRB signal S2N > sn_threshold;
+    - the measurement lasts at least for t_f (150 sec) after the peak;
+    Input:
+    - t90_threshold [s];
+    - sn_threshold;
+    - bin_time: temporal bin size of the instrument [s];
+    - t_f: time after the peak that we need the signal to last [s];
+    Output:
+    - good_grb_list: list of GRB objects, where each one is a GRB that satisfies
+                     the 3 constraints described above;
+    """
+    good_grb_list = []
+    for grb in tqdm(grb_list):
+        times   = np.float32(grb.times)
+        counts  = np.float32(grb.counts)
+        errs    = np.float32(grb.errs)
+        t90     = np.float32(grb.t90)
+        i_c_max = np.argmax(counts)
+        s_n     = evaluateGRB_SN(times=times, 
+                                 counts=counts, 
+                                 errs=errs, 
+                                 t90=t90,
+                                 bin_time=bin_time)
         #s_n_peak = evaluateGRB_SN_peak(counts=counts, 
         #                               errs=errs)
-        cond_1 = t90[0]>t90_threshold
+        
+        cond_1 = t90>t90_threshold
         cond_2 = s_n>sn_threshold
         #cond_2 = s_n_peak>sn_threshold
-        if ( cond_1 and cond_2 ):
-            grb = GRB(grb_name, times, counts, errs, t90[0], path + grb_file)
-            grb_list_sim.append(grb)
-            
-    print("Total number of simulated GRBs: ", len(grb_sim_names))
-    print("Selected GRBs: ", len(grb_list_sim)) 
-    return grb_list_sim
+        cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
+        if ( cond_1 and cond_2 and cond_3 ):
+            good_grb_list.append(grb)
+
+    print("Total number of GRBs: ", len(grb_list))
+    print("Selected GRBs: ", len(good_grb_list)) 
+
+    return good_grb_list
 
 ################################################################################
 
