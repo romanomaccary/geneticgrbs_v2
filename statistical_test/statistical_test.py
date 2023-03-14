@@ -162,25 +162,16 @@ def evaluateGRB_SN_peak(counts, errs):
 
 ################################################################################
 
-def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=150):
+def load_lc_batse(path):
     """
     Load the BATSE light curves, and put each of them in an object inside
     a list. Since in the analysis we consider only the long GRBs, we load 
-    only the light curves listed in the 'alltrig_long.list' file. Then, we 
-    take only the light curves satisfying the following constraints:
-    - T90 > t90_threshold (2 sec);
-    - GRB signal S2N > sn_threshold;
-    - the measurement lasts at least for t_f = 150 sec after the peak;
+    only the light curves listed in the 'alltrig_long.list' file.
     Input:
     - path: path to the folder that contains a file for each BATSE GRB and the
             file containing all the T90s;
-    - sn_threshold;
-    - t90_threshold;
-    - bin_time: temporal bin size of BATSE [s];
-    - t_f: time after the peak that we need the signal to last [seconds];
     Output:
-    - grb_list_batse: list of objects, where each object is a GRB that satisfies
-                      the constraints described above;
+    - grb_list_batse: list of GRB objects;
     """
     # load only the GRBs that are already classified as 'long'
     long_list_file     = 'alltrig_long.list'
@@ -197,30 +188,17 @@ def load_lc_batse(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=15
             # print(grb_name, ' not found!')
             grb_not_found.append(grb_name)
             continue
-        t90     = t90data[t90data[:,0] == float(grb_name),1]
-        times   = np.float32(times)
-        counts  = np.float32(counts)
-        errs    = np.float32(errs)
-        t90     = np.float32(t90)
-        i_c_max = np.argmax(counts)
-        s_n     = evaluateGRB_SN(times=times, 
-                                 counts=counts, 
-                                 errs=errs, 
-                                 t90=t90,
-                                 bin_time=bin_time)
-        #s_n_peak = evaluateGRB_SN_peak(counts=counts, 
-        #                               errs=errs)
-        cond_1 = t90>t90_threshold
-        cond_2 = s_n>sn_threshold
-        #cond_2 = s_n_peak>sn_threshold
-        cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
-        if ( cond_1 and cond_2 and cond_3 ):
-            grb = GRB(grb_name, times, counts, errs, t90, path+grb_name+'_all_bs.out')
-            grb_list_batse.append(grb)
+        t90    = t90data[t90data[:,0] == float(grb_name),1]
+        times  = np.float32(times)
+        counts = np.float32(counts)
+        errs   = np.float32(errs)
+        t90    = np.float32(t90)
+        grb    = GRB(grb_name, times, counts, errs, t90, path+grb_name+'_all_bs.out')
+        grb_list_batse.append(grb)
 
-    print("Total number of GRBs in BATSE catalogue: ", len(all_grb_list_batse))
+    print("Total number of _long_ GRBs in BATSE catalogue: ", len(all_grb_list_batse))
     print("GRBs in the catalogue which are NOT present in the data folder: ", len(grb_not_found))
-    print("Selected GRBs: ", len(grb_list_batse))
+    print("Loaded GRBs: ", len(grb_list_batse))
     return grb_list_batse
 
 ################################################################################
@@ -521,7 +499,7 @@ def load_lc_sim(path):
     print("Total number of simulated GRBs: ", len(grb_sim_names))
     return grb_list_sim
 
-
+################################################################################
 
 def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f):
     """
@@ -551,9 +529,7 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f):
                                  errs=errs, 
                                  t90=t90,
                                  bin_time=bin_time)
-        #s_n_peak = evaluateGRB_SN_peak(counts=counts, 
-        #                               errs=errs)
-        
+        #s_n_peak = evaluateGRB_SN_peak(counts=counts, errs=errs)
         cond_1 = t90>t90_threshold
         cond_2 = s_n>sn_threshold
         #cond_2 = s_n_peak>sn_threshold
