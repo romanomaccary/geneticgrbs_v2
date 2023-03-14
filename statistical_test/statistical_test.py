@@ -202,37 +202,18 @@ def load_lc_batse(path):
     return grb_list_batse
 
 ################################################################################
-
-def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=150):
+def load_lc_swift(path):
     """
     Load the Swift light curves, and put each of them in an object inside
-    a list. Since in the analysis we consider only the long GRBs, we load 
+    a list. Since in the analysis we consider only the _long_ GRBs, we load 
     only the light curves listed in the 'merged_lien16-GCN_long_noshortEE_t90.dat'
-    file. Then, we take only the light curves satisfying the following constraints:
-    - T90 > t90_threshold (2 sec);
-    - GRB signal S2N > sn_threshold;
-    - the measurement lasts at least for t_f = 150 sec after the peak;
+    file.
     Input:
     - path: path to the folder that contains a folder for each Swift GRB named
             with the name of the GRB, and the file containing all the T90s;
-    - sn_threshold;
-    - t90_threshold;
-    - bin_time: temporal bin size of Swift [s];
-    - t_f: time after the peak that we need the signal to last [seconds];
     Output:
-    - grb_list_swift: list of objects, where each object is a GRB that satisfies
-                      the constraints described above;
+    - grb_list_swift:  list of GRB objects;
     """
-
-    #--------------------------------------------------------------------------#
-    # OLD
-    # load light curves
-    # The command 'next(os.walk(path))' list all the directories and sub-directories
-    # of the given directory 'path'. Then [1] means that we list only the immediate
-    # directories present in 'path', NOT also the sub-directories.
-    # list_dir           = next(os.walk(path))[1] 
-    # all_grb_list_swift = [direc for direc in list_dir if direc.startswith('GRB')]
-    #--------------------------------------------------------------------------#
 
     # load only the GRBs that are already classified as 'long'
     long_list_file     = 'merged_lien16-GCN_long_noshortEE_t90.dat'
@@ -247,7 +228,6 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=15
 
     grb_list_swift = []
     grb_not_found  = []
-    sn_levels = []
     for grb_name in tqdm(all_grb_list_swift):
         try:
             times, counts, errs = np.loadtxt(path+grb_name+'/'+'all_3col.out', unpack=True)
@@ -255,32 +235,18 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=15
             # print(grb_name, ' not found!')
             grb_not_found.append(grb_name)
             continue
-        t90     = t90_dic[grb_name]
-        times   = np.float32(times)
-        counts  = np.float32(counts)
-        errs    = np.float32(errs)
-        t90     = np.float32(t90)
-        i_c_max = np.argmax(counts)
-        s_n     = evaluateGRB_SN(times=times, 
-                                 counts=counts, 
-                                 errs=errs, 
-                                 t90=t90,
-                                 bin_time=bin_time)
-        sn_levels.append(s_n)
-        #s_n_peak = evaluateGRB_SN_peak(counts=counts, 
-        #                               errs=errs)
-        cond_1 = t90>t90_threshold
-        cond_2 = s_n>sn_threshold
-        #cond_2 = s_n_peak>sn_threshold
-        cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
-        if ( cond_1 and cond_2 and cond_3 ):
-            grb = GRB(grb_name, times, counts, errs, t90, path+grb_name+'/'+'all_3col.out')
-            grb_list_swift.append(grb)
+        t90    = t90_dic[grb_name]
+        times  = np.float32(times)
+        counts = np.float32(counts)
+        errs   = np.float32(errs)
+        t90    = np.float32(t90)
+        grb    = GRB(grb_name, times, counts, errs, t90, path+grb_name+'/'+'all_3col.out')
+        grb_list_swift.append(grb)
 
     print("Total number of GRBs in Swift catalogue: ", len(all_grb_list_swift))
     print("GRBs in the catalogue which are NOT present in the data folder: ", len(grb_not_found))
-    print("Selected GRBs: ", len(grb_list_swift))
-    return grb_list_swift, sn_levels
+    print("Loaded GRBs: ", len(grb_list_swift))
+    return grb_list_swift
 
 ################################################################################
 
@@ -475,7 +441,7 @@ def load_lc_sim(path):
 
 ################################################################################
 
-def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f):
+def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_distr=False):
     """
     Given as input a list of GBR objects, the function outputs a list containing
     only the GRBs that satisfy the following constraint:
@@ -487,11 +453,16 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f):
     - sn_threshold;
     - bin_time: temporal bin size of the instrument [s];
     - t_f: time after the peak that we need the signal to last [s];
+    - sn_distr: if True, return also the distribution of the s2n of all the 
+                GRBs in input;
     Output:
     - good_grb_list: list of GRB objects, where each one is a GRB that satisfies
                      the 3 constraints described above;
+    - sn_levels: list containing the s2n ratio of _all_ the input GRBs (not only
+                 of those selected); 
     """
     good_grb_list = []
+    sn_levels     = []
     for grb in tqdm(grb_list):
         times   = np.float32(grb.times)
         counts  = np.float32(grb.counts)
@@ -504,6 +475,8 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f):
                                  t90=t90,
                                  bin_time=bin_time)
         #s_n_peak = evaluateGRB_SN_peak(counts=counts, errs=errs)
+        if sn_distr:
+            sn_levels.append(s_n)
         cond_1 = t90>t90_threshold
         cond_2 = s_n>sn_threshold
         #cond_2 = s_n_peak>sn_threshold
@@ -512,9 +485,12 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f):
             good_grb_list.append(grb)
 
     print("Total number of input GRBs: ", len(grb_list))
-    print("GRBs that satify the constraints: ", len(good_grb_list)) 
+    print("GRBs that satisfy the constraints: ", len(good_grb_list)) 
 
-    return good_grb_list
+    if sn_distr:
+        return good_grb_list, sn_levels
+    else:
+        return good_grb_list
 
 ################################################################################
 
