@@ -284,27 +284,19 @@ def load_lc_swift(path, sn_threshold=70, t90_threshold=2, bin_time=0.064, t_f=15
 
 ################################################################################
 
-def load_lc_sax(path, sn_threshold=70, t90_threshold=2, bin_time=1.0, t_f=150):
+def load_lc_sax_hr(path):
     """
-    Load the BeppoSAX light curves, and put each of them in an object inside
-    a list. The GRBs are listed in the file 'formatted_catalogue_GRBM_paper.txt'.
-    Then, we take only the light curves satisfying the following constraints:
-    - T90 > t90_threshold (2 sec);
-    - GRB signal S2N > sn_threshold;
-    - the measurement lasts at least for t_f sec after the peak;
-    Moreover, we discard GBRs which are not fully covered by the HR data; since
-    the high res data last for 106 sec, we discard the GRBs which have a nominal
-    T90 greater than 106 sec.
+    Load the HIGH RESOLUTION BeppoSAX light curves, and put each of them in an 
+    object inside a list. The GRBs are listed in the file:
+    'formatted_catalogue_GRBM_paper.txt'. We discard GBRs which are not fully
+    covered by the HR data; since the high res data last for 106 sec, we discard
+    the GRBs which have a nominal T90 greater than 106 sec (we discard also the
+    GRBs which do not have a nominal T90).
     Input:
     - path: path to the folder that contains a folder for each Sax GRB named
             with the name of the GRB, and the file containing all the T90s;
-    - sn_threshold;
-    - t90_threshold;
-    - bin_time: temporal bin size of Sax [s];
-    - t_f: time after the peak that we need the signal to last [seconds];
     Output:
-    - grb_list_sax: list of objects, where each object is a GRB that satisfies
-                    the constraints described above;
+    - grb_list_sax: list of GRB objects;
     """
     #-------------------------------------------------------------------------#
     # def find_file_OLD(path, grb_name):
@@ -439,33 +431,15 @@ def load_lc_sax(path, sn_threshold=70, t90_threshold=2, bin_time=1.0, t_f=150):
         if (t90>106): # discard GBRs which are not fully covered by the HR data
             grb_not_full.append(grb_name)
             continue
-        i_c_max = np.argmax(counts)
-        s_n     = evaluateGRB_SN(times=times, 
-                                 counts=counts, 
-                                 errs=errs, 
-                                 t90=t90,
-                                 bin_time=bin_time)
-        #s_n_peak = evaluateGRB_SN_peak(counts=counts, 
-        #                               errs=errs)
-        cond_1 = t90>t90_threshold
-        cond_2 = s_n>sn_threshold
-        #cond_2 = s_n_peak>sn_threshold
-        cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
-        if ( cond_1 and cond_2 and cond_3 ):
-            grb = GRB(grb_name, 
-                      times, 
-                      counts, 
-                      errs, 
-                      t90, 
-                      path+grb_name+'/'+hr_grb)
-            grb_list_sax.append(grb)
+        grb = GRB(grb_name, times, counts, errs, t90, path+grb_name+'/'+hr_grb)
+        grb_list_sax.append(grb)
 
     print("Total number of GRBs in BeppoSAX catalogue: ", len(all_grb_list_sax))
     print('GRBs that have an high-res "best" (or 2-mixed) channel lc:', len(all_grb_list_sax)-grb_no_hr)
     print("GRBs in the catalogue which are NOT present in the data folder: ", len(grb_not_found))
     print("GRBs in the catalogue which have a T90 greater than 106s: ", len(grb_not_full))
     print("GRBs in the catalogue which are present in the data folder, but with no T90: ", len(grb_no_t90))
-    print("Selected GRBs: ", len(grb_list_sax))
+    print("Loaded GRBs: ", len(grb_list_sax))
     return grb_list_sax
 
 ################################################################################
@@ -537,8 +511,8 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f):
         if ( cond_1 and cond_2 and cond_3 ):
             good_grb_list.append(grb)
 
-    print("Total number of GRBs: ", len(grb_list))
-    print("Selected GRBs: ", len(good_grb_list)) 
+    print("Total number of input GRBs: ", len(grb_list))
+    print("GRBs that satify the constraints: ", len(good_grb_list)) 
 
     return good_grb_list
 
