@@ -2,6 +2,7 @@
 # IMPORT LIBRARIES
 ################################################################################
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import ctypes
@@ -18,6 +19,17 @@ rc('text', usetex=True)
 
 SEED=42
 np.random.seed(SEED)
+
+
+user='LB'
+#user='AF'
+if user=='LB':
+    sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/lc_pulse_avalanche')
+elif user=='AF':
+    sys.path.append('......WRITE_HERE....../lc_pulse_avalanche/lc_pulse_avalanche')
+else:
+    raise ValueError('Assign to the variable "user" a correct username!')
+from avalanche import LC
 
 ################################################################################
 
@@ -895,6 +907,119 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 
 ################################################################################
 
+
+
+
+def generate_GRBs(N_grb, # number of simulated GRBs to produce
+                  mu, mu0, alpha, delta1, delta2,  tau_min, tau_max, # 7 parameters
+                  instrument, bin_time, eff_area, bg_level, # instrument parameters
+                  t90_threshold, sn_threshold, t_f, # constraint parameters
+                  export_files=False, export_path=None, # other parameters
+                  n_cut=2000, with_bg=False # other parameters
+                  ):
+    """
+    AAA
+    AAA
+    AAA
+    AAA
+    Input:
+    - N_grb: total number of simulated GRBs to produce in output;
+    ### 7 parameters
+    - mu:
+    - mu0:
+    - alpha:
+    - delta1:
+    - delta2:
+    - tau_min:
+    - tau_max:
+    ### instrument parameters
+    - res:
+    - eff_area:
+    - bg_level;
+    ### constraint parameters
+    - t90_threshold:
+    - sn_threshold: 
+    - t_f:
+    ### other parameters
+    - n_cut:
+    - with_bg:
+    Output:
+    -grb_list_sim: list containing N_grb GRB objects, each lc satisfying the
+                imposed constraints;
+
+    """
+
+    def export_lc(LC, idx, instrument, path='../simulations/'):
+        """
+        Export the simulated light curves in a file with these columns: 
+            times, counts, err_counts, T90.
+        Input:
+        - LC: object that contains the light curve;
+        - idx: number of the light curve;
+        - instrument: string with the name of the instrument;
+        - path: path where to store the results of the simulations;
+        """
+        outfile  = path+instrument+'/'+'lc'+str(idx)+'.txt'
+        savefile = open(outfile, 'w')
+        times    = LC._times
+        lc       = LC._plot_lc
+        err_lc   = LC._err_lc
+        T90      = LC._t90
+        for i in range(len(times)):
+            savefile.write('{0} {1} {2} {3}\n'.format(times[i], lc[i], err_lc[i], T90))
+        savefile.close()
+
+    cnt=0
+    grb_list_sim = []
+    while (cnt<N_grb):
+        lc = LC(### 7 parameters
+                mu=mu,
+                mu0=mu0,
+                alpha=alpha,
+                delta1=delta1,
+                delta2=delta2,
+                tau_min=tau_min, 
+                tau_max=tau_max,
+                ### instrument parameters:
+                res=bin_time,
+                eff_area=eff_area,
+                bg_level=bg_level,
+                ### other parameters:
+                n_cut=n_cut,
+                with_bg=with_bg) 
+        lc.generate_avalanche(seed=None)
+        
+        # convert the lc generated from the avalance into a GRB object
+        grb = GRB('lc_candidate.txt', 
+                  lc._times, 
+                  lc._plot_lc, 
+                  lc._err_lc, 
+                  lc._t90, 
+                  export_path+instrument+'/'+'lc_candidate.txt')
+        # we use a temporary list that contains only _one_ lc, then we
+        # check if that GRB satisfies the constraints imposed, ad if that is
+        # the case, we append it to the final list of GRBs
+        grb_list_sim_temp = [ grb ]
+        grb_list_sim_temp = apply_constraints(grb_list=grb_list_sim_temp, 
+                                              bin_time=bin_time, 
+                                              t90_threshold=t90_threshold, 
+                                              sn_threshold=sn_threshold, 
+                                              t_f=t_f)
+        # save the GRB into the final list _only_ if it passed the
+        # constraints selection
+        if (len(grb_list_sim_temp)==1):
+            if export_files:
+                export_lc(LC=lc, 
+                          idx=cnt, 
+                          instrument=instrument,
+                          path=export_path)
+                grb.name           = 'lc'+str(cnt)+'.txt'
+                grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
+            grb_list_sim.append(grb)
+            cnt+=1
+        del(lc)
+
+    return grb_list_sim
 
 
 ################################################################################
