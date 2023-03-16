@@ -4,3 +4,6 @@ statistical_test/__pycache__/statistical_test.cpython-37.pyc
 pyMEPSA/a.exe
 pyMEPSA/mepsa.o
 pyMEPSA/mepsa.so
+lc_pulse_avalanche/__pycache__/avalanche.cpython-37.pyc
+statistical_test/__pycache__/avalanche.cpython-37.pyc
+statistical_test/avalanche.py
