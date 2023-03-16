@@ -104,6 +104,7 @@ def evaluateDuration20(times, counts, filter=False, t90=None, bin_time=None):
         t90_frac = 5.
         window   = int(t90/t90_frac/bin_time)
         window   = window if window%2==1 else window+1
+        window   = window if window < len(counts) else len(counts)/5
         try:
             counts = savgol_filter(x=counts,
                                    window_length=window,
