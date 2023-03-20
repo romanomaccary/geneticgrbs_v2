@@ -578,7 +578,7 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_d
 
 ################################################################################
 
-def compute_average_quantities(grb_list, t_f=150, bin_time=0.064, filter=True):
+def compute_average_quantities(grb_list, t_f=150, bin_time=0.064, filter=True, filter_window=21):
     """
     Compute the averaged peak-aligned fluxes of the GRBs, following the 
     technique described in [Mitrofanov et al., 1996]. We need only the signal
@@ -618,13 +618,13 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064, filter=True):
 
     if filter:
         averaged_fluxes      = savgol_filter(x=averaged_fluxes,      
-                                             window_length=21, 
+                                             window_length=filter_window, 
                                              polyorder=2)
         averaged_fluxes_rms  = savgol_filter(x=averaged_fluxes_rms,  
-                                             window_length=21, 
+                                             window_length=filter_window, 
                                              polyorder=2)
         averaged_fluxes_cube = savgol_filter(x=averaged_fluxes_cube, 
-                                             window_length=21, 
+                                             window_length=filter_window, 
                                              polyorder=2)
 
     return averaged_fluxes, averaged_fluxes_cube, averaged_fluxes_rms 
