@@ -45,6 +45,12 @@ class GRB:
         self.t90    = t90
         self.data_file_path = grb_data_file_path
 
+    def copy(self):
+        copy_grb = GRB(self.name, self.times, self.counts, self.errs, self.t90, self.data_file_path)
+        return copy_grb
+
+        
+
 ################################################################################
 
 # def evaluateT90(times, counts):
