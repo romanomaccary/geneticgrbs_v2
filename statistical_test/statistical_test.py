@@ -910,13 +910,6 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 
 ################################################################################
 
-
-
-################################################################################
-
-
-
-
 def generate_GRBs(N_grb, # number of simulated GRBs to produce
                   mu, mu0, alpha, delta1, delta2,  tau_min, tau_max, # 7 parameters
                   instrument, bin_time, eff_area, bg_level, # instrument parameters
@@ -1006,6 +999,14 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
         # we use a temporary list that contains only _one_ lc, then we
         # check if that GRB satisfies the constraints imposed, ad if that is
         # the case, we append it to the final list of GRBs
+        if grb.t90<t90_threshold: 
+            # preliminary check to ensure that the savgol will not fail due
+            # to short GRBs, for which often this filter fails. The reason
+            # is that the `window_length` of savgol filter must be greater than 
+            # `polyorder`, but for short GRBs the computed `window_length` is
+            # very small.
+            del(lc)
+            continue
         grb_list_sim_temp = [ grb ]
         grb_list_sim_temp = apply_constraints(grb_list=grb_list_sim_temp, 
                                               bin_time=bin_time, 
@@ -1027,7 +1028,6 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
         del(lc)
 
     return grb_list_sim
-
 
 ################################################################################
 
