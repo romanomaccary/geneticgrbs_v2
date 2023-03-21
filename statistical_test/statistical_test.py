@@ -21,9 +21,12 @@ SEED=42
 np.random.seed(SEED)
 
 
-#user='LB'
-user='AF'
-if user=='LB':
+user='LB'
+#user='AF'
+#user='bach
+if user=='bach':
+    pass
+elif user=='LB':
     sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/lc_pulse_avalanche')
 elif user=='AF':
     sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
@@ -460,7 +463,7 @@ def load_lc_sim(path):
 
 ################################################################################
 
-def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_distr=False):
+def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_distr=False, verbose=True):
     """
     Given as input a list of GBR objects, the function outputs a list containing
     only the GRBs that satisfy the following constraint:
@@ -482,7 +485,7 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_d
     """
     good_grb_list = []
     sn_levels     = []
-    for grb in tqdm(grb_list):
+    for grb in grb_list:
         times   = np.float32(grb.times)
         counts  = np.float32(grb.counts)
         errs    = np.float32(grb.errs)
@@ -503,8 +506,9 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_d
         if ( cond_1 and cond_2 and cond_3 ):
             good_grb_list.append(grb)
 
-    print("Total number of input GRBs: ", len(grb_list))
-    print("GRBs that satisfy the constraints: ", len(good_grb_list)) 
+    if verbose:
+        print("Total number of input GRBs: ", len(grb_list))
+        print("GRBs that satisfy the constraints: ", len(good_grb_list)) 
 
     if sn_distr:
         return good_grb_list, sn_levels
@@ -822,19 +826,20 @@ def make_plot(instrument,
 
 ################################################################################
 
-def compute_loss(test_times,
-                 averaged_fluxes,      averaged_fluxes_sim,
-                 averaged_fluxes_rms,  averaged_fluxes_rms_sim,
-                 averaged_fluxes_cube, averaged_fluxes_cube_sim,
-                 steps, steps_sim, bin_time, acf, acf_sim,
-                 duration, duration_sim):
+def compute_loss(test_times=None,
+                 averaged_fluxes=None,      averaged_fluxes_sim=None,
+                 averaged_fluxes_rms=None,  averaged_fluxes_rms_sim=None,
+                 averaged_fluxes_cube=None, averaged_fluxes_cube_sim=None,
+                 steps=None, steps_sim=None, bin_time=None, acf=None, acf_sim=None,
+                 duration=None, duration_sim=None):
     """
     Compute the loss to be used in the Genetic Algorithm.
     FOR SIMPLICITY, FOR THE MOMENT WE CONSIDER ONLY ONE OBSERVABLE!
     """
-    averaged_fluxes     = np.log10(averaged_fluxes)
-    averaged_fluxes_sim = np.log10(averaged_fluxes_sim)
+    #averaged_fluxes     = np.log10(averaged_fluxes)
+    #averaged_fluxes_sim = np.log10(averaged_fluxes_sim)
     l2_loss = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
+
     return l2_loss
  
 ################################################################################
@@ -911,7 +916,7 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 ################################################################################
 
 def generate_GRBs(N_grb, # number of simulated GRBs to produce
-                  mu, mu0, alpha, delta1, delta2,  tau_min, tau_max, # 7 parameters
+                  mu, mu0, alpha, delta1, delta2, tau_min, tau_max, # 7 parameters
                   instrument, bin_time, eff_area, bg_level, # instrument parameters
                   t90_threshold, sn_threshold, t_f, # constraint parameters
                   export_files=False, export_path=None, # other parameters
@@ -969,6 +974,15 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             savefile.write('{0} {1} {2} {3}\n'.format(times[i], lc[i], err_lc[i], T90))
         savefile.close()
 
+
+    # check that the parameters are in the correct range
+    assert delta1<0
+    assert delta2>=0
+    assert np.abs(delta1)>np.abs(delta2)
+    assert tau_min>0
+    assert tau_max>0
+    assert tau_max>tau_min
+
     cnt=0
     grb_list_sim = []
     while (cnt<N_grb):
@@ -1012,7 +1026,8 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                                               bin_time=bin_time, 
                                               t90_threshold=t90_threshold, 
                                               sn_threshold=sn_threshold, 
-                                              t_f=t_f)
+                                              t_f=t_f,
+                                              verbose=False)
         # save the GRB into the final list _only_ if it passed the
         # constraints selection
         if (len(grb_list_sim_temp)==1):
