@@ -299,6 +299,11 @@ class LC(object):
         self._raw_lc = self._sp_pulse + self._rates
 
         self._max_raw_pcr = self._raw_lc.max()
+        if (self._max_raw_pcr<1.e-12):
+            self.check=0
+            return 0
+        else:
+            self.check=1
         population = np.geomspace(self._min_photon_rate , self._max_photon_rate, 1000)
         weights    = list(map(lambda x: x**(-3/2), population))
         weights    = weights / np.sum(weights)
