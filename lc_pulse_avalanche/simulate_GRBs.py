@@ -23,7 +23,8 @@ user='LB'
 #user='AF'
 #user='bach
 if user=='bach':
-    pass
+    sys.path.append('/home/')
+    sys.path.append('/home/')
 elif user=='LB':
     sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/statistical_test')
     sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/lc_pulse_avalanche')
@@ -43,23 +44,26 @@ export_path='../simulations/'
 ################################################################################
 
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are
-mu=1.2
-mu0=1
-alpha=4
-delta1=-0.5
-delta2=0
-tau_min=0.02
-tau_max=26
-
+mu      = 1.2 
+mu0     = 1
+alpha   = 4
+delta1  = -0.5
+delta2  = 0
+tau_min = 0.02
+tau_max = 26
+# The 7 values obtained from an EARLY optimization are
+# mu      = 1.0983483483483483
+# mu0     = 0.9637137137137137
+# alpha   = 2.054054054054054
+# delta1  = -1.1846846846846848
+# delta2  = 0.47047047047047047
+# tau_min = 0.03536325825825826
+# tau_max = 25.48995395395395
 
 t_i=0   # [s]
 t_f=150 # [s]
-t90_threshold=2 # [s] --> used to select only _long_ GRBs
 
-N_grb=10
-n_cut=2000
-with_bg=False 
-
+N_grb=1000
 
 instrument = 'batse'
 #instrument = 'swift'
@@ -102,7 +106,7 @@ _ = generate_GRBs(# number of simulated GRBs to produce
                   eff_area=eff_area,
                   bg_level=bg_level, 
                   # constraint parameters
-                  t90_threshold=t90_threshold,
+                  t90_threshold=2, # [s] --> used to select only _long_ GRBs
                   sn_threshold=sn_threshold, 
                   t_f=t_f, 
                   # other parameters
