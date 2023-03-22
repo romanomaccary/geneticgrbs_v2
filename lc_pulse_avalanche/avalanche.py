@@ -300,6 +300,9 @@ class LC(object):
 
         self._max_raw_pcr = self._raw_lc.max()
         if (self._max_raw_pcr<1.e-12):
+            # check that we have generated a lc with non-zero values; otherwise,
+            # exit and set the flag 'self.check=0', which indicates that this
+            # lc has to be skipped
             self.check=0
             return 0
         else:
