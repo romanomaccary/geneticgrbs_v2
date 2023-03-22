@@ -69,20 +69,23 @@ instrument = 'batse'
 #instrument = 'swift'
 #instrument = 'sax'
 if instrument=='batse':
-    res          = 0.064 # time resolution of the light curves [ms]
-    eff_area     = 3600  # effective area of instrument [cm2]
-    bg_level     = 10.67 # background level [cnt/cm2/s]
-    sn_threshold = 70
+    res           = 0.064 # time resolution of the light curves [ms]
+    eff_area      = 3600  # effective area of instrument [cm2]
+    bg_level      = 10.67 # background level [cnt/cm2/s]
+    t90_threshold = 2     # [s] --> used to select only _long_ GRBs
+    sn_threshold  = 70
 elif instrument=='swift':
-    res          = 0.064            # time resolution of the light curves [ms]
-    eff_area     = 1400             # effective area of instrument [cm2]
-    bg_level     = (10000/eff_area) # background level [cnt/cm2/s]
-    sn_threshold = 15
+    res           = 0.064            # time resolution of the light curves [ms]
+    eff_area      = 1400             # effective area of instrument [cm2]
+    bg_level      = (10000/eff_area) # background level [cnt/cm2/s]
+    t90_threshold = 2                # [s] --> used to select only _long_ GRBs
+    sn_threshold  = 15
 elif instrument=='sax':
-    res          = 0.0078125       # time resolution of the light curves [s]
-    eff_area     = 420             # effective area of instrument [cm2]
-    bg_level     = (1000/eff_area) # background level [cnt/cm2/s]
-    sn_threshold = 10
+    res           = 0.0078125       # time resolution of the light curves [s]
+    eff_area      = 420             # effective area of instrument [cm2]
+    bg_level      = (1000/eff_area) # background level [cnt/cm2/s]
+    t90_threshold = 2               # [s] --> used to select only _long_ GRBs
+    sn_threshold  = 10
 else:
     raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
@@ -106,7 +109,7 @@ _ = generate_GRBs(# number of simulated GRBs to produce
                   eff_area=eff_area,
                   bg_level=bg_level, 
                   # constraint parameters
-                  t90_threshold=2, # [s] --> used to select only _long_ GRBs
+                  t90_threshold=t90_threshold,
                   sn_threshold=sn_threshold, 
                   t_f=t_f, 
                   # other parameters
