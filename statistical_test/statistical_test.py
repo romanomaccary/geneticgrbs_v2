@@ -25,7 +25,7 @@ user='LB'
 #user='AF'
 #user='bach
 if user=='bach':
-    pass
+    sys.path.append('/home/')
 elif user=='LB':
     sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/lc_pulse_avalanche')
 elif user=='AF':
@@ -605,7 +605,7 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064, filter=True, f
     averaged_fluxes_square = np.zeros(n_steps)
     averaged_fluxes_cube   = np.zeros(n_steps)
 
-    for grb in tqdm(grb_list):
+    for grb in grb_list:
         c_max         = np.max(grb.counts)
         i_c_max       = np.argmax(grb.counts)
         fluxes_to_sum = grb.counts[i_c_max:i_c_max+n_steps] / c_max
@@ -664,7 +664,7 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, bin_time=0.064,
         acf_scipy  = np.zeros(steps)
 
     # Evaluate ACF
-    for grb in tqdm(grb_list[:N_lim]):
+    for grb in grb_list[:N_lim]:
         counts = grb.counts
         errs   = grb.errs
         if mode=='scipy':
@@ -834,12 +834,16 @@ def compute_loss(test_times=None,
                  duration=None, duration_sim=None):
     """
     Compute the loss to be used in the Genetic Algorithm.
-    FOR SIMPLICITY, FOR THE MOMENT WE CONSIDER ONLY ONE OBSERVABLE!
+    FOR SIMPLICITY, FOR THE MOMENT WE CONSIDER ONLY 2 OBSERVABLES!
+    THE OTHERS WILL BE ADDED...
     """
-    #averaged_fluxes     = np.log10(averaged_fluxes)
-    #averaged_fluxes_sim = np.log10(averaged_fluxes_sim)
-    l2_loss = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
-
+    # averaged_fluxes          = np.log10(averaged_fluxes)
+    # averaged_fluxes_sim      = np.log10(averaged_fluxes_sim)
+    # averaged_fluxes_cube     = np.log10(averaged_fluxes_cube)
+    # averaged_fluxes_sim_cube = np.log10(averaged_fluxes_sim_cube)
+    l2_loss_1 = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
+    l2_loss_2 = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
+    l2_loss   = 0.5*l2_loss_1 + 0.5*l2_loss_2
     return l2_loss
  
 ################################################################################
@@ -919,7 +923,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                   mu, mu0, alpha, delta1, delta2, tau_min, tau_max, # 7 parameters
                   instrument, bin_time, eff_area, bg_level, # instrument parameters
                   t90_threshold, sn_threshold, t_f, # constraint parameters
-                  export_files=False, export_path=None, # other parameters
+                  export_files=False, export_path='None', # other parameters
                   n_cut=2000, with_bg=False # other parameters
                   ):
     """
@@ -1002,6 +1006,11 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                 n_cut=n_cut,
                 with_bg=with_bg) 
         lc.generate_avalanche(seed=None)
+        if lc.check==0:
+            # check that we have generated a lc with non-zero values; otherwise,
+            # skip it and continue in the generation process
+            del(lc)
+            continue
         
         # convert the lc generated from the avalance into a GRB object
         grb = GRB('lc_candidate.txt', 
