@@ -15,13 +15,13 @@ from matplotlib import rc
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 rc('text', usetex=True)
 
-SEED=42
-np.random.seed(SEED)
+#SEED=42
+#np.random.seed(SEED)
 
 # set the username for the path of the files:
 user='LB'
 #user='AF'
-#user='bach
+#user='bach'
 if user=='bach':
     sys.path.append('/home/')
     sys.path.append('/home/')
@@ -52,13 +52,15 @@ delta2  = 0
 tau_min = 0.02
 tau_max = 26
 # The 7 values obtained from an EARLY optimization are
-# mu      = 1.0983483483483483
-# mu0     = 0.9637137137137137
-# alpha   = 2.054054054054054
-# delta1  = -1.1846846846846848
-# delta2  = 0.47047047047047047
-# tau_min = 0.03536325825825826
-# tau_max = 25.48995395395395
+#mu      = 1.2436380646574723
+#mu0     = 1.0003897454703008
+#alpha   = 7.049219926652907
+#delta1  = -0.5479762424587183
+#delta2  = 0.20430555005030396
+#tau_min = 0.0520250387823067
+#tau_max = 20.991949810979172
+
+
 
 t_i=0   # [s]
 t_f=150 # [s]
