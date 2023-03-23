@@ -17,8 +17,8 @@ from matplotlib import rc
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 rc('text', usetex=True)
 
-SEED=42
-np.random.seed(SEED)
+#SEED=42
+#np.random.seed(SEED)
 
 
 user='LB'
@@ -703,7 +703,7 @@ def make_plot(instrument,
               averaged_fluxes_cube, averaged_fluxes_cube_sim,
               steps, steps_sim, bin_time, acf, acf_sim,
               duration, duration_sim,
-              save_fig=False, name_fig='fig.pdf'):
+              log=True, save_fig=False, name_fig='fig.pdf'):
     """
     Make plot as in Stern et al., 1996.
     """
@@ -718,6 +718,28 @@ def make_plot(instrument,
     else:
         raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
+    if log:
+        averaged_fluxes          = np.log10(averaged_fluxes)    
+        averaged_fluxes_sim      = np.log10(averaged_fluxes_sim) 
+        averaged_fluxes_rms      = np.log10(averaged_fluxes_rms[1:])  
+        averaged_fluxes_rms_sim  = np.log10(averaged_fluxes_rms_sim[1:])
+        averaged_fluxes_cube     = np.log10(averaged_fluxes_cube) 
+        averaged_fluxes_cube_sim = np.log10(averaged_fluxes_cube_sim) 
+        acf                      = np.log10(acf)
+        acf_sim                  = np.log10(acf_sim)
+        duration                 = np.log10(duration)
+        duration_sim             = np.log10(duration_sim)
+    else:    
+        averaged_fluxes          = averaged_fluxes
+        averaged_fluxes_sim      = averaged_fluxes_sim
+        averaged_fluxes_rms      = averaged_fluxes_rms[1:]
+        averaged_fluxes_rms_sim  = averaged_fluxes_rms_sim[1:]
+        averaged_fluxes_cube     = averaged_fluxes_cube 
+        averaged_fluxes_cube_sim = averaged_fluxes_cube_sim 
+        acf                      = acf
+        acf_sim                  = acf_sim
+        duration                 = duration
+        duration_sim             = duration_sim
     #--------------------------------------------------------------------------#
     # <(F/F_p)>
     #--------------------------------------------------------------------------#
@@ -727,10 +749,10 @@ def make_plot(instrument,
     ax[0,0].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',                   size=18)
     ax[0,0].set_ylabel(r'$\log F_{rms},\quad \log \langle F/F_p\rangle$', size=18)
     #
-    ax[0,0].plot(test_times**(1/3),     np.log10(averaged_fluxes),             color = 'b', alpha=1.00, label = label_instr)
-    ax[0,0].plot(test_times**(1/3),     np.log10(averaged_fluxes_sim),         color = 'r', alpha=0.75, label = r'Simulated')
-    ax[0,0].plot(test_times[1:]**(1/3), np.log10(averaged_fluxes_rms[1:]),     color = 'b', alpha=1.00)
-    ax[0,0].plot(test_times[1:]**(1/3), np.log10(averaged_fluxes_rms_sim[1:]), color = 'r', alpha=0.75)
+    ax[0,0].plot(test_times**(1/3),     averaged_fluxes,         color = 'b', alpha=1.00, label = label_instr)
+    ax[0,0].plot(test_times**(1/3),     averaged_fluxes_sim,     color = 'r', alpha=0.75, label = r'Simulated')
+    ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms,     color = 'b', alpha=1.00)
+    ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms_sim, color = 'r', alpha=0.75)
     #
     ax[0,0].set_xlim(0,5)
     ax[0,0].set_ylim(-3,0)
@@ -749,8 +771,8 @@ def make_plot(instrument,
     ax[0,1].set_axisbelow(True)
     ax[0,1].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',     size=18)
     ax[0,1].set_ylabel(r'$\log \langle (F/F_p)^3 \rangle$', size=18)
-    ax[0,1].plot(test_times**(1/3), np.log10(averaged_fluxes_cube),     color='b', label=label_instr)
-    ax[0,1].plot(test_times**(1/3), np.log10(averaged_fluxes_cube_sim), color='r', label='Simulated', alpha=0.75)
+    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube,     color='b', label=label_instr)
+    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube_sim, color='r', label='Simulated', alpha=0.75)
     ax[0,1].set_xlim(0,5)
     ax[0,1].set_ylim(-4,0)
     ax[0,1].xaxis.set_tick_params(labelsize=14)
@@ -763,8 +785,8 @@ def make_plot(instrument,
     #--------------------------------------------------------------------------#
 
     print('- plotting the autocorrelation...')
-    ax[1,0].plot((steps*bin_time)**(1/3),       np.log10(acf),     color='b', label=label_instr)
-    ax[1,0].plot((steps_sim  *bin_time)**(1/3), np.log10(acf_sim), color='r', label='Simulated', alpha=0.75)
+    ax[1,0].plot((steps    *bin_time)**(1/3), acf,     color='b', label=label_instr)
+    ax[1,0].plot((steps_sim*bin_time)**(1/3), acf_sim, color='r', label='Simulated', alpha=0.75)
     ax[1,0].set_xlabel(r'$(\mathrm{timelag}\ [s])^{1/3}$', size=18)
     ax[1,0].set_ylabel(r'$\log \langle ACF \rangle$',      size=18)
     #ax[1,0].set_xlim(0,5)
@@ -784,7 +806,7 @@ def make_plot(instrument,
     ax[1,1].set_xlabel(r'$\log\mathrm{duration}$ [s]', size=18)
 
     n_bins=30
-    n1, bins, patches = ax[1,1].hist(x=np.log10(duration),
+    n1, bins, patches = ax[1,1].hist(x=duration,
                                     bins=n_bins,
                                     alpha=1.00,
                                     label=label_instr, 
@@ -793,7 +815,7 @@ def make_plot(instrument,
                                     linewidth=4,
                                     density=True)
 
-    n2, bins, patches = ax[1,1].hist(x=np.log10(duration_sim),
+    n2, bins, patches = ax[1,1].hist(x=duration_sim,
                                     bins=n_bins,
                                     alpha=0.75,
                                     label='Simulated', 
@@ -838,9 +860,9 @@ def compute_loss(test_times=None,
     """
     if log:
         averaged_fluxes          = np.log10(averaged_fluxes)
-        averaged_fluxes_sim      = np.log10(averaged_fluxes_sim)
+        averaged_fluxes_sim      = np.log10(np.abs(averaged_fluxes_sim))
         averaged_fluxes_cube     = np.log10(averaged_fluxes_cube)
-        averaged_fluxes_cube_sim = np.log10(averaged_fluxes_cube_sim)
+        averaged_fluxes_cube_sim = np.log10(np.abs(averaged_fluxes_cube_sim))
 
     #l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
     #l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
