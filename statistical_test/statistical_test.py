@@ -831,19 +831,28 @@ def compute_loss(test_times=None,
                  averaged_fluxes_rms=None,  averaged_fluxes_rms_sim=None,
                  averaged_fluxes_cube=None, averaged_fluxes_cube_sim=None,
                  steps=None, steps_sim=None, bin_time=None, acf=None, acf_sim=None,
-                 duration=None, duration_sim=None):
+                 duration=None, duration_sim=None,
+                 log=False):
     """
     Compute the loss to be used in the Genetic Algorithm.
-    FOR SIMPLICITY, FOR THE MOMENT WE CONSIDER ONLY 2 OBSERVABLES!
-    THE OTHERS WILL BE ADDED...
     """
-    # averaged_fluxes          = np.log10(averaged_fluxes)
-    # averaged_fluxes_sim      = np.log10(averaged_fluxes_sim)
-    # averaged_fluxes_cube     = np.log10(averaged_fluxes_cube)
-    # averaged_fluxes_sim_cube = np.log10(averaged_fluxes_sim_cube)
-    l2_loss_1 = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
-    l2_loss_2 = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
-    l2_loss   = 0.5*l2_loss_1 + 0.5*l2_loss_2
+    if log:
+        averaged_fluxes          = np.log10(averaged_fluxes)
+        averaged_fluxes_sim      = np.log10(averaged_fluxes_sim)
+        averaged_fluxes_cube     = np.log10(averaged_fluxes_cube)
+        averaged_fluxes_cube_sim = np.log10(averaged_fluxes_cube_sim)
+
+    #l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
+    #l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
+    #l2_loss_acf         = np.sqrt( np.sum(np.power((acf-acf_sim),2)) )
+    #l2_loss             = (1./3)*l2_loss_fluxes + \
+    #                      (1./3)*l2_loss_fluxes_cube + \
+    #                      (1./3)*l2_loss_acf
+                          
+    l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
+    l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
+    l2_loss             = 0.5*l2_loss_fluxes + 0.5*l2_loss_fluxes_cube
+
     return l2_loss
  
 ################################################################################
