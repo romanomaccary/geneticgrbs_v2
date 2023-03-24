@@ -671,8 +671,8 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, bin_time=0.064,
         errs   = np.array(grb.errs)
         if mode=='scipy':
             acf   = signal.correlate(in1=counts, in2=counts, method='auto')
-            #acf  = acf / np.max(acf)
-            acf   = acf / np.sum(counts**2)
+            acf   = acf / np.max(acf)
+            #acf  = acf / np.sum(counts**2)
             lags  = signal.correlation_lags(in1_len=len(counts), in2_len=len(counts))
             idx_i = np.where(lags*bin_time==t_min)[0][ 0] # select the index corresponding to t=0 s
             idx_f = np.where(lags*bin_time<=t_max)[0][-1] # select the index corresponding to t=150 s
@@ -864,7 +864,7 @@ def make_plot(instrument,
         if log:
             x_grid = np.linspace(-2, 5,  1000)
         else:
-            x_grid = np.linspace(-2, 10, 1000)
+            x_grid = np.linspace(-2, 15, 1000)
         y_plot_real   = stats.norm.pdf(x_grid, duration[:, None],     h_opt)
         y_plot_sim    = stats.norm.pdf(x_grid, duration_sim[:, None], h_opt)
         y_plot_real  /= (len(duration))
