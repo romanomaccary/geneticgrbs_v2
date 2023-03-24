@@ -754,8 +754,11 @@ def make_plot(instrument,
     ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms,     color = 'b', alpha=1.00)
     ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms_sim, color = 'r', alpha=0.75)
     #
-    ax[0,0].set_xlim(0,5)
-    ax[0,0].set_ylim(-3,0)
+    if log:
+        pass
+    else:
+        ax[0,0].set_xlim(0,5)
+        ax[0,0].set_ylim(-3,0)
     ax[0,0].text(3,   -0.7, r'$F_{rms}$',              fontsize=20)
     ax[0,0].text(2.2, -1.7, r'$\langle F/F_p\rangle$', fontsize=20)
     ax[0,0].xaxis.set_tick_params(labelsize=14)
@@ -773,8 +776,11 @@ def make_plot(instrument,
     ax[0,1].set_ylabel(r'$\log \langle (F/F_p)^3 \rangle$', size=18)
     ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube,     color='b', label=label_instr)
     ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube_sim, color='r', label='Simulated', alpha=0.75)
-    ax[0,1].set_xlim(0,5)
-    ax[0,1].set_ylim(-4,0)
+    if log:
+        pass
+    else:
+        ax[0,1].set_xlim(0,5)
+        ax[0,1].set_ylim(-4,0)
     ax[0,1].xaxis.set_tick_params(labelsize=14)
     ax[0,1].yaxis.set_tick_params(labelsize=14)
     ax[0,1].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
@@ -789,8 +795,12 @@ def make_plot(instrument,
     ax[1,0].plot((steps_sim*bin_time)**(1/3), acf_sim, color='r', label='Simulated', alpha=0.75)
     ax[1,0].set_xlabel(r'$(\mathrm{timelag}\ [s])^{1/3}$', size=18)
     ax[1,0].set_ylabel(r'$\log \langle ACF \rangle$',      size=18)
-    #ax[1,0].set_xlim(0,5)
-    #ax[1,0].set_ylim(-2,0.2)
+    if log:
+        pass
+    else:
+        pass
+        #ax[1,0].set_xlim(0,5)
+        #ax[1,0].set_ylim(-2,0.2)
     ax[1,0].xaxis.set_tick_params(labelsize=14)
     ax[1,0].yaxis.set_tick_params(labelsize=14)
     ax[1,0].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
@@ -824,8 +834,12 @@ def make_plot(instrument,
                                     linewidth=4,
                                     density=True)
 
-    #ax[1,1].set_xlim(-2,3)
-    #ax[1,1].set_ylim(0,30)
+    if log:
+        pass
+    else:
+        pass
+        #ax[1,1].set_xlim(-2,3)
+        #ax[1,1].set_ylim(0,30)
     ax[1,1].xaxis.set_tick_params(labelsize=14)
     ax[1,1].yaxis.set_tick_params(labelsize=14)
     ax[1,1].legend(prop={'size':15}, loc="upper left", facecolor='white', framealpha=0.5)
@@ -849,9 +863,9 @@ def make_plot(instrument,
 ################################################################################
 
 def compute_loss(test_times=None,
-                 averaged_fluxes=None,      averaged_fluxes_sim=None,
-                 averaged_fluxes_rms=None,  averaged_fluxes_rms_sim=None,
-                 averaged_fluxes_cube=None, averaged_fluxes_cube_sim=None,
+                 averaged_fluxes=None,       averaged_fluxes_sim=None,
+                 averaged_fluxes_rms=None,   averaged_fluxes_rms_sim=None,
+                 averaged_fluxes_cube=None,  averaged_fluxes_cube_sim=None,
                  steps=None, steps_sim=None, bin_time=None, acf=None, acf_sim=None,
                  duration=None, duration_sim=None,
                  log=False):
@@ -863,6 +877,8 @@ def compute_loss(test_times=None,
         averaged_fluxes_sim      = np.log10(np.abs(averaged_fluxes_sim))
         averaged_fluxes_cube     = np.log10(averaged_fluxes_cube)
         averaged_fluxes_cube_sim = np.log10(np.abs(averaged_fluxes_cube_sim))
+        acf                      = np.log10(acf)
+        acf_sim                  = np.log10(acf_sim)
 
     #l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
     #l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
