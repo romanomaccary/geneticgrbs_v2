@@ -139,7 +139,7 @@ def evaluateDuration20(times, counts, filter=False, t90=None, bin_time=None):
 
 ################################################################################
 
-def evaluateGRB_SN(times, counts, errs, t90, bin_time):
+def evaluateGRB_SN(times, counts, errs, t90, bin_time, filter):
     """
     Compute the S/N ratio between the total signal from a GRB and the background
     in a time interval equal to the GRB duration, as defined in Stern+96, i.e.,
@@ -159,7 +159,7 @@ def evaluateGRB_SN(times, counts, errs, t90, bin_time):
     """
     _, tstart, tstop = evaluateDuration20(times=times, 
                                           counts=counts, 
-                                          filter=True, 
+                                          filter=filter, 
                                           t90=t90, 
                                           bin_time=bin_time)
     
@@ -434,6 +434,70 @@ def load_lc_sax_hr(path):
 
 ################################################################################
 
+def load_lc_sax_lr(path):
+    """
+    Load the LOW RESOLUTION BeppoSAX light curves, and put each of them in an 
+    object inside a list. The GRBs are listed in the file:
+    'formatted_catalogue_GRBM_paper.txt'. 
+    Input:
+    - path: path to the folder that contains a folder for each Sax GRB named
+            with the name of the GRB, and the file containing all the T90s;
+    Output:
+    - grb_list_sax: list of GRB objects;
+    """
+
+    list_file = 'formatted_catalogue_GRBM_paper.txt'
+    all_grb_list_sax     = []
+    all_grb_cat_list_sax = []
+    with open(path+list_file) as f:
+        for line in f:
+            grb_name     = line.split()[1]
+            grb_cat_name = line.split()[2]
+            all_grb_list_sax.append(grb_name)
+            all_grb_cat_list_sax.append(grb_cat_name)
+
+    # load T90
+    t90data = np.loadtxt(path+'saxgrbm_t90.dat', dtype='str', skiprows=1)
+
+    grb_list_sax  = []
+    grb_not_found = []
+    grb_no_t90    = []
+
+    for grb_name, grb_cat_name in zip(all_grb_list_sax, all_grb_cat_list_sax):
+        try:
+            #times, counts, errs = np.loadtxt(path+grb_name+'/'+hr_grb, unpack=True) 
+            try: 
+                times, counts, errs = np.loadtxt(path+grb_name+'/'+grb_name+'_grbm0_bs_nospk.out', unpack=True)  
+                grb_path_name = path+grb_name+'_grbm0_bs_nospk.out'
+            except FileNotFoundError:
+                times, counts, errs = np.loadtxt(path+grb_name+'/'+grb_name +'_grbm0_bs.out', unpack=True)  
+                grb_path_name = path+grb_name+'_grbm0_bs.out'
+            grb_cat_name        = grb_cat_name.replace("GRB", "")
+        except:
+            grb_not_found.append(grb_name)
+            continue
+        # for some GRBs we don't have the T90 in the file
+        t90 = t90data[t90data[:,0]==grb_cat_name][0][1]
+        if t90=='n.a.':
+            grb_no_t90.append(grb_name)
+            continue
+        t90    = t90.astype('float32')
+        times  = np.float32(times)
+        counts = np.float32(counts)
+        errs   = np.float32(errs)
+        t90    = np.float32(t90)
+
+        grb = GRB(grb_name, times, counts, errs, t90, grb_path_name)
+        grb_list_sax.append(grb)
+
+    print("Total number of GRBs in BeppoSAX catalogue: ", len(all_grb_list_sax))
+    print("GRBs in the catalogue which are NOT present in the data folder: ", len(grb_not_found))
+    print("GRBs in the catalogue which are present in the data folder, but with no T90: ", len(grb_no_t90))
+    print("Loaded GRBs: ", len(grb_list_sax))
+    return grb_list_sax
+
+################################################################################
+
 def load_lc_sim(path):
     """
     Load the simulated light curves, which were previously generated and saved
@@ -465,7 +529,7 @@ def load_lc_sim(path):
 
 ################################################################################
 
-def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_distr=False, verbose=True):
+def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_distr=False, verbose=True, filter=True):
     """
     Given as input a list of GBR objects, the function outputs a list containing
     only the GRBs that satisfy the following constraint:
@@ -487,17 +551,25 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_d
     """
     good_grb_list = []
     sn_levels     = []
+    grb_with_neg_t20 = 0
     for grb in grb_list:
         times   = np.float32(grb.times)
         counts  = np.float32(grb.counts)
         errs    = np.float32(grb.errs)
         t90     = np.float32(grb.t90)
         i_c_max = np.argmax(counts)
-        s_n     = evaluateGRB_SN(times=times, 
+        try:
+            s_n     = evaluateGRB_SN(times=times, 
                                  counts=counts, 
                                  errs=errs, 
                                  t90=t90,
-                                 bin_time=bin_time)
+                                 bin_time=bin_time,
+                                 filter = filter)
+        except AssertionError:
+            #remove GRB if the t20% is negative
+            #@@@@@Potrebbe essere meglio definire un filtraggio fisso
+            grb_with_neg_t20 += 1
+            cond_2 = False
         #s_n_peak = evaluateGRB_SN_peak(counts=counts, errs=errs)
         if sn_distr:
             sn_levels.append(s_n)
@@ -510,6 +582,7 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_d
 
     if verbose:
         print("Total number of input GRBs: ", len(grb_list))
+        print("GRBs with negative duration: ", grb_with_neg_t20)
         print("GRBs that satisfy the constraints: ", len(good_grb_list)) 
 
     if sn_distr:
