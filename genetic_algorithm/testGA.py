@@ -127,7 +127,7 @@ range_mu0     = {"low": 0.75,            "high": 1.4}
 range_alpha   = {"low": 1,               "high": 10} 
 range_delta1  = {"low": -1.5,            "high": -0.25-1.e-6} 
 range_delta2  = {"low": 0.0,             "high": 0.25} 
-range_tau_min = {"low": np.log10(1.e-6), "high": np.log10(bin_time-1.e-6)} # sample uniformly in log space
+range_tau_min = {"low": np.log10(1.e-9), "high": np.log10(bin_time-1.e-6)} # sample uniformly in log space
 range_tau_max = {"low": bin_time+15,     "high": 35} 
 
 range_constraints = [range_mu, 
@@ -282,13 +282,32 @@ def fitness_func(solution, solution_idx=None):
     return fitness
 
 
-last_fitness = 0
+################################################################################
+# DEFINE AUXILIARY FUNCTION
+################################################################################
+
+last_fitness, last_loss, current_fitness, current_loss = 0, 0, 0, 0
 def on_generation(ga_instance):
-    global last_fitness
-    print("Generation   = {generation}".format(generation=ga_instance.generations_completed))
-    print("Best Fitness = {fitness}".format(fitness=ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1]))
-    #print("Change     = {change}".format(change=ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1] - last_fitness))
-    last_fitness = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1]
+    global last_fitness, last_loss, current_fitness, current_loss
+    print('--------------------------------------------------------------------------------')
+    print("Generation     = {generation}".format(generation=ga_instance.generations_completed))
+    current_fitness = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1]
+    current_loss    = current_fitness**(-1)                
+    print("Best Loss      = {solution_loss}".format(solution_loss=current_loss))
+    print("Best Fitness   = {fitness}".format(fitness=current_fitness))
+    print("Fitness Change = {change}".format(change=current_fitness-last_fitness))
+    last_fitness = current_fitness
+    last_loss    = current_loss
+    # Returning the details of the best solution in the current generation.
+    solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
+    print("Parameters of the best solution in the current generation:")
+    print("    - mu      = {solution}".format(solution=solution[0]))
+    print("    - mu0     = {solution}".format(solution=solution[1]))
+    print("    - alpha   = {solution}".format(solution=solution[2]))
+    print("    - delta1  = {solution}".format(solution=solution[3]))
+    print("    - delta2  = {solution}".format(solution=solution[4]))
+    print("    - tau_min = {solution}".format(solution=10**(solution[5])))
+    print("    - tau_max = {solution}".format(solution=solution[6]))
 
 
 ################################################################################
@@ -344,8 +363,11 @@ ga_GRB.run()
 #------------------------------------------------------------------------------#
 # Return the details of the best solution.
 solution, solution_fitness, solution_idx = ga_GRB.best_solution(ga_GRB.last_generation_fitness)
-#
-print("* Parameters of the best solution:")
+print('\n')
+print('\n')
+print('################################################################################')
+print('################################################################################')
+print("* Parameters of the BEST solution:")
 print("    - mu      = {solution}".format(solution=solution[0]))
 print("    - mu0     = {solution}".format(solution=solution[1]))
 print("    - alpha   = {solution}".format(solution=solution[2]))
@@ -358,6 +380,8 @@ print("* Fitness value of the best solution : {solution_fitness}".format(solutio
 #print("Index of the best solution          : {solution_idx}".format(solution_idx=solution_idx))
 if ga_GRB.best_solution_generation != -1:
     print("* Best fitness value reached after N={best_solution_generation} generations.".format(best_solution_generation=ga_GRB.best_solution_generation))
+print('################################################################################')
+print('################################################################################')
 #------------------------------------------------------------------------------#
 # Print on file
 #------------------------------------------------------------------------------#
@@ -424,7 +448,6 @@ file.write('\n')
 file.write("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))
 file.write('\n')
 #print("Index of the best solution          : {solution_idx}".format(solution_idx=solution_idx))
-#print("Index of the best solution          : {solution_idx}".format(solution_idx=solution_idx))
 if ga_GRB.best_solution_generation != -1:
     file.write("* Best fitness value reached after N = {best_solution_generation} generations.".format(best_solution_generation=ga_GRB.best_solution_generation))
 file.write('\n')
@@ -446,18 +469,28 @@ plt.plot(inv_fit, ls='-', lw=2, c='b')
 #plt.yscale('log')
 plt.xlabel(r'Generation')
 plt.ylabel(r'Best Loss')
-plt.savefig('FIG01.pdf')
+plt.savefig('fig01.pdf')
 plt.clf()
+
 
 loss_list = ga_GRB.solutions_fitness
 avg_loss  = np.zeros(num_generations+1)
+std_loss  = np.zeros(num_generations+1)
 for i in range(num_generations+1):
         avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
-plt.plot(avg_loss, ls='-', lw=2, c='b')
+        std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
+plt.errorbar(np.arange(num_generations+1), avg_loss, yerr=std_loss/np.sqrt(sol_per_pop), ls='-', lw=2, c='b')
 #plt.yscale('log')
 plt.xlabel('Generation')
 plt.ylabel(r'Average Loss')
-plt.savefig('FIG02.pdf')
+plt.savefig('fig02.pdf')
+plt.clf()
+
+
+plt.plot(std_loss, ls='-', lw=2, c='b')
+plt.xlabel('Generation')
+plt.ylabel(r'Standard Deviation of the loss')
+plt.savefig('fig03.pdf')
 plt.clf()
 
 ################################################################################
