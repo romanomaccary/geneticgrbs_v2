@@ -733,6 +733,51 @@ def compute_kde_duration(duration_list, x_left=-2, x_right=5, h_opt=0.09):
 
 ################################################################################
 
+def compute_loss(averaged_fluxes=None,      averaged_fluxes_sim=None,
+                 averaged_fluxes_rms=None,  averaged_fluxes_rms_sim=None,
+                 averaged_fluxes_cube=None, averaged_fluxes_cube_sim=None,
+                 acf=None,                  acf_sim=None,
+                 duration=None,             duration_sim=None,
+                 log=False, verbose=False):
+    """
+    Compute the loss to be used for the optimization in the Genetic Algorithm.
+    Input:
+    -
+    Output:
+    - l2_loss: L2 loss;
+    """
+    if log:
+        averaged_fluxes          = np.log10(averaged_fluxes)
+        averaged_fluxes_sim      = np.log10(averaged_fluxes_sim)
+        averaged_fluxes_cube     = np.log10(averaged_fluxes_cube)
+        averaged_fluxes_cube_sim = np.log10(averaged_fluxes_cube_sim)
+        acf                      = np.log10(acf)
+        acf_sim                  = np.log10(acf_sim)
+        # 'duration'     is already in log scale, since it is the output of compute_kde_duration()
+        # 'duration_sim' is already in log scale, since it is the output of compute_kde_duration()
+
+    l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
+    l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
+    l2_loss_acf         = np.sqrt( np.sum(np.power((acf-acf_sim),2)) )
+    l2_loss_duration    = np.sqrt( np.sum(np.power((duration-duration_sim),2)) )
+    l2_loss             = (1./4)*l2_loss_fluxes      + \
+                          (1./4)*l2_loss_fluxes_cube + \
+                          (1./4)*l2_loss_acf         + \
+                          (1./4)*l2_loss_duration
+    if verbose:
+        # WE SHOULD CHECK WHAT IS THE ORDER OF MAGNITUDE OF EACH LOSS, SO THAT
+        # WE KNOW HOW MUCH THEY CONTRIBUTE TO THE TOTAL!
+        # Incidentally, there is one combination of log/no-log that makes the 
+        # loss functions all in the range ~ np.abs( [0,1] ), which is the one
+        # obtained by NOT choosing the log on averaged_fluxes, averaged_fluxes_cube,
+        # and acf, while choosing the log for duration (which is automatically
+        # in log scale, since it is the output of the function compute_kde_duration())
+        pass
+                          
+    return l2_loss
+
+################################################################################
+
 def make_plot(instrument, 
               test_times, 
               averaged_fluxes,      averaged_fluxes_sim,
@@ -930,48 +975,6 @@ def make_plot(instrument,
         plt.savefig(name_fig)
 
     plt.show()
-
-################################################################################
-
-def compute_loss(test_times=None,
-                 averaged_fluxes=None,       averaged_fluxes_sim=None,
-                 averaged_fluxes_rms=None,   averaged_fluxes_rms_sim=None,
-                 averaged_fluxes_cube=None,  averaged_fluxes_cube_sim=None,
-                 steps=None, steps_sim=None, bin_time=None, 
-                 acf=None, acf_sim=None,
-                 duration=None, duration_sim=None,
-                 log=False, verbose=False):
-    """
-    Compute the loss to be used for the optimization in the Genetic Algorithm.
-    Input:
-    -
-    Output:
-    - l2_loss: L2 loss;
-    """
-    if log:
-        averaged_fluxes          = np.log10(averaged_fluxes)
-        averaged_fluxes_sim      = np.log10(averaged_fluxes_sim)
-        averaged_fluxes_cube     = np.log10(averaged_fluxes_cube)
-        averaged_fluxes_cube_sim = np.log10(averaged_fluxes_cube_sim)
-        acf                      = np.log10(acf)
-        acf_sim                  = np.log10(acf_sim)
-        # 'duration'     is already in log scale
-        # 'duration_sim' is already in log scale
-
-    l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
-    l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
-    l2_loss_acf         = np.sqrt( np.sum(np.power((acf-acf_sim),2)) )
-    l2_loss_duration    = np.sqrt( np.sum(np.power((duration-duration_sim),2)) )
-    l2_loss             = (1./4)*l2_loss_fluxes      + \
-                          (1./4)*l2_loss_fluxes_cube + \
-                          (1./4)*l2_loss_acf         + \
-                          (1./4)*l2_loss_duration
-    if verbose:
-        # WE SHOULD CHECK WHAT IS THE ORDER OF MAGNITUDE OF EACH LOSS, SO THAT
-        # WE KNOW HOW MUCH THEY CONTRIBUTE TO THE TOTAL!
-        pass
-                          
-    return l2_loss
  
 ################################################################################
 
