@@ -434,6 +434,70 @@ def load_lc_sax_hr(path):
 
 ################################################################################
 
+def load_lc_sax_lr(path):
+    """
+    Load the LOW RESOLUTION BeppoSAX light curves, and put each of them in an 
+    object inside a list. The GRBs are listed in the file:
+    'formatted_catalogue_GRBM_paper.txt'. 
+    Input:
+    - path: path to the folder that contains a folder for each Sax GRB named
+            with the name of the GRB, and the file containing all the T90s;
+    Output:
+    - grb_list_sax: list of GRB objects;
+    """
+
+    list_file = 'formatted_catalogue_GRBM_paper.txt'
+    all_grb_list_sax     = []
+    all_grb_cat_list_sax = []
+    with open(path+list_file) as f:
+        for line in f:
+            grb_name     = line.split()[1]
+            grb_cat_name = line.split()[2]
+            all_grb_list_sax.append(grb_name)
+            all_grb_cat_list_sax.append(grb_cat_name)
+
+    # load T90
+    t90data = np.loadtxt(path+'saxgrbm_t90.dat', dtype='str', skiprows=1)
+
+    grb_list_sax  = []
+    grb_not_found = []
+    grb_no_t90    = []
+
+    for grb_name, grb_cat_name in zip(all_grb_list_sax, all_grb_cat_list_sax):
+        try:
+            #times, counts, errs = np.loadtxt(path+grb_name+'/'+hr_grb, unpack=True) 
+            try: 
+                times, counts, errs = np.loadtxt(path+grb_name+'/'+grb_name+'_grbm0_bs_nospk.out', unpack=True)  
+                grb_path_name = path+grb_name+'_grbm0_bs_nospk.out'
+            except FileNotFoundError:
+                times, counts, errs = np.loadtxt(path+grb_name+'/'+grb_name +'_grbm0_bs.out', unpack=True)  
+                grb_path_name = path+grb_name+'_grbm0_bs.out'
+            grb_cat_name        = grb_cat_name.replace("GRB", "")
+        except:
+            grb_not_found.append(grb_name)
+            continue
+        # for some GRBs we don't have the T90 in the file
+        t90 = t90data[t90data[:,0]==grb_cat_name][0][1]
+        if t90=='n.a.':
+            grb_no_t90.append(grb_name)
+            continue
+        t90    = t90.astype('float32')
+        times  = np.float32(times)
+        counts = np.float32(counts)
+        errs   = np.float32(errs)
+        t90    = np.float32(t90)
+
+        grb = GRB(grb_name, times, counts, errs, t90, grb_path_name)
+        grb_list_sax.append(grb)
+
+    print("Total number of GRBs in BeppoSAX catalogue: ", len(all_grb_list_sax))
+    print("GRBs in the catalogue which are NOT present in the data folder: ", len(grb_not_found))
+    print("GRBs in the catalogue which are present in the data folder, but with no T90: ", len(grb_no_t90))
+    print("Loaded GRBs: ", len(grb_list_sax))
+    return grb_list_sax
+
+################################################################################
+
 def load_lc_sim(path):
     """
     Load the simulated light curves, which were previously generated and saved
