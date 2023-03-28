@@ -107,7 +107,7 @@ else:
 
 #------------------------------------------------------------------------------#
 
-num_generations      = 6 # 10                 # Number of generations.
+num_generations      = 5                      # Number of generations.
 sol_per_pop          = 2000                   # Number of solutions in the population.
 num_parents_mating   = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents         = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
@@ -145,6 +145,12 @@ num_genes = len(range_constraints) # 7
 save_model = 0 
 
 #------------------------------------------------------------------------------#
+
+print('\n\n')
+print('################################################################################')
+print('START')
+print('################################################################################')
+print('\n\n')
 
 
 ################################################################################
@@ -187,7 +193,11 @@ else:
     raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
 end_load_time = time.perf_counter()
-print('*** {} data loaded in {:0.0f} sec ***'.format(instrument,(end_load_time-init_load_time)))
+print('\n')
+print('--------------------------------------------------------------------------------')
+print('* {} data loaded in {:0.0f} sec'.format(instrument,(end_load_time-init_load_time)))
+print('--------------------------------------------------------------------------------')
+
 
 # Set the number of simulated GRBs to produce equal to the number of real GRBs
 # that passed the constraint selection
@@ -198,7 +208,6 @@ N_grb=1000 #len(grb_list_real)
 # COMPUTE AVERAGE QUANTITIES OF REAL DATA
 ################################################################################
 
-#------------------------------------------------------------------------------#
 ### TEST 1&2: Average Peak-Aligned Profiles
 averaged_fluxes_real, \
 averaged_fluxes_cube_real, \
@@ -206,7 +215,6 @@ averaged_fluxes_rms_real = compute_average_quantities(grb_list=grb_list_real,
                                                       t_f=t_f, 
                                                       bin_time=bin_time,
                                                       filter=True)
-#------------------------------------------------------------------------------#
 ### TEST 3: Autocorrelation
 N_lim = np.min( [N_grb, len(grb_list_real)] ) 
 steps_real, acf_real = compute_autocorrelation(grb_list=grb_list_real,
@@ -214,7 +222,6 @@ steps_real, acf_real = compute_autocorrelation(grb_list=grb_list_real,
                                                t_max=t_f,
                                                bin_time=bin_time,
                                                mode='scipy')
-#------------------------------------------------------------------------------#
 ### TEST 4: Duration
 duration_real = [ evaluateDuration20(times=grb.times, 
                                      counts=grb.counts,
@@ -222,7 +229,6 @@ duration_real = [ evaluateDuration20(times=grb.times,
                                      t90=grb.t90,
                                      bin_time=bin_time)[0] for grb in grb_list_real ]
 duration_distr_real = compute_kde_duration(duration_list=duration_real)
-#------------------------------------------------------------------------------#
 
 
 ################################################################################
@@ -260,20 +266,20 @@ def fitness_func(solution, solution_idx=None):
     #--------------------------------------------------------------------------#
     # Compute average quantities of simulated data needed for the loss function
     #--------------------------------------------------------------------------#
-    # TEST 1&2: Average Peak-Aligned Profiles
+    ### TEST 1&2: Average Peak-Aligned Profiles
     averaged_fluxes_sim, \
     averaged_fluxes_cube_sim, \
     averaged_fluxes_rms_sim = compute_average_quantities(grb_list=grb_list_sim,
                                                          t_f=t_f,
                                                          bin_time=bin_time,
                                                          filter=True)
-    # TEST 3: Autocorrelation
+    ### TEST 3: Autocorrelation
     steps_sim, acf_sim      = compute_autocorrelation(grb_list=grb_list_sim,
                                                       N_lim=N_lim,
                                                       t_max=t_f,
                                                       bin_time=bin_time,
                                                       mode='scipy')
-    # TEST 4: Duration
+    ### TEST 4: Duration
     duration_sim = [ evaluateDuration20(times=grb.times, 
                                          counts=grb.counts,
                                          filter=True,
@@ -303,7 +309,8 @@ last_fitness, last_loss, current_fitness, current_loss = 0, 0, 0, 0
 def on_generation(ga_instance):
     """
     This function is executed after _each_ generation. It prints useful 
-    information of the currect epoch.
+    information of the current epoch, in particular, the details of the best
+    solution in the current generation.
     """
     global last_fitness, last_loss, current_fitness, current_loss
     print('--------------------------------------------------------------------------------')
@@ -315,7 +322,6 @@ def on_generation(ga_instance):
     print("Fitness Change = {change}".format(change=current_fitness-last_fitness))
     last_fitness = current_fitness
     last_loss    = current_loss
-    # Returning the details of the best solution in the current generation.
     solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
     print("Parameters of the best solution in the current generation:")
     print("    - mu      = {solution}".format(solution=solution[0]))
@@ -371,7 +377,11 @@ init_run_time = time.perf_counter()
 ga_GRB.run()
 #ga_GRB.plot_fitness()
 end_run_time = time.perf_counter()
-print('*** Model run in {:0.0f} sec ***'.format((end_run_time-init_run_time)))
+
+print('\n')
+print('--------------------------------------------------------------------------------')
+print('* Model run in {:0.0f} sec'.format((end_run_time-init_run_time)))
+print('--------------------------------------------------------------------------------')
 
 ################################################################################
 # SAVE THE MODEL
@@ -394,9 +404,7 @@ if save_model:
 #------------------------------------------------------------------------------#
 # Print on terminal
 #------------------------------------------------------------------------------#
-# Return the details of the best solution.
 solution, solution_fitness, solution_idx = ga_GRB.best_solution(ga_GRB.last_generation_fitness)
-print('\n')
 print('\n')
 print('################################################################################')
 print('################################################################################')
@@ -530,12 +538,19 @@ plt.clf()
 # EXPORT DATA FOR THE PLOT
 ################################################################################
 
-datafile = '/.datafile.txt'
+datafile = './datafile.txt'
 file = open(datafile, 'w')
-file.write('# generation, best_loss, avg_loss, std_loss, std_loss/sqrt(sol_per_pop)\n')
+file.write('# generation\t best_loss\t avg_loss\t std_loss\t std_loss/sqrt(sol_per_pop)\n')
 for i in range(num_generations+1):
     file.write('{0} {1} {2} {3} {4}\n'.format(i, best_loss[i], avg_loss[i], std_loss[i], std_loss[i]/np.sqrt(sol_per_pop)))
 file.close()
 
 ################################################################################
 ################################################################################
+
+print('\n\n')
+print('################################################################################')
+print('END')
+print('################################################################################')
+print('\n\n')
+
