@@ -700,12 +700,37 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, bin_time=0.064,
 
 ################################################################################
 
+def compute_kde_duration(duration_list, x_left=-2, x_right=5, h_opt=0.09):
+    """
+    Compute the kernel density estimate of the distribution of the (log10) of
+    the duration of the selected GRBs;
+    Input:
+    - duration_list: list containing all the T20% durations of the selected GRBs
+                     obtained as output of the function evaluateDuration20();
+    - x_left:   left endpoint for the array onto which we compute the sum of gaussians;
+    - x_right: right endpoint for the array onto which we compute the sum of gaussians;
+    - h_opt: optimal sigma of the gaussian; this value has been obtained with
+             GridSearch optimization (see the notebook in DEBUG section);
+    Output:
+    - dur_distr: kernel density estimate of the log of the duration of the selected GRBs;
+    """ 
+    duration_list = np.log10(duration_list)
+    # Apply kernel density estimation to distribution of durations:
+    x_grid     = np.linspace(x_left, x_right, 1000)
+    dur_distr  = stats.norm.pdf(x_grid, duration_list[:, None], h_opt) # (x=, loc=, scale=)
+    dur_distr /= len(duration_list)
+    dur_distr  = dur_distr.sum(0)
+    return dur_distr
+
+################################################################################
+
 def make_plot(instrument, 
               test_times, 
               averaged_fluxes,      averaged_fluxes_sim,
               averaged_fluxes_rms,  averaged_fluxes_rms_sim,
               averaged_fluxes_cube, averaged_fluxes_cube_sim,
-              steps, steps_sim, bin_time, acf, acf_sim,
+              steps, steps_sim, bin_time, 
+              acf, acf_sim,
               duration, duration_sim,
               log=True, hist=False, 
               save_fig=False, name_fig='fig.pdf'):
@@ -860,7 +885,7 @@ def make_plot(instrument,
             #ax[1,1].set_ylim(0,30)
     
     else: # kernel density estimation
-        h_opt         = 0.09 # values obtained with GridSearch optimization; see the notebook in DEBUG section
+        h_opt = 0.09 # values obtained with GridSearch optimization; see the notebook in DEBUG section
         if log:
             x_grid = np.linspace(-2, 5,  1000)
         else:
@@ -903,14 +928,13 @@ def compute_loss(test_times=None,
                  averaged_fluxes=None,       averaged_fluxes_sim=None,
                  averaged_fluxes_rms=None,   averaged_fluxes_rms_sim=None,
                  averaged_fluxes_cube=None,  averaged_fluxes_cube_sim=None,
-                 steps=None, steps_sim=None, bin_time=None, acf=None, acf_sim=None,
+                 steps=None, steps_sim=None, bin_time=None, 
+                 acf=None, acf_sim=None,
                  duration=None, duration_sim=None,
                  log=False, verbose=False):
     """
     Compute the loss to be used for the optimization in the Genetic Algorithm.
     Input:
-    -
-    -
     -
     Output:
     - l2_loss: L2 loss;
@@ -922,13 +946,17 @@ def compute_loss(test_times=None,
         averaged_fluxes_cube_sim = np.log10(averaged_fluxes_cube_sim)
         acf                      = np.log10(acf)
         acf_sim                  = np.log10(acf_sim)
+        # 'duration'     is already in log scale
+        # 'duration_sim' is already in log scale
 
     l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
     l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
     l2_loss_acf         = np.sqrt( np.sum(np.power((acf-acf_sim),2)) )
-    l2_loss             = (1./3)*l2_loss_fluxes + \
-                          (1./3)*l2_loss_fluxes_cube + \
-                          (1./3)*l2_loss_acf
+    l2_loss_duration    = np.sqrt( np.sum(np.power((duration-duration_sim),2)) )
+    l2_loss             = (1./4)*l2_loss_fluxes      + \
+                          (1./4)*l2_loss_fluxes_cube + \
+                          (1./4)*l2_loss_acf         + \
+                          (1./4)*l2_loss_duration
     if verbose:
         # WE SHOULD CHECK WHAT IS THE ORDER OF MAGNITUDE OF EACH LOSS, SO THAT
         # WE KNOW HOW MUCH THEY CONTRIBUTE TO THE TOTAL!
