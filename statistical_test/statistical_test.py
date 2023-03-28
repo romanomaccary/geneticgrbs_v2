@@ -1014,7 +1014,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                   instrument, bin_time, eff_area, bg_level, # instrument parameters
                   t90_threshold, sn_threshold, t_f, # constraint parameters
                   export_files=False, export_path='None', # other parameters
-                  n_cut=2000, with_bg=False # other parameters
+                  n_cut=2000, with_bg=False, seed=None # other parameters
                   ):
     """
     AAA
@@ -1094,7 +1094,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                 bg_level=bg_level,
                 ### other parameters:
                 n_cut=n_cut,
-                with_bg=with_bg) 
+                with_bg=with_bg)
         lc.generate_avalanche(seed=None)
         if lc.check==0:
             # check that we have generated a lc with non-zero values; otherwise,

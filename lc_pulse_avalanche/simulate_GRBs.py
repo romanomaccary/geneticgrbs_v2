@@ -15,7 +15,7 @@ from matplotlib import rc
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 rc('text', usetex=True)
 
-#SEED=42
+#seed=42
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
@@ -51,15 +51,26 @@ delta1  = -0.5
 delta2  = 0
 tau_min = 0.02
 tau_max = 26
-# The 7 values obtained from an EARLY optimization are
-#mu      = 1.2436380646574723
-#mu0     = 1.0003897454703008
-#alpha   = 7.049219926652907
-#delta1  = -0.5479762424587183
-#delta2  = 0.20430555005030396
-#tau_min = 0.0520250387823067
-#tau_max = 20.991949810979172
 
+# The 7 values obtained from an EARLY optimization are
+# mu      = 1.2436380646574723
+# mu0     = 1.0003897454703008
+# alpha   = 7.049219926652907
+# delta1  = -0.5479762424587183
+# delta2  = 0.20430555005030396
+# tau_min = 0.0520250387823067
+# tau_max = 20.991949810979172
+
+# The 7 values obtained from an EARLY v2 optimization are
+#* Loss value of the best solution    : 0.19689057333047827
+#* Fitness value of the best solution : 5.0789633200037105
+# mu      = 1.3712230777324108
+# mu0     = 1.292056879500315
+# alpha   = 6.238631180118012
+# delta1  = -0.5895371604462968
+# delta2  = 0.21749228991192124
+# tau_min = 0.06234108759332604
+# tau_max = 23.443421866972386
 
 
 t_i=0   # [s]
