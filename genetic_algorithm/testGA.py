@@ -140,6 +140,8 @@ range_constraints = [range_mu,
 
 num_genes = len(range_constraints) # 7
 
+save_model = 0 
+
 #------------------------------------------------------------------------------#
 
 
@@ -208,11 +210,12 @@ steps_real, acf_real = compute_autocorrelation(grb_list=grb_list_real,
                                                mode='scipy')
 #------------------------------------------------------------------------------#
 ### TEST 4: Duration
-#duration_real = [ evaluateDuration20(times=grb.times, 
-#                                     counts=grb.counts,
-#                                     filter=True,
-#                                     t90=grb.t90,
-#                                     bin_time=bin_time_batse)[0] for grb in grb_list_real ]
+duration_real = [ evaluateDuration20(times=grb.times, 
+                                     counts=grb.counts,
+                                     filter=True,
+                                     t90=grb.t90,
+                                     bin_time=bin_time)[0] for grb in grb_list_real ]
+duration_distr_real = compute_kde_duration(duration_list=duration_real)
 #------------------------------------------------------------------------------#
 
 
@@ -220,7 +223,6 @@ steps_real, acf_real = compute_autocorrelation(grb_list=grb_list_real,
 # DEFINE FITNESS FUNCTION OF THE GENETIC ALGORITHM
 ################################################################################
 
-loss_list = []
 def fitness_func(solution, solution_idx=None):
     global loss_list
     #--------------------------------------------------------------------------#
@@ -266,6 +268,12 @@ def fitness_func(solution, solution_idx=None):
                                                       bin_time=bin_time,
                                                       mode='scipy')
     # TEST 4: Duration
+    duration_sim = [ evaluateDuration20(times=grb.times, 
+                                         counts=grb.counts,
+                                         filter=True,
+                                         t90=grb.t90,
+                                         bin_time=bin_time)[0] for grb in grb_list_sim ]
+    duration_distr_sim = compute_kde_duration(duration_list=duration_sim)
     #--------------------------------------------------------------------------#
     # Compute loss
     #--------------------------------------------------------------------------#
@@ -275,9 +283,8 @@ def fitness_func(solution, solution_idx=None):
                            averaged_fluxes_cube_sim=averaged_fluxes_cube_sim,
                            acf=acf_real, 
                            acf_sim=acf_sim,
-                           log=False)
-    #print('l2_loss =', l2_loss)
-    loss_list.append(l2_loss)
+                           duration=duration_distr_real, 
+                           duration_sim=duration_distr_sim)
     fitness = 1.0 / (l2_loss + 1.e-9)
     return fitness
 
@@ -288,6 +295,9 @@ def fitness_func(solution, solution_idx=None):
 
 last_fitness, last_loss, current_fitness, current_loss = 0, 0, 0, 0
 def on_generation(ga_instance):
+    """
+    This function is executed after _each_ generation.
+    """
     global last_fitness, last_loss, current_fitness, current_loss
     print('--------------------------------------------------------------------------------')
     print("Generation     = {generation}".format(generation=ga_instance.generations_completed))
@@ -352,6 +362,20 @@ ga_GRB.summary()
 # Run the GA to optimize the parameters of the function.
 ga_GRB.run()
 #ga_GRB.plot_fitness()
+
+
+################################################################################
+# SAVE THE MODEL
+################################################################################
+
+# Saving the GA instance.
+if save_model:
+    filename = 'geneticGRB'
+    ga_instance.save(filename=filename)
+
+# # Loading the saved GA instance.
+# loaded_ga_instance = pygad.load(filename=filename)
+# loaded_ga_instance.plot_fitness()
 
 
 ################################################################################
