@@ -4,6 +4,7 @@
 
 import os
 import sys
+import time
 import pygad
 #import yaml, h5py
 import numpy as np
@@ -20,6 +21,7 @@ rc('text', usetex=True)
 seed=42
 np.random.seed(seed)
 
+print_time = 1
 
 ################################################################################
 # SET PATHS
@@ -149,6 +151,8 @@ save_model = 0
 # LOAD REAL DATA
 ################################################################################
 
+init_load_time = time.perf_counter()
+
 ### Load the BATSE GRBs
 if instrument=='batse': 
     # load all data
@@ -182,6 +186,8 @@ elif instrument=='sax':
 else:
     raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
+end_load_time = time.perf_counter()
+print('*** {} data loaded in {:0.0f} sec ***'.format(instrument,(end_load_time-init_load_time)))
 
 # Set the number of simulated GRBs to produce equal to the number of real GRBs
 # that passed the constraint selection
@@ -360,10 +366,12 @@ ga_GRB.summary()
 # RUN THE GENETIC ALGORITHM
 ################################################################################
 
+init_run_time = time.perf_counter()
 # Run the GA to optimize the parameters of the function.
 ga_GRB.run()
 #ga_GRB.plot_fitness()
-
+end_run_time = time.perf_counter()
+print('*** Model run in {:0.0f} sec ***'.format((end_run_time-init_run_time)))
 
 ################################################################################
 # SAVE THE MODEL
@@ -410,7 +418,7 @@ print('#########################################################################
 #------------------------------------------------------------------------------#
 # Print on file
 #------------------------------------------------------------------------------#
-file = open("./results.txt", "w")
+file = open("./simulation_info.txt", "w")
 file.write('################################################################################')
 file.write('\n')
 file.write("INPUT")
@@ -483,14 +491,13 @@ file.write('####################################################################
 file.close()
 #------------------------------------------------------------------------------#
 
-
 ################################################################################
 # EXPORT PLOT
 ################################################################################
 
-inv_fit = (np.array(ga_GRB.best_solutions_fitness))**(-1)
-print('inv_fit[-1] =', inv_fit[-1])
-plt.plot(inv_fit, ls='-', lw=2, c='b')
+best_loss = np.array(ga_GRB.best_solutions_fitness)**(-1)
+print('best_loss[-1] =', best_loss[-1])
+plt.plot(best_loss, ls='-', lw=2, c='b')
 #plt.yscale('log')
 plt.xlabel(r'Generation')
 plt.ylabel(r'Best Loss')
@@ -498,10 +505,9 @@ plt.savefig('fig01.pdf')
 plt.clf()
 
 
-fitness_list = np.array(ga_GRB.solutions_fitness)
-loss_list    = 1. / (fitness_list + 1.e-9)
-avg_loss     = np.zeros(num_generations+1)
-std_loss     = np.zeros(num_generations+1)
+loss_list = np.array(ga_GRB.solutions_fitness)**(-1)
+avg_loss  = np.zeros(num_generations+1)
+std_loss  = np.zeros(num_generations+1)
 for i in range(num_generations+1):
         avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
         std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
@@ -518,6 +524,18 @@ plt.xlabel(r'Generation')
 plt.ylabel(r'Standard Deviation of the loss')
 plt.savefig('fig03.pdf')
 plt.clf()
+
+
+################################################################################
+# EXPORT DATA FOR THE PLOT
+################################################################################
+
+datafile = '/.datafile.txt'
+file = open(datafile, 'w')
+file.write('# generation, best_loss, avg_loss, std_loss, std_loss/sqrt(sol_per_pop)\n')
+for i in range(num_generations+1):
+    file.write('{0} {1} {2} {3} {4}\n'.format(i, best_loss[i], avg_loss[i], std_loss[i], std_loss[i]/np.sqrt(sol_per_pop)))
+file.close()
 
 ################################################################################
 ################################################################################
