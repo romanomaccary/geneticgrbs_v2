@@ -122,12 +122,12 @@ mutation_probability = 0.01                   # by default is 'None', otherwise 
 # tau_max=26
 
 # We impose constraints on the range of values that the 7 parameter can assume
-range_mu      = {"low": 0.75,            "high": 1.4}
-range_mu0     = {"low": 0.75,            "high": 1.4} 
+range_mu      = {"low": 0.75,            "high": 1.5}
+range_mu0     = {"low": 0.75,            "high": 1.5} 
 range_alpha   = {"low": 1,               "high": 10} 
-range_delta1  = {"low": -1.5,            "high": -0.25-1.e-6} 
-range_delta2  = {"low": 0.0,             "high": 0.25} 
-range_tau_min = {"low": np.log10(1.e-9), "high": np.log10(bin_time-1.e-6)} # sample uniformly in log space
+range_delta1  = {"low": -1.5,            "high": -0.25-1.e-9} 
+range_delta2  = {"low": np.log10(1.e-9), "high": np.log10(0.25)}           # sample uniformly in log space
+range_tau_min = {"low": np.log10(1.e-9), "high": np.log10(bin_time-1.e-9)} # sample uniformly in log space
 range_tau_max = {"low": bin_time+15,     "high": 35} 
 
 range_constraints = [range_mu, 
@@ -202,7 +202,7 @@ averaged_fluxes_rms_real = compute_average_quantities(grb_list=grb_list_real,
                                                       filter=True)
 #------------------------------------------------------------------------------#
 ### TEST 3: Autocorrelation
-N_lim = np.min( [N_grb, len(grb_list_real)] ) # N_grb is set equal to len(grb_list_real)
+N_lim = np.min( [N_grb, len(grb_list_real)] ) 
 steps_real, acf_real = compute_autocorrelation(grb_list=grb_list_real,
                                                N_lim=N_lim,
                                                t_max=t_f,
@@ -235,7 +235,7 @@ def fitness_func(solution, solution_idx=None):
                                  mu0=solution[1],
                                  alpha=solution[2],
                                  delta1=solution[3],
-                                 delta2=solution[4],
+                                 delta2=10**solution[4],   # sample uniformly in log space
                                  tau_min=10**solution[5],  # sample uniformly in log space
                                  tau_max=solution[6],
                                  # instrument parameters:
@@ -296,7 +296,8 @@ def fitness_func(solution, solution_idx=None):
 last_fitness, last_loss, current_fitness, current_loss = 0, 0, 0, 0
 def on_generation(ga_instance):
     """
-    This function is executed after _each_ generation.
+    This function is executed after _each_ generation. It prints useful 
+    information of the currect epoch.
     """
     global last_fitness, last_loss, current_fitness, current_loss
     print('--------------------------------------------------------------------------------')
@@ -315,7 +316,7 @@ def on_generation(ga_instance):
     print("    - mu0     = {solution}".format(solution=solution[1]))
     print("    - alpha   = {solution}".format(solution=solution[2]))
     print("    - delta1  = {solution}".format(solution=solution[3]))
-    print("    - delta2  = {solution}".format(solution=solution[4]))
+    print("    - delta2  = {solution}".format(solution=10**(solution[4])))
     print("    - tau_min = {solution}".format(solution=10**(solution[5])))
     print("    - tau_max = {solution}".format(solution=solution[6]))
 
@@ -368,12 +369,12 @@ ga_GRB.run()
 # SAVE THE MODEL
 ################################################################################
 
-# Saving the GA instance.
+# Save the GA instance.
 if save_model:
-    filename = 'geneticGRB'
-    ga_instance.save(filename=filename)
+    filename_model = 'geneticGRB'
+    ga_instance.save(filename=filename_model)
 
-# # Loading the saved GA instance.
+# # Load the saved GA instance.
 # loaded_ga_instance = pygad.load(filename=filename)
 # loaded_ga_instance.plot_fitness()
 
@@ -396,7 +397,7 @@ print("    - mu      = {solution}".format(solution=solution[0]))
 print("    - mu0     = {solution}".format(solution=solution[1]))
 print("    - alpha   = {solution}".format(solution=solution[2]))
 print("    - delta1  = {solution}".format(solution=solution[3]))
-print("    - delta2  = {solution}".format(solution=solution[4]))
+print("    - delta2  = {solution}".format(solution=10**(solution[4])))
 print("    - tau_min = {solution}".format(solution=10**(solution[5])))
 print("    - tau_max = {solution}".format(solution=solution[6]))
 print("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
@@ -461,7 +462,7 @@ file.write("    - alpha   = {solution}".format(solution=solution[2]))
 file.write('\n')
 file.write("    - delta1  = {solution}".format(solution=solution[3]))
 file.write('\n')
-file.write("    - delta2  = {solution}".format(solution=solution[4]))
+file.write("    - delta2  = {solution}".format(solution=10**(solution[4])))
 file.write('\n')
 file.write("    - tau_min = {solution}".format(solution=10**(solution[5])))
 file.write('\n')
@@ -497,22 +498,23 @@ plt.savefig('fig01.pdf')
 plt.clf()
 
 
-loss_list = ga_GRB.solutions_fitness
-avg_loss  = np.zeros(num_generations+1)
-std_loss  = np.zeros(num_generations+1)
+fitness_list = np.array(ga_GRB.solutions_fitness)
+loss_list    = 1. / (fitness_list + 1.e-9)
+avg_loss     = np.zeros(num_generations+1)
+std_loss     = np.zeros(num_generations+1)
 for i in range(num_generations+1):
         avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
         std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
 plt.errorbar(np.arange(num_generations+1), avg_loss, yerr=std_loss/np.sqrt(sol_per_pop), ls='-', lw=2, c='b')
 #plt.yscale('log')
-plt.xlabel('Generation')
+plt.xlabel(r'Generation')
 plt.ylabel(r'Average Loss')
 plt.savefig('fig02.pdf')
 plt.clf()
 
 
 plt.plot(std_loss, ls='-', lw=2, c='b')
-plt.xlabel('Generation')
+plt.xlabel(r'Generation')
 plt.ylabel(r'Standard Deviation of the loss')
 plt.savefig('fig03.pdf')
 plt.clf()
