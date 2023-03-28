@@ -139,7 +139,7 @@ def evaluateDuration20(times, counts, filter=False, t90=None, bin_time=None):
 
 ################################################################################
 
-def evaluateGRB_SN(times, counts, errs, t90, bin_time):
+def evaluateGRB_SN(times, counts, errs, t90, bin_time, filter):
     """
     Compute the S/N ratio between the total signal from a GRB and the background
     in a time interval equal to the GRB duration, as defined in Stern+96, i.e.,
@@ -159,7 +159,7 @@ def evaluateGRB_SN(times, counts, errs, t90, bin_time):
     """
     _, tstart, tstop = evaluateDuration20(times=times, 
                                           counts=counts, 
-                                          filter=True, 
+                                          filter=filter, 
                                           t90=t90, 
                                           bin_time=bin_time)
     
@@ -465,7 +465,7 @@ def load_lc_sim(path):
 
 ################################################################################
 
-def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_distr=False, verbose=True):
+def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_distr=False, verbose=True, filter=True):
     """
     Given as input a list of GBR objects, the function outputs a list containing
     only the GRBs that satisfy the following constraint:
@@ -487,17 +487,25 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_d
     """
     good_grb_list = []
     sn_levels     = []
+    grb_with_neg_t20 = 0
     for grb in grb_list:
         times   = np.float32(grb.times)
         counts  = np.float32(grb.counts)
         errs    = np.float32(grb.errs)
         t90     = np.float32(grb.t90)
         i_c_max = np.argmax(counts)
-        s_n     = evaluateGRB_SN(times=times, 
+        try:
+            s_n     = evaluateGRB_SN(times=times, 
                                  counts=counts, 
                                  errs=errs, 
                                  t90=t90,
-                                 bin_time=bin_time)
+                                 bin_time=bin_time,
+                                 filter = filter)
+        except AssertionError:
+            #remove GRB if the t20% is negative
+            #@@@@@Potrebbe essere meglio definire un filtraggio fisso
+            grb_with_neg_t20 += 1
+            cond_2 = False
         #s_n_peak = evaluateGRB_SN_peak(counts=counts, errs=errs)
         if sn_distr:
             sn_levels.append(s_n)
@@ -510,6 +518,7 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_d
 
     if verbose:
         print("Total number of input GRBs: ", len(grb_list))
+        print("GRBs with negative duration: ", grb_with_neg_t20)
         print("GRBs that satisfy the constraints: ", len(good_grb_list)) 
 
     if sn_distr:
