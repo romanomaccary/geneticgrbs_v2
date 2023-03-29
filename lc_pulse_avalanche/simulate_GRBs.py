@@ -78,10 +78,10 @@ t_f=150 # [s]
 
 N_grb=1000
 
-instrument = 'batse'
+#instrument = 'batse'
 #instrument = 'swift'
 #instrument = 'sax'
-#instrument = 'sax_lr'
+instrument = 'sax_lr'
 if instrument=='batse':
     res           = 0.064 # time resolution of the light curves [ms]
     eff_area      = 3600  # effective area of instrument [cm2]
@@ -107,7 +107,7 @@ elif instrument=='sax_lr':
     t90_threshold = 2               # [s] --> used to select only _long_ GRBs
     sn_threshold  = 10
 else:
-    raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
+    raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax", "sax_lr".')
 
 
 ################################################################################
