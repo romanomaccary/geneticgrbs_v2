@@ -29,8 +29,8 @@ elif user=='LB':
     sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/statistical_test')
     sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/lc_pulse_avalanche')
 elif user=='AF':
-    sys.path.append('......WRITE_HERE....../lc_pulse_avalanche/statistical_test')
-    sys.path.append('......WRITE_HERE....../lc_pulse_avalanche/lc_pulse_avalanche')
+    sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/statistical_test')
+    sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
@@ -81,6 +81,7 @@ N_grb=1000
 instrument = 'batse'
 #instrument = 'swift'
 #instrument = 'sax'
+#instrument = 'sax_lr'
 if instrument=='batse':
     res           = 0.064 # time resolution of the light curves [ms]
     eff_area      = 3600  # effective area of instrument [cm2]
@@ -95,6 +96,12 @@ elif instrument=='swift':
     sn_threshold  = 15
 elif instrument=='sax':
     res           = 0.0078125       # time resolution of the light curves [s]
+    eff_area      = 420             # effective area of instrument [cm2]
+    bg_level      = (1000/eff_area) # background level [cnt/cm2/s]
+    t90_threshold = 2               # [s] --> used to select only _long_ GRBs
+    sn_threshold  = 10
+elif instrument=='sax_lr':
+    res           = 1               # time resolution of the light curves [s]
     eff_area      = 420             # effective area of instrument [cm2]
     bg_level      = (1000/eff_area) # background level [cnt/cm2/s]
     t90_threshold = 2               # [s] --> used to select only _long_ GRBs
