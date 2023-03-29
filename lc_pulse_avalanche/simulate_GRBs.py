@@ -132,6 +132,7 @@ _ = generate_GRBs(# number of simulated GRBs to produce
                   t90_threshold=t90_threshold,
                   sn_threshold=sn_threshold, 
                   t_f=t_f, 
+                  filter = False,
                   # other parameters
                   export_files=True, 
                   export_path=export_path, 

@@ -567,9 +567,8 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_d
                                  filter = filter)
         except AssertionError:
             #remove GRB if the t20% is negative
-            #@@@@@Potrebbe essere meglio definire un filtraggio fisso
             grb_with_neg_t20 += 1
-            cond_2 = False
+            s_n = 0
         #s_n_peak = evaluateGRB_SN_peak(counts=counts, errs=errs)
         if sn_distr:
             sn_levels.append(s_n)
@@ -1116,7 +1115,7 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 def generate_GRBs(N_grb, # number of simulated GRBs to produce
                   mu, mu0, alpha, delta1, delta2, tau_min, tau_max, # 7 parameters
                   instrument, bin_time, eff_area, bg_level, # instrument parameters
-                  t90_threshold, sn_threshold, t_f, # constraint parameters
+                  t90_threshold, sn_threshold, t_f, filter = True, # constraint parameters
                   export_files=False, export_path='None', # other parameters
                   n_cut=2000, with_bg=False, seed=None # other parameters
                   ):
@@ -1230,7 +1229,8 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                                               t90_threshold=t90_threshold, 
                                               sn_threshold=sn_threshold, 
                                               t_f=t_f,
-                                              verbose=False)
+                                              verbose=False, 
+                                              filter = filter)
         # save the GRB into the final list _only_ if it passed the
         # constraints selection
         if (len(grb_list_sim_temp)==1):
