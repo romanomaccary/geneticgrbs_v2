@@ -93,7 +93,7 @@ class GRB:
 
 ################################################################################
 
-def evaluateDuration20(times, counts, filter=False, t90=None, bin_time=None):
+def evaluateDuration20(times, counts, t90=None, bin_time=None, filter=True):
     """
     Compute the duration of the GRB event as described in [Stern et al., 1996].
     We define the starting time when the signal reaches the 20% of the value of
@@ -104,10 +104,10 @@ def evaluateDuration20(times, counts, filter=False, t90=None, bin_time=None):
     Inputs:
       - times: time values of the bins of the light-curve;
       - counts: counts per bin of the GRB;
-      - filter: boolean variable. Activate/deactivate the smoothing filter 
-                before computing the T20% duration;
       - t90: T90 duration of the GRB;
       - bin_time: temporal bin size of the instrument [s];
+      - filter: boolean variable. If True, it activates the smoothing savgol
+                filter before computing the T20% duration;
     Output:
       - duration: T20%, that is, the duration at 20% level;
     """
@@ -154,14 +154,15 @@ def evaluateGRB_SN(times, counts, errs, t90, bin_time, filter):
      - errs: errors over the counts;
      - t90: T90 of the GRB;
      - bin_time: temporal bin size of the instrument [s];
+     - filter: if True, apply savgol filter;
     Output:
      - s2n: signal to noise ratio;
     """
     _, tstart, tstop = evaluateDuration20(times=times, 
-                                          counts=counts, 
-                                          filter=filter, 
+                                          counts=counts,
                                           t90=t90, 
-                                          bin_time=bin_time)
+                                          bin_time=bin_time,
+                                          filter=filter)
     
     event_times_mask = np.logical_and(times>=tstart, times<=tstop)
     sum_grb_counts   = np.sum( counts[event_times_mask] )
@@ -226,6 +227,7 @@ def load_lc_batse(path):
     return grb_list_batse
 
 ################################################################################
+
 def load_lc_swift(path):
     """
     Load the Swift light curves, and put each of them in an object inside
@@ -529,7 +531,8 @@ def load_lc_sim(path):
 
 ################################################################################
 
-def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_distr=False, verbose=True, filter=True):
+def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, 
+                      sn_distr=False, filter=True, verbose=True):
     """
     Given as input a list of GBR objects, the function outputs a list containing
     only the GRBs that satisfy the following constraint:
@@ -543,6 +546,7 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_d
     - t_f: time after the peak that we need the signal to last [s];
     - sn_distr: if True, return also the distribution of the s2n of all the 
                 GRBs in input;
+    - filter: if True, is applies a savgol filter before computing the S2N;
     Output:
     - good_grb_list: list of GRB objects, where each one is a GRB that satisfies
                      the 3 constraints described above;
@@ -559,17 +563,16 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_d
         t90     = np.float32(grb.t90)
         i_c_max = np.argmax(counts)
         try:
-            s_n     = evaluateGRB_SN(times=times, 
+            s_n = evaluateGRB_SN(times=times, 
                                  counts=counts, 
                                  errs=errs, 
                                  t90=t90,
                                  bin_time=bin_time,
-                                 filter = filter)
+                                 filter=filter)
         except AssertionError:
             #remove GRB if the t20% is negative
             grb_with_neg_t20 += 1
             s_n = 0
-        #s_n_peak = evaluateGRB_SN_peak(counts=counts, errs=errs)
         if sn_distr:
             sn_levels.append(s_n)
         cond_1 = t90>t90_threshold
@@ -656,7 +659,8 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, sn_d
 
 ################################################################################
 
-def compute_average_quantities(grb_list, t_f=150, bin_time=0.064, filter=True, filter_window=21):
+def compute_average_quantities(grb_list, t_f=150, bin_time=0.064, 
+                               filter=True, filter_window=21):
     """
     Compute the averaged peak-aligned fluxes of the GRBs, following the 
     technique described in [Mitrofanov et al., 1996]. We need only the signal
@@ -970,30 +974,30 @@ def make_plot(instrument,
 
     print('- plotting the distribution of the durations...')
     ax[1,1].set_axisbelow(True)
-    ax[1,1].set_ylabel('(Normalized) Number of events',     size=18)
+    ax[1,1].set_ylabel('(Normalized) Number of events',    size=18)
     if log:
-        ax[1,1].set_xlabel(r'$\log\mathrm{duration}$ [s]',  size=18)
+        ax[1,1].set_xlabel(r'$\log\mathrm{duration}$ [s]', size=18)
     else:
-        ax[1,1].set_xlabel(r'$\mathrm{duration}$ [s]',      size=18)
+        ax[1,1].set_xlabel(r'$\mathrm{duration}$ [s]',     size=18)
 
     if hist:
         n_bins=30
         n1, bins, patches = ax[1,1].hist(x=duration,
-                                        bins=n_bins,
-                                        alpha=1.00,
-                                        label=label_instr, 
-                                        color='b',
-                                        histtype='step',
-                                        linewidth=4,
-                                        density=True)
+                                         bins=n_bins,
+                                         alpha=1.00,
+                                         label=label_instr, 
+                                         color='b',
+                                         histtype='step',
+                                         linewidth=4,
+                                         density=True)
         n2, bins, patches = ax[1,1].hist(x=duration_sim,
-                                        bins=n_bins,
-                                        alpha=0.75,
-                                        label='Simulated', 
-                                        color='r',
-                                        histtype='step',
-                                        linewidth=4,
-                                        density=True)
+                                         bins=n_bins,
+                                         alpha=0.75,
+                                         label='Simulated', 
+                                         color='r',
+                                         histtype='step',
+                                         linewidth=4,
+                                         density=True)
         if log:
             pass
         else:
@@ -1004,7 +1008,7 @@ def make_plot(instrument,
     else: # kernel density estimation
         h_opt = 0.09 # values obtained with GridSearch optimization; see the notebook in DEBUG section
         if log:
-            x_grid = np.linspace(-2, 5,  1000)
+            x_grid = np.linspace(-2,  5, 1000)
         else:
             x_grid = np.linspace(-2, 15, 1000)
         y_plot_real   = stats.norm.pdf(x_grid, duration[:, None],     h_opt)
@@ -1115,7 +1119,7 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 def generate_GRBs(N_grb, # number of simulated GRBs to produce
                   mu, mu0, alpha, delta1, delta2, tau_min, tau_max, # 7 parameters
                   instrument, bin_time, eff_area, bg_level, # instrument parameters
-                  t90_threshold, sn_threshold, t_f, filter = True, # constraint parameters
+                  t90_threshold, sn_threshold, t_f, filter=True, # constraint parameters
                   export_files=False, export_path='None', # other parameters
                   n_cut=2000, with_bg=False, seed=None # other parameters
                   ):
@@ -1142,6 +1146,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
     - t90_threshold:
     - sn_threshold: 
     - t_f:
+    - filter:
     ### other parameters
     - n_cut:
     - with_bg:
@@ -1229,8 +1234,8 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                                               t90_threshold=t90_threshold, 
                                               sn_threshold=sn_threshold, 
                                               t_f=t_f,
-                                              verbose=False, 
-                                              filter = filter)
+                                              filter=filter,
+                                              verbose=False)
         # save the GRB into the final list _only_ if it passed the
         # constraints selection
         if (len(grb_list_sim_temp)==1):

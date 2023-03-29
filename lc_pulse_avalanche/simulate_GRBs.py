@@ -72,16 +72,24 @@ tau_max = 26
 # tau_min = 0.06234108759332604
 # tau_max = 23.443421866972386
 
+# The 7 values obtained from an EARLY v3 optimization are
+# mu      = 1.3824946258409123
+# mu0     = 1.15547634120758
+# alpha   = 5.240511090395332
+# delta1  = -0.45579705811174676
+# delta2  = 0.1341616114704469
+# tau_min = 0.003487215483012309
+# tau_max = 32.858056193896196
 
 t_i=0   # [s]
 t_f=150 # [s]
 
 N_grb=1000
 
-#instrument = 'batse'
+instrument = 'batse'
 #instrument = 'swift'
 #instrument = 'sax'
-instrument = 'sax_lr'
+#instrument = 'sax_lr'
 if instrument=='batse':
     res           = 0.064 # time resolution of the light curves [ms]
     eff_area      = 3600  # effective area of instrument [cm2]
@@ -132,7 +140,7 @@ _ = generate_GRBs(# number of simulated GRBs to produce
                   t90_threshold=t90_threshold,
                   sn_threshold=sn_threshold, 
                   t_f=t_f, 
-                  filter = False,
+                  filter=True,
                   # other parameters
                   export_files=True, 
                   export_path=export_path, 
