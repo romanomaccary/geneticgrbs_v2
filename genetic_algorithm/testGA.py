@@ -18,16 +18,17 @@ from matplotlib import rc
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 rc('text', usetex=True)
 
-seed=42
-np.random.seed(seed)
+random_seed=None
+#random_seed=42
+#np.random.seed(random_seed)
 
-print_time = 1
+print_time=True
 
 ################################################################################
 # SET PATHS
 ################################################################################
 
-# set the username for the path of the files:
+# Set the username for the path of the files:
 #user='LB'
 #user='AF'
 user='bach'
@@ -49,8 +50,8 @@ elif user=='LB':
     sax_path   = '/home/lorenzo/Desktop/Astrophysics/PYTHON/DATA/BeppoSAX_GRBM/'
 elif user=='AF':
     # libraries
-    sys.path.append('......WRITE_HERE....../lc_pulse_avalanche/statistical_test')
-    sys.path.append('......WRITE_HERE....../lc_pulse_avalanche/lc_pulse_avalanche')
+    sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/statistical_test')
+    sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
     # real data
     batse_path = 'E:/grb_to_test/CGRO_BATSE/'
     swift_path = 'E:/grb_to_test/Swift_BAT/'
@@ -59,14 +60,14 @@ else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
 from statistical_test import *
-from avalanche import LC, Restored_LC
+from avalanche import LC #, Restored_LC
 
 
 ################################################################################
 # SET PARAMETERS
 ################################################################################
 
-# choose the instrument
+# Choose the instrument
 instrument = 'batse'
 #instrument = 'swift'
 #instrument = 'sax'
@@ -107,14 +108,21 @@ else:
 
 #------------------------------------------------------------------------------#
 
-num_generations      = 5                      # Number of generations.
-sol_per_pop          = 2000                   # Number of solutions in the population.
-num_parents_mating   = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
-keep_parents         = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
-keep_elitism         = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
-mutation_probability = 0.01                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
+parent_selection_type = 'sss'
+crossover_probability = 0.5   # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
+initial_population    = None  # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
+mutation_type         = "random"
+crossover_type        = "scattered"
+parallel_processing   = ["process", 50] # None
 
-# The values of the 7 parameters from the paper [Stern & Svensson, 1996] are
+num_generations       = 10                     # Number of generations.
+sol_per_pop           = 2000                   # Number of solutions in the population.
+num_parents_mating    = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
+keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
+keep_elitism          = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
+mutation_probability  = 0.01                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
+
+# The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
 # mu0=1
 # alpha=4
@@ -124,13 +132,13 @@ mutation_probability = 0.01                   # by default is 'None', otherwise 
 # tau_max=26
 
 # We impose constraints on the range of values that the 7 parameter can assume
-range_mu      = {"low": 0.75,            "high": 1.5}
-range_mu0     = {"low": 0.75,            "high": 1.5} 
-range_alpha   = {"low": 1,               "high": 10} 
-range_delta1  = {"low": -1.5,            "high": -0.25-1.e-9} 
+range_mu      = {"low": 0.80,            "high": 1.6}
+range_mu0     = {"low": 0.80,            "high": 1.6} 
+range_alpha   = {"low": 1,               "high": 12} 
+range_delta1  = {"low": -1.5,            "high": -0.25-1.e-6} 
 range_delta2  = {"low": np.log10(1.e-9), "high": np.log10(0.25)}           # sample uniformly in log space
-range_tau_min = {"low": np.log10(1.e-9), "high": np.log10(bin_time-1.e-9)} # sample uniformly in log space
-range_tau_max = {"low": bin_time+15,     "high": 35} 
+range_tau_min = {"low": np.log10(1.e-6), "high": np.log10(bin_time-1.e-6)} # sample uniformly in log space
+range_tau_max = {"low": bin_time+15,     "high": 40} 
 
 range_constraints = [range_mu, 
                      range_mu0,
@@ -281,10 +289,10 @@ def fitness_func(solution, solution_idx=None):
                                                       mode='scipy')
     ### TEST 4: Duration
     duration_sim = [ evaluateDuration20(times=grb.times, 
-                                         counts=grb.counts,
-                                         filter=True,
-                                         t90=grb.t90,
-                                         bin_time=bin_time)[0] for grb in grb_list_sim ]
+                                        counts=grb.counts,
+                                        filter=True,
+                                        t90=grb.t90,
+                                        bin_time=bin_time)[0] for grb in grb_list_sim ]
     duration_distr_sim = compute_kde_duration(duration_list=duration_sim)
     #--------------------------------------------------------------------------#
     # Compute loss
@@ -342,27 +350,27 @@ ga_GRB = pygad.GA(num_generations=num_generations,
                   sol_per_pop=sol_per_pop,
                   num_genes=num_genes,
                   gene_type=float,
-                  initial_population=None,      # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
+                  initial_population=initial_population,
                   on_generation=on_generation,
                   ### fitness function:
                   fitness_func=fitness_func,
                   ### parent selection:
-                  parent_selection_type='sss',
+                  parent_selection_type=parent_selection_type,
                   keep_parents=keep_parents,           
                   keep_elitism=keep_elitism,           
                   ### crossover:
-                  crossover_probability=0.5,    # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
-                  crossover_type="scattered",
+                  crossover_probability=crossover_probability,
+                  crossover_type=crossover_type,
                   ### mutation:
-                  mutation_type="random",
-                  mutation_probability=mutation_probability,     # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
+                  mutation_type=mutation_type,
+                  mutation_probability=mutation_probability,     
                   ### set range of parameters:
                   gene_space=range_constraints,
                   ### other stuff:
                   save_best_solutions=True,
                   save_solutions=True,
-                  parallel_processing=["process", 50], # =None,
-                  random_seed=seed)
+                  parallel_processing=parallel_processing,
+                  random_seed=random_seed)
 
 # print summary of the GA
 ga_GRB.summary()
@@ -467,6 +475,7 @@ file.write('\n')
 file.write("OUTPUT")
 file.write('\n')
 file.write('################################################################################')
+file.write('\n')
 file.write('\n')
 file.write("* Parameters of the best solution:")
 file.write('\n')
