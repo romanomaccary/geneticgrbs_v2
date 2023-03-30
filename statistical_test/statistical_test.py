@@ -660,7 +660,8 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
 ################################################################################
 
 def compute_average_quantities(grb_list, t_f=150, bin_time=0.064, 
-                               filter=True, filter_window=21):
+                               filter=True, filter_window=21,
+                               compute_rms=False):
     """
     Compute the averaged peak-aligned fluxes of the GRBs, following the 
     technique described in [Mitrofanov et al., 1996]. We need only the signal
@@ -682,6 +683,8 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064,
     averaged_fluxes        = np.zeros(n_steps)
     averaged_fluxes_square = np.zeros(n_steps)
     averaged_fluxes_cube   = np.zeros(n_steps)
+    if compute_rms:
+        averaged_fluxes_cube_square = np.zeros(n_steps)
 
     for grb in grb_list:
         c_max         = np.max(grb.counts)
@@ -692,11 +695,18 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064,
         averaged_fluxes        += fluxes_to_sum
         averaged_fluxes_square += fluxes_to_sum**2
         averaged_fluxes_cube   += fluxes_to_sum**3
+        if compute_rms:
+            averaged_fluxes_cube_square = fluxes_to_sum**6
 
     averaged_fluxes        /= len(grb_list)
     averaged_fluxes_square /= len(grb_list)
     averaged_fluxes_cube   /= len(grb_list)
-    averaged_fluxes_rms     = np.sqrt(averaged_fluxes_square - averaged_fluxes**2)
+    if compute_rms:
+        averaged_fluxes_cube_square /= len(grb_list)
+
+    averaged_fluxes_rms = np.sqrt(averaged_fluxes_square - averaged_fluxes**2)
+    if compute_rms:
+        averaged_fluxes_cube_rms = np.sqrt(averaged_fluxes_cube_square - averaged_fluxes_cube**2)
 
     if filter:
         averaged_fluxes      = savgol_filter(x=averaged_fluxes,      
@@ -705,16 +715,26 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064,
         averaged_fluxes_rms  = savgol_filter(x=averaged_fluxes_rms,  
                                              window_length=filter_window, 
                                              polyorder=2)
+        averaged_fluxes_rms[0] = 0 # if we smooth, we loose the fact that the rms has to be 0 in zero                                     
         averaged_fluxes_cube = savgol_filter(x=averaged_fluxes_cube, 
                                              window_length=filter_window, 
                                              polyorder=2)
-        averaged_fluxes_rms[0] = 0 # if we smooth, we loose the fact that the rms has to be 0 in zero
-
-    return averaged_fluxes, averaged_fluxes_cube, averaged_fluxes_rms 
+        if compute_rms:
+            averaged_fluxes_cube_rms = savgol_filter(x=averaged_fluxes_rms,  
+                                                      window_length=filter_window, 
+                                                      polyorder=2)
+            averaged_fluxes_cube_rms[0] = 0 # if we smooth, we loose the fact that the rms has to be 0 in zero 
+        
+    if compute_rms:
+        return averaged_fluxes, averaged_fluxes_cube, averaged_fluxes_rms, averaged_fluxes_cube_rms
+    else:
+        return averaged_fluxes, averaged_fluxes_cube, averaged_fluxes_rms 
 
 ################################################################################
 
-def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, bin_time=0.064, mode='scipy'):
+def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, 
+                            bin_time=0.064, mode='scipy',
+                            compute_rms=False):
     """
     Compute the autocorrelation (ACF) of the GRBs. The ACF is computed up to
     a shift of the light curve of t_max = 150 seconds. 
@@ -729,18 +749,17 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, bin_time=0.064,
             automatically chooses direct or Fourier method based on an estimate
             of which is faster.
             'link93': use the method described in Link et al., 1993;
+    - compute_rms: if True, the function computes and returns also the rms of 
+                   the autocorrelation;
     Outputs:
     - steps: time lags of the autocorrelation;
-    - acf_scipy: autocorrelation computed with scipy.signal.correlate function;
-    - acf_link: autocorrelation computed as in Link et al., 1993;
+    - acf: autocorrelation;
     """
 
-    steps = int((t_max-t_min)/bin_time) # number of steps for ACF
-    if mode=='link93':
-        acf_link   = np.zeros(steps)
-        steps_link = np.arange(steps) 
-    elif mode=='scipy':
-        acf_scipy  = np.zeros(steps)
+    steps   = int((t_max-t_min)/bin_time) # number of steps for ACF
+    acf_sum = np.zeros(steps)
+    if compute_rms:
+        acf_sum_square = np.zeros(steps)
 
     # Evaluate ACF
     for grb in grb_list[:N_lim]:
@@ -748,32 +767,35 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, bin_time=0.064,
         errs   = np.array(grb.errs)
         if mode=='scipy':
             acf   = signal.correlate(in1=counts, in2=counts, method='auto')
-            acf   = acf / np.max(acf)
-            #acf  = acf / np.sum(counts**2)
+            acf   = acf / np.max(acf)  # np.max(acf) is equal to np.sum(counts**2)
             lags  = signal.correlation_lags(in1_len=len(counts), in2_len=len(counts))
-            idx_i = np.where(lags*bin_time==t_min)[0][ 0] # select the index corresponding to t=0 s
-            idx_f = np.where(lags*bin_time<=t_max)[0][-1] # select the index corresponding to t=150 s
+            idx_i = np.where(lags*bin_time==t_min)[0][ 0] # select the index corresponding to t =   0 s
+            idx_f = np.where(lags*bin_time<=t_max)[0][-1] # select the index corresponding to t = 150 s
             assert lags[idx_i]==t_min, "ERROR: The left limit of the autocorrelation is not computed correctly..."
             assert np.isclose(lags[idx_f]*bin_time, t_max, atol=1e-1), "ERROR: The right limit of the autocorrelation is not computed correctly..."         
-            acf       = acf[idx_i:idx_f] # select only the autocorrelation up to a shift of t_max = 150 sec
-            acf_scipy = acf_scipy + acf
+            acf = acf[idx_i:idx_f] # select only the autocorrelation up to a shift of t_max = 150 s
         elif mode=='link93':
             # errs=0
-            acf      = [np.sum((np.roll(counts, u) * counts)[u:]) / np.sum(counts**2 - errs**2) for u in range(steps)]
-            acf_link = acf_link + acf
+            acf = [np.sum((np.roll(counts, u) * counts)[u:]) / np.sum(counts**2 - errs**2) for u in range(steps)]
+        acf_sum += acf
+        if compute_rms:
+            acf_sum_square += acf**2
 
-    del(acf)
+    acf = acf_sum/N_lim
+    if compute_rms:
+        acf_square = acf_sum_square/N_lim
+        acf_rms    = np.sqrt(acf_square - acf**2)
+
     if mode=='scipy':
-        acf    = acf_scipy
-        acf   /= N_lim
         steps  = lags[idx_i:idx_f]
     elif mode=='link93':
-        acf    = acf_link   
-        acf   /= N_lim
         acf[0] = 1
-        steps  = steps_link 
+        steps  = np.arange(steps) 
 
-    return steps, acf
+    if compute_rms:
+        return steps, acf, acf_rms
+    else:
+        return steps, acf
 
 ################################################################################
 
@@ -846,16 +868,25 @@ def compute_loss(averaged_fluxes=None,      averaged_fluxes_sim=None,
 
 ################################################################################
 
-def make_plot(instrument, 
-              test_times, 
+def make_plot(instrument, test_times, 
+              # plot 1
               averaged_fluxes,      averaged_fluxes_sim,
               averaged_fluxes_rms,  averaged_fluxes_rms_sim,
+              # plot 2
               averaged_fluxes_cube, averaged_fluxes_cube_sim,
+              # plot 3
               steps, steps_sim, bin_time, 
               acf, acf_sim,
+              # plot 4
               duration, duration_sim,
+              # mode
               log=True, hist=False, 
-              err_bars=False, n_grb_sim=1000, n_grb_real=1000,
+              # error bars
+              err_bars=False, sigma=1,
+              averaged_fluxes_cube_rms=None, averaged_fluxes_cube_rms_sim=None,
+              acf_rms=None,                  acf_rms_sim=None,
+              n_grb_real=None,               n_grb_sim=1000, 
+              # save plot
               save_fig=False, name_fig='fig.pdf'):
     """
     Make plot as in Stern et al., 1996.
@@ -897,7 +928,6 @@ def make_plot(instrument,
     ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms_sim[1:], color='r', alpha=0.75)
     # error bars
     if err_bars:
-        sigma    = 3
         errs     = averaged_fluxes_rms     / np.sqrt(n_grb_real)
         errs_sim = averaged_fluxes_rms_sim / np.sqrt(n_grb_sim)
         #
@@ -945,13 +975,31 @@ def make_plot(instrument,
     # plots
     ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube,     color='b', label=label_instr)
     ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube_sim, color='r', label='Simulated', alpha=0.75)
+    # error bars
+    if err_bars:
+        errs     = averaged_fluxes_cube_rms     / np.sqrt(n_grb_real)
+        errs_sim = averaged_fluxes_cube_rms_sim / np.sqrt(n_grb_sim)
+        #
+        ax[0,1].fill_between(test_times**(1/3),
+                             averaged_fluxes_cube-sigma*errs,
+                             averaged_fluxes_cube+sigma*errs,
+                             color='b',
+                             alpha=0.25) 
+        ax[0,1].fill_between(test_times**(1/3),
+                             averaged_fluxes_cube_sim-sigma*errs_sim,
+                             averaged_fluxes_cube_sim+sigma*errs_sim,
+                             color='r',
+                             alpha=0.25)
+
     # set scale
     if log:
         ax[0,1].set_yscale('log', base=10)
-        #ax[0,0].set_xlim(0,test_times[-1]**(1/3))
+        #ax[0,1].set_xlim(0,test_times[-1]**(1/3))
+        if err_bars:
+            ax[0,1].set_ylim(7.e-5, 1)
     else:
         pass
-        #ax[0,0].set_xlim(0,test_times[-1]**(1/3))
+        #ax[0,1].set_xlim(0,test_times[-1]**(1/3))
     # set labels
     ax[0,1].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',         size=18)
     if log:
@@ -974,6 +1022,21 @@ def make_plot(instrument,
     # plots
     ax[1,0].plot((steps    *bin_time)**(1/3), acf,     color='b', label=label_instr)
     ax[1,0].plot((steps_sim*bin_time)**(1/3), acf_sim, color='r', label='Simulated', alpha=0.75)
+    # error bars
+    if err_bars:
+        errs     = acf_rms     / np.sqrt(n_grb_real)
+        errs_sim = acf_rms_sim / np.sqrt(n_grb_sim)
+        #
+        ax[1,0].fill_between((steps*bin_time)**(1/3),
+                             acf-sigma*errs,
+                             acf+sigma*errs,
+                             color='b',
+                             alpha=0.25) 
+        ax[1,0].fill_between((steps_sim*bin_time)**(1/3),
+                             acf_sim-sigma*errs_sim,
+                             acf_sim+sigma*errs_sim,
+                             color='r',
+                             alpha=0.25)
     # set scale
     if log:
         ax[1,0].set_yscale('log', base=10)
