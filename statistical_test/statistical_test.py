@@ -678,7 +678,7 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064,
     - averaged_fluxes_cube:   <(F/F_p)^3>
     - averaged_fluxes_rms : ( <(F/F_p)^2> - <F/F_p>^2 )^(1/2)
     """
-    n_steps=int(t_f/bin_time)
+    n_steps                = int(t_f/bin_time)
     averaged_fluxes        = np.zeros(n_steps)
     averaged_fluxes_square = np.zeros(n_steps)
     averaged_fluxes_cube   = np.zeros(n_steps)
@@ -708,6 +708,7 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064,
         averaged_fluxes_cube = savgol_filter(x=averaged_fluxes_cube, 
                                              window_length=filter_window, 
                                              polyorder=2)
+        averaged_fluxes_rms[0] = 0 # if we smooth, we loose the fact that the rms has to be 0 in zero
 
     return averaged_fluxes, averaged_fluxes_cube, averaged_fluxes_rms 
 
@@ -776,7 +777,7 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, bin_time=0.064,
 
 ################################################################################
 
-def compute_kde_duration(duration_list, x_left=-2, x_right=5, h_opt=0.09):
+def compute_kde_log_duration(duration_list, x_left=-2, x_right=5, h_opt=0.09):
     """
     Compute the kernel density estimate of the distribution of the (log10) of
     the duration of the selected GRBs;
@@ -820,8 +821,8 @@ def compute_loss(averaged_fluxes=None,      averaged_fluxes_sim=None,
         averaged_fluxes_cube_sim = np.log10(averaged_fluxes_cube_sim)
         acf                      = np.log10(acf)
         acf_sim                  = np.log10(acf_sim)
-        # 'duration'     is already in log scale, since it is the output of compute_kde_duration()
-        # 'duration_sim' is already in log scale, since it is the output of compute_kde_duration()
+        # 'duration'     is already in log scale, since it is the output of compute_kde_log_duration()
+        # 'duration_sim' is already in log scale, since it is the output of compute_kde_log_duration()
 
     l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
     l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
@@ -838,7 +839,7 @@ def compute_loss(averaged_fluxes=None,      averaged_fluxes_sim=None,
         # loss functions all in the range ~ np.abs( [0,1] ), which is the one
         # obtained by NOT choosing the log on averaged_fluxes, averaged_fluxes_cube,
         # and acf, while choosing the log for duration (which is automatically
-        # in log scale, since it is the output of the function compute_kde_duration())
+        # in log scale, since it is the output of the function compute_kde_log_duration())
         pass
                           
     return l2_loss
