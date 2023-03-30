@@ -855,6 +855,7 @@ def make_plot(instrument,
               acf, acf_sim,
               duration, duration_sim,
               log=True, hist=False, 
+              err_bars=False, n_grb_sim=1000, n_grb_real=1000,
               save_fig=False, name_fig='fig.pdf'):
     """
     Make plot as in Stern et al., 1996.
@@ -863,126 +864,147 @@ def make_plot(instrument,
 
     if instrument=='batse':
         label_instr='BATSE'
+        n_grb_real=578
     elif instrument=='swift':
         label_instr='Swift'
+        n_grb_real=561
     elif instrument=='sax':
         label_instr='BeppoSAX'
+        n_grb_real=121
     else:
         raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
-    if log:
-        averaged_fluxes          = np.log10(averaged_fluxes)    
-        averaged_fluxes_sim      = np.log10(averaged_fluxes_sim) 
-        averaged_fluxes_rms      = np.log10(averaged_fluxes_rms[1:])  
-        averaged_fluxes_rms_sim  = np.log10(averaged_fluxes_rms_sim[1:])
-        averaged_fluxes_cube     = np.log10(averaged_fluxes_cube) 
-        averaged_fluxes_cube_sim = np.log10(averaged_fluxes_cube_sim) 
-        acf                      = np.log10(acf)
-        acf_sim                  = np.log10(acf_sim)
-        duration                 = np.log10(duration)
-        duration_sim             = np.log10(duration_sim)
-    else:    
-        averaged_fluxes          = np.array(averaged_fluxes)
-        averaged_fluxes_sim      = np.array(averaged_fluxes_sim)
-        averaged_fluxes_rms      = np.array(averaged_fluxes_rms[1:])
-        averaged_fluxes_rms_sim  = np.array(averaged_fluxes_rms_sim[1:])
-        averaged_fluxes_cube     = np.array(averaged_fluxes_cube)
-        averaged_fluxes_cube_sim = np.array(averaged_fluxes_cube_sim)
-        acf                      = np.array(acf)
-        acf_sim                  = np.array(acf_sim)
-        duration                 = np.array(duration)
-        duration_sim             = np.array(duration_sim)
+    averaged_fluxes          = np.array(averaged_fluxes)
+    averaged_fluxes_sim      = np.array(averaged_fluxes_sim)
+    averaged_fluxes_rms      = np.array(averaged_fluxes_rms)
+    averaged_fluxes_rms_sim  = np.array(averaged_fluxes_rms_sim)
+    averaged_fluxes_cube     = np.array(averaged_fluxes_cube)
+    averaged_fluxes_cube_sim = np.array(averaged_fluxes_cube_sim)
+    acf                      = np.array(acf)
+    acf_sim                  = np.array(acf_sim)
+    duration                 = np.array(duration)
+    duration_sim             = np.array(duration_sim)
+
     #--------------------------------------------------------------------------#
     # <(F/F_p)>
     #--------------------------------------------------------------------------#
+    #print('- plotting <(F/F_p)>...')
 
-    print('- plotting <(F/F_p)>...')
-    ax[0,0].set_axisbelow(True)
+    # plots
+    ax[0,0].plot(test_times**(1/3),     averaged_fluxes,             color='b', alpha=1.00, label = label_instr)
+    ax[0,0].plot(test_times**(1/3),     averaged_fluxes_sim,         color='r', alpha=0.75, label = r'Simulated')
+    ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms[1:],     color='b', alpha=1.00)
+    ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms_sim[1:], color='r', alpha=0.75)
+    # error bars
+    if err_bars:
+        sigma    = 3
+        errs     = averaged_fluxes_rms     / np.sqrt(n_grb_real)
+        errs_sim = averaged_fluxes_rms_sim / np.sqrt(n_grb_sim)
+        #
+        ax[0,0].fill_between(test_times**(1/3),
+                             averaged_fluxes-sigma*errs,
+                             averaged_fluxes+sigma*errs,
+                             color='b',
+                             alpha=0.25) 
+        ax[0,0].fill_between(test_times**(1/3),
+                             averaged_fluxes_sim-sigma*errs_sim,
+                             averaged_fluxes_sim+sigma*errs_sim,
+                             color='r',
+                             alpha=0.25)
+    # set scale
+    if log:
+        ax[0,0].set_yscale('log', base=10) 
+        #ax[0,0].set_xlim(0,test_times[-1]**(1/3))
+        if err_bars:
+            ax[0,0].set_ylim(1.e-3, 1.2)
+    else:
+        pass
+        #ax[0,0].set_xlim(0,test_times[-1]**(1/3))
+    # set labels
     ax[0,0].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',                       size=18)
     if log:
         ax[0,0].set_ylabel(r'$\log F_{rms},\quad \log \langle F/F_p\rangle$', size=18)
     else:
         ax[0,0].set_ylabel(r'$F_{rms},\quad \langle F/F_p\rangle$',           size=18)
     #
-    ax[0,0].plot(test_times**(1/3),     averaged_fluxes,         color = 'b', alpha=1.00, label = label_instr)
-    ax[0,0].plot(test_times**(1/3),     averaged_fluxes_sim,     color = 'r', alpha=0.75, label = r'Simulated')
-    ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms,     color = 'b', alpha=1.00)
-    ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms_sim, color = 'r', alpha=0.75)
+    ax[0,0].text(3,   10**(-0.7), r'$F_{rms}$',              fontsize=20)
+    ax[0,0].text(2.2, 10**(-1.7), r'$\langle F/F_p\rangle$', fontsize=20)
     #
-    if log:
-        ax[0,0].set_xlim(0,5)
-        ax[0,0].set_ylim(-3,0)
-    else:
-        pass
-    ax[0,0].text(3,   -0.7, r'$F_{rms}$',              fontsize=20)
-    ax[0,0].text(2.2, -1.7, r'$\langle F/F_p\rangle$', fontsize=20)
+    ax[0,0].grid(True, which="major", lw=1.0, ls="-")
+    ax[0,0].grid(True, which="minor", lw=0.3, ls="-")
     ax[0,0].xaxis.set_tick_params(labelsize=14)
     ax[0,0].yaxis.set_tick_params(labelsize=14)
     ax[0,0].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
-    print('\tdone')
+    #print('\tdone')
 
     #--------------------------------------------------------------------------#
     # <(F/F_p)^3>
     #--------------------------------------------------------------------------#
+    #print('- plotting <(F/F_p)^3>...')
 
-    print('- plotting <(F/F_p)^3>...')
-    ax[0,1].set_axisbelow(True)
+    # plots
+    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube,     color='b', label=label_instr)
+    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube_sim, color='r', label='Simulated', alpha=0.75)
+    # set scale
+    if log:
+        ax[0,1].set_yscale('log', base=10)
+        #ax[0,0].set_xlim(0,test_times[-1]**(1/3))
+    else:
+        pass
+        #ax[0,0].set_xlim(0,test_times[-1]**(1/3))
+    # set labels
     ax[0,1].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',         size=18)
     if log:
         ax[0,1].set_ylabel(r'$\log \langle (F/F_p)^3 \rangle$', size=18)
     else:
         ax[0,1].set_ylabel(r'$\langle (F/F_p)^3 \rangle$',      size=18)
     #
-    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube,     color='b', label=label_instr)
-    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube_sim, color='r', label='Simulated', alpha=0.75)
-    if log:
-        ax[0,1].set_xlim(0,5)
-        ax[0,1].set_ylim(-4,0)
-    else:
-        pass
+    ax[0,1].grid(True, which="major", lw=1.0, ls="-")
+    ax[0,1].grid(True, which="minor", lw=0.3, ls="-")
     ax[0,1].xaxis.set_tick_params(labelsize=14)
     ax[0,1].yaxis.set_tick_params(labelsize=14)
     ax[0,1].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
-    print('\tdone')
+    #print('\tdone')
 
     #--------------------------------------------------------------------------#
     # AUTOCORRELATION
     #--------------------------------------------------------------------------#
+    #print('- plotting the autocorrelation...')
 
-    print('- plotting the autocorrelation...')
+    # plots
     ax[1,0].plot((steps    *bin_time)**(1/3), acf,     color='b', label=label_instr)
     ax[1,0].plot((steps_sim*bin_time)**(1/3), acf_sim, color='r', label='Simulated', alpha=0.75)
+    # set scale
+    if log:
+        ax[1,0].set_yscale('log', base=10)
+    else:
+        pass
+    # set labels
     ax[1,0].set_xlabel(r'$(\mathrm{timelag}\ [s])^{1/3}$', size=18)
     if log:
         ax[1,0].set_ylabel(r'$\log \langle ACF \rangle$',  size=18)
     else:
         ax[1,0].set_ylabel(r'$\langle ACF \rangle$',       size=18)
     #
-    if log:
-        pass
-    else:
-        pass
-        #ax[1,0].set_xlim(0,5)
-        #ax[1,0].set_ylim(-2,0.2)
+    ax[1,0].grid(True, which="major", lw=1.0, ls="-")
+    ax[1,0].grid(True, which="minor", lw=0.3, ls="-")
     ax[1,0].xaxis.set_tick_params(labelsize=14)
     ax[1,0].yaxis.set_tick_params(labelsize=14)
     ax[1,0].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
-    print('\tdone')
+    #print('\tdone')
 
     #--------------------------------------------------------------------------#
     # HISTOGRAM OF DURATIONS
     #--------------------------------------------------------------------------#
+    #print('- plotting the distribution of the durations...')
 
-    print('- plotting the distribution of the durations...')
-    ax[1,1].set_axisbelow(True)
-    ax[1,1].set_ylabel('(Normalized) Number of events',    size=18)
     if log:
-        ax[1,1].set_xlabel(r'$\log\mathrm{duration}$ [s]', size=18)
-    else:
-        ax[1,1].set_xlabel(r'$\mathrm{duration}$ [s]',     size=18)
+        duration     = np.log10(duration)
+        duration_sim = np.log10(duration_sim)
 
     if hist:
-        n_bins=30
+        # histogram
+        n_bins='auto'
         n1, bins, patches = ax[1,1].hist(x=duration,
                                          bins=n_bins,
                                          alpha=1.00,
@@ -998,36 +1020,41 @@ def make_plot(instrument,
                                          color='r',
                                          histtype='step',
                                          linewidth=4,
-                                         density=True)
-        if log:
-            pass
-        else:
-            pass
-            #ax[1,1].set_xlim(-2,3)
-            #ax[1,1].set_ylim(0,30)
+                                         density=True)           
     
-    else: # kernel density estimation
-        h_opt = 0.09 # values obtained with GridSearch optimization; see the notebook in DEBUG section
+    else: 
+        # kernel density estimation
+        h_opt = 0.09 # values obtained with GridSearch optimization (see the notebook in DEBUG section)
         if log:
-            x_grid = np.linspace(-2,  5, 1000)
+            x_grid = np.linspace(-2,    5, 1000)
         else:
-            x_grid = np.linspace(-2, 15, 1000)
+            x_grid = np.linspace(-2, 1000, 1000)
         y_plot_real   = stats.norm.pdf(x_grid, duration[:, None],     h_opt)
         y_plot_sim    = stats.norm.pdf(x_grid, duration_sim[:, None], h_opt)
         y_plot_real  /= (len(duration))
         y_plot_sim   /= (len(duration_sim))
-        #
+        # plot
         ax[1,1].plot(x_grid, y_plot_real.sum(0), c='b', lw=3, label=label_instr)
         ax[1,1].plot(x_grid, y_plot_sim.sum(0),  c='r', lw=3, label='Simulated')
-        if log:
-            ax[1,1].set_xlim(-1.0,3.5)
-        else:
-            pass
-        
+
+    # set scale
+    if log:
+        ax[1,1].set_xlim(-1.0,3.5)
+    else:
+        pass
+    # set label
+    ax[1,1].set_ylabel('(Normalized) Number of events',    size=18)
+    if log:
+        ax[1,1].set_xlabel(r'$\log\mathrm{duration}$ [s]', size=18)
+    else:
+        ax[1,1].set_xlabel(r'$\mathrm{duration}$ [s]',     size=18)
+    #
+    ax[1,1].grid(True, which="major", lw=1.0, ls="-")
+    ax[1,1].grid(True, which="minor", lw=0.3, ls="-")
     ax[1,1].xaxis.set_tick_params(labelsize=14)
     ax[1,1].yaxis.set_tick_params(labelsize=14)
     ax[1,1].legend(prop={'size':15}, loc="upper left", facecolor='white', framealpha=0.5)
-    print('\tdone')
+    #print('\tdone')
 
     #from scipy.stats import ks_2samp
     #ks_test_res = ks_2samp(n1, n2)
