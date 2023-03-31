@@ -885,7 +885,7 @@ def make_plot(instrument, test_times,
               err_bars=False, sigma=1,
               averaged_fluxes_cube_rms=None, averaged_fluxes_cube_rms_sim=None,
               acf_rms=None,                  acf_rms_sim=None,
-              n_grb_real=None,               n_grb_sim=1000, 
+              n_grb_real=None,               n_grb_sim=None, 
               # save plot
               save_fig=False, name_fig='fig.pdf'):
     """
