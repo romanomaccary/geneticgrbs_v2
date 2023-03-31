@@ -1133,7 +1133,146 @@ def make_plot(instrument, test_times,
         plt.savefig(name_fig)
 
     plt.show()
- 
+
+################################################################################
+
+def make_plot_errs(test_times, 
+                   # plot 1
+                   averaged_fluxes,      
+                   averaged_fluxes_sim,
+                   averaged_fluxes_rms,  
+                   averaged_fluxes_rms_sim,
+                   # plot 2
+                   averaged_fluxes_cube, 
+                   averaged_fluxes_cube_sim,
+                   # plot 3
+                   steps, 
+                   bin_time, 
+                   acf,                  
+                   acf_sim,
+                   # 
+                   averaged_fluxes_cube_rms, 
+                   averaged_fluxes_cube_rms_sim,
+                   acf_rms,
+                   acf_rms_sim,
+                   n_grb_real,
+                   n_grb_sim, 
+                   # save plot
+                   save_fig=False, 
+                   name_fig='fig_errs.pdf'):
+    """
+    Make plot of delta value over error.
+    """
+
+    sigma  = 1.96 # 97.5th percentile point
+    sigma3 = 3 
+
+    test_times                   = np.array(test_times)
+    averaged_fluxes              = np.array(averaged_fluxes)
+    averaged_fluxes_sim          = np.array(averaged_fluxes_sim)
+    averaged_fluxes_rms          = np.array(averaged_fluxes_rms)
+    averaged_fluxes_rms_sim      = np.array(averaged_fluxes_rms_sim)
+    averaged_fluxes_cube         = np.array(averaged_fluxes_cube)
+    averaged_fluxes_cube_sim     = np.array(averaged_fluxes_cube_sim)
+    averaged_fluxes_cube_rms     = np.array(averaged_fluxes_cube_rms)
+    averaged_fluxes_cube_rms_sim = np.array(averaged_fluxes_cube_rms_sim)
+    acf                          = np.array(acf)
+    acf_sim                      = np.array(acf_sim)
+
+    fig, ax = plt.subplots(2, 2, figsize=(14,12))
+
+    #--------------------------------------------------------------------------#
+    # <(F/F_p)>
+    #--------------------------------------------------------------------------#
+
+    label = r'$\frac{\langle F/F_p \rangle_{sim}-\langle F/F_p \rangle_{real}}{\sqrt{\sigma^2_{sim}+\sigma^2_{real}}}$'
+    # plots
+    errs     = averaged_fluxes_rms[1:]     / np.sqrt(n_grb_real)
+    errs_sim = averaged_fluxes_rms_sim[1:] / np.sqrt(n_grb_sim)
+    ax[0,0].plot(test_times[1:]**(1/3), (averaged_fluxes_sim-averaged_fluxes)[1:]/np.sqrt(errs_sim**2+errs**2), c='b', label=label)
+    # sigma
+    ax[0,0].axhline(y=+sigma,  xmin=test_times[0]**(1/3), xmax=test_times[-1]**(1/3), c='k', ls='--', label=r'$1.96\sigma$')
+    ax[0,0].axhline(y=-sigma,  xmin=test_times[0]**(1/3), xmax=test_times[-1]**(1/3), c='k', ls='--')
+    ax[0,0].axhline(y=+sigma3, xmin=test_times[0]**(1/3), xmax=test_times[-1]**(1/3), c='r', ls='--', label=r'$3\sigma$')
+    ax[0,0].axhline(y=-sigma3, xmin=test_times[0]**(1/3), xmax=test_times[-1]**(1/3), c='r', ls='--')
+    # set labels
+    ax[0,0].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',         size=18)
+    ax[0,0].set_ylabel(r'$ \langle F/F_p\rangle$', size=18)
+    # set limits
+    ax[0,0].set_ylim(-5,5)
+    # other
+    ax[0,0].grid(True, which="major", lw=1.0, ls="-")
+    ax[0,0].grid(True, which="minor", lw=0.3, ls="-")
+    ax[0,0].xaxis.set_tick_params(labelsize=14)
+    ax[0,0].yaxis.set_tick_params(labelsize=14)
+    ax[0,0].legend(prop={'size':15}, loc="best", facecolor='white', framealpha=0.5)
+
+    #--------------------------------------------------------------------------#
+    # <(F/F_p)^3>
+    #--------------------------------------------------------------------------#
+
+    label = r'$\frac{\langle (F/F_p)^3 \rangle_{sim}-\langle (F/F_p)^3 \rangle_{real}}{\sqrt{\sigma^2_{sim}+\sigma^2_{real}}}$'
+    # plots
+    errs     = averaged_fluxes_cube_rms[1:]     / np.sqrt(n_grb_real)
+    errs_sim = averaged_fluxes_cube_rms_sim[1:] / np.sqrt(n_grb_sim)
+    ax[0,1].plot(test_times[1:]**(1/3), (averaged_fluxes_cube_sim[1:]-averaged_fluxes_cube[1:])/np.sqrt(errs_sim**2+errs**2), c='b', label=label)
+    # sigma
+    ax[0,1].axhline(y=+sigma,  xmin=test_times[0]**(1/3), xmax=test_times[-1]**(1/3), c='k', ls='--', label=r'$1.96\sigma$')
+    ax[0,1].axhline(y=-sigma,  xmin=test_times[0]**(1/3), xmax=test_times[-1]**(1/3), c='k', ls='--')
+    ax[0,1].axhline(y=+sigma3, xmin=test_times[0]**(1/3), xmax=test_times[-1]**(1/3), c='r', ls='--', label=r'$3\sigma$')
+    ax[0,1].axhline(y=-sigma3, xmin=test_times[0]**(1/3), xmax=test_times[-1]**(1/3), c='r', ls='--')
+    # set labels
+    ax[0,1].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',         size=18) 
+    # set limits
+    ax[0,1].set_ylim(-5,5)
+    # other
+    ax[0,1].grid(True, which="major", lw=1.0, ls="-")
+    ax[0,1].grid(True, which="minor", lw=0.3, ls="-")
+    ax[0,1].xaxis.set_tick_params(labelsize=14)
+    ax[0,1].yaxis.set_tick_params(labelsize=14)
+    ax[0,1].legend(prop={'size':15}, loc="best", facecolor='white', framealpha=0.5)
+
+    #--------------------------------------------------------------------------#
+    # AUTOCORRELATION
+    #--------------------------------------------------------------------------#
+
+    label = r'$\frac{\langle ACF \rangle_{sim}-\langle ACF \rangle_{real}}{\sqrt{\sigma^2_{sim}+\sigma^2_{real}}}$'
+    # plots
+    errs     = acf_rms[1:]     / np.sqrt(n_grb_real)
+    errs_sim = acf_rms_sim[1:] / np.sqrt(n_grb_sim)
+    ax[1,0].plot((steps[1:]*bin_time)**(1/3),(acf_sim[1:]-acf[1:])/np.sqrt(errs_sim**2+errs**2), c='b', label=label)
+    # sigma
+    ax[1,0].axhline(y=+sigma,  xmin=(steps[0]*bin_time)**(1/3), xmax=(steps[-1]*bin_time)**(1/3), c='k', ls='--', label=r'$1.96\sigma$')
+    ax[1,0].axhline(y=-sigma,  xmin=(steps[0]*bin_time)**(1/3), xmax=(steps[-1]*bin_time)**(1/3), c='k', ls='--')
+    ax[1,0].axhline(y=+sigma3, xmin=(steps[0]*bin_time)**(1/3), xmax=(steps[-1]*bin_time)**(1/3), c='r', ls='--', label=r'$3\sigma$')
+    ax[1,0].axhline(y=-sigma3, xmin=(steps[0]*bin_time)**(1/3), xmax=(steps[-1]*bin_time)**(1/3), c='r', ls='--')
+    # set labels
+    ax[1,0].set_xlabel(r'$(\mathrm{timelag}\ [s])^{1/3}$', size=18)
+    # set limits
+    ax[1,0].set_ylim(-8,8)
+    # other
+    ax[1,0].grid(True, which="major", lw=1.0, ls="-")
+    ax[1,0].grid(True, which="minor", lw=0.3, ls="-")
+    ax[1,0].xaxis.set_tick_params(labelsize=14)
+    ax[1,0].yaxis.set_tick_params(labelsize=14)
+    ax[1,0].legend(prop={'size':15}, loc="best", facecolor='white', framealpha=0.5)
+
+    #--------------------------------------------------------------------------#
+    # 
+    #--------------------------------------------------------------------------#
+
+    # plots
+    ax[1,1].plot([0,1],[0,1], c='k')
+    ax[1,1].plot([1,0],[0,1], c='k')
+
+    #--------------------------------------------------------------------------#
+    #--------------------------------------------------------------------------#
+
+    if(save_fig):
+        plt.savefig(name_fig)
+
+    plt.show()
+
 ################################################################################
 
 def runMEPSA(mepsa_path, ex_pattern_file_path, grb_file_path, nbins, grb_name, sn_level=5):
