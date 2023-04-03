@@ -42,7 +42,7 @@ class GRB:
     """
     Class for GRBs where to store their properties.
     """
-    def __init__(self, grb_name, times, counts, errs, t90, grb_data_file_path, num_of_sig_pulses == 0):
+    def __init__(self, grb_name, times, counts, errs, t90, grb_data_file_path, num_of_sig_pulses = 0):
         self.name   = grb_name
         self.times  = times
         self.counts = counts
@@ -1477,8 +1477,17 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
         savefile.close()
 
     def count_significative_pulses(LC, verbose = False):
+        """
+        Count the number of significative pulses in a simulated LC. A pulse is significative
+        if its peak rate is bigger than 50*(FWHM)**-0.6 counts/64 ms, where FWHM is the 
+        FWHM of the peak.
+        Input:
+        - LC: object that contains the light curve;
+        Output:
+        - n_of_sig_pulses: number of significative pulses
+        """
         n_of_sig_pulses = 0
-        pulses_param_list = lc._params_lc
+        pulses_param_list = lc._lc_params
         ampl = lc._ampl
         eff_area = lc._eff_area
 
@@ -1494,6 +1503,11 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             t_1 = t_delay - tau_r *np.sqrt(np.log(2))
             t_2 = t_delay + tau *np.log(2)
             peak_fwhm = t_2 - t_1
+
+            if verbose:
+                print('----')
+                print('Pulse peak rate: ', max_peak_rate, 'counts/64 ms')
+                print('Pulse FWHM: ',peak_fwhm, 's' )
             
             minimum_max_peak_rate = 50 * peak_fwhm**(-0.6)
             if max_peak_rate >= minimum_max_peak_rate:
@@ -1541,16 +1555,16 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             del(lc)
             continue
         # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
-        n_of_sig_pulses = count_significative_pulses(lc)
+        n_of_sig_pulses = count_significative_pulses(lc, verbose = False)
 
         # convert the lc generated from the avalance into a GRB object
         grb = GRB('lc_candidate.txt', 
                   lc._times, 
                   lc._plot_lc, 
                   lc._err_lc, 
-                  lc._t90, 
-                  n_of_sig_pulses,
-                  export_path+instrument+'/'+'lc_candidate.txt')
+                  lc._t90,
+                  export_path+instrument+'/'+'lc_candidate.txt',  
+                  n_of_sig_pulses)
         # we use a temporary list that contains only _one_ lc, then we
         # check if that GRB satisfies the constraints imposed, ad if that is
         # the case, we append it to the final list of GRBs

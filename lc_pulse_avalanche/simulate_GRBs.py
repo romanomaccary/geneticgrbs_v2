@@ -19,8 +19,8 @@ rc('text', usetex=True)
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
-user='LB'
-#user='AF'
+#user='LB'
+user='AF'
 #user='bach'
 if user=='bach':
     sys.path.append('/home/')
