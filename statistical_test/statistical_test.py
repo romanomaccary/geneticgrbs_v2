@@ -42,13 +42,14 @@ class GRB:
     """
     Class for GRBs where to store their properties.
     """
-    def __init__(self, grb_name, times, counts, errs, t90, grb_data_file_path):
+    def __init__(self, grb_name, times, counts, errs, t90, grb_data_file_path, num_of_sig_pulses == 0):
         self.name   = grb_name
         self.times  = times
         self.counts = counts
         self.errs   = errs
         self.t90    = t90
         self.data_file_path = grb_data_file_path
+        self.num_of_sig_pulses = num_of_sig_pulses
 
     def copy(self):
         copy_grb = GRB(self.name, self.times, self.counts, self.errs, self.t90, self.data_file_path)
@@ -1406,6 +1407,37 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             savefile.write('{0} {1} {2} {3}\n'.format(times[i], lc[i], err_lc[i], T90))
         savefile.close()
 
+    def count_significative_pulses(LC, verbose = False):
+        n_of_sig_pulses = 0
+        pulses_param_list = lc._params_lc
+        ampl = lc._ampl
+        eff_area = lc._eff_area
+
+        for pulse in pulses_param_list:
+            norm = pulse['norm']
+            t_delay = pulse['t_delay']
+            tau = pulse['tau']
+            tau_r = pulse['tau_r']
+
+            pulse = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
+
+            max_peak_rate = np.max(pulse)
+            t_1 = t_delay - tau_r *np.sqrt(np.log(2))
+            t_2 = t_delay + tau *np.log(2)
+            peak_fwhm = t_2 - t_1
+            
+            minimum_max_peak_rate = 50 * peak_fwhm**(-0.6)
+            if max_peak_rate >= minimum_max_peak_rate:
+                n_of_sig_pulses += 1
+        
+        if verbose:
+            print('-------------------------------------')
+            print('Number of generated pulses: ', len(pulses_param_list))
+            print('Number of significative pulses: ', n_of_sig_pulses)
+            print('-------------------------------------')
+
+        return n_of_sig_pulses
+
 
     # check that the parameters are in the correct range
     assert delta1<0
@@ -1439,13 +1471,16 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             # skip it and continue in the generation process
             del(lc)
             continue
-        
+        # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
+        n_of_sig_pulses = count_significative_pulses(lc)
+
         # convert the lc generated from the avalance into a GRB object
         grb = GRB('lc_candidate.txt', 
                   lc._times, 
                   lc._plot_lc, 
                   lc._err_lc, 
                   lc._t90, 
+                  n_of_sig_pulses,
                   export_path+instrument+'/'+'lc_candidate.txt')
         # we use a temporary list that contains only _one_ lc, then we
         # check if that GRB satisfies the constraints imposed, ad if that is
