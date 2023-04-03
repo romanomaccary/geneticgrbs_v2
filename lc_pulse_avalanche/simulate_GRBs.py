@@ -52,18 +52,7 @@ delta2  = 0
 tau_min = 0.02
 tau_max = 26
 
-# The 7 values obtained from an EARLY optimization are
-# mu      = 1.2436380646574723
-# mu0     = 1.0003897454703008
-# alpha   = 7.049219926652907
-# delta1  = -0.5479762424587183
-# delta2  = 0.20430555005030396
-# tau_min = 0.0520250387823067
-# tau_max = 20.991949810979172
-
-# The 7 values obtained from an EARLY v2 optimization are
-#* Loss value of the best solution    : 0.19689057333047827
-#* Fitness value of the best solution : 5.0789633200037105
+# The 7 values obtained from v1 optimization are
 # mu      = 1.3712230777324108
 # mu0     = 1.292056879500315
 # alpha   = 6.238631180118012
@@ -72,7 +61,7 @@ tau_max = 26
 # tau_min = 0.06234108759332604
 # tau_max = 23.443421866972386
 
-# The 7 values obtained from an EARLY v3 optimization are
+# The 7 values obtained from v2 optimization are
 # mu      = 1.3824946258409123
 # mu0     = 1.15547634120758
 # alpha   = 5.240511090395332
@@ -80,6 +69,17 @@ tau_max = 26
 # delta2  = 0.1341616114704469
 # tau_min = 0.003487215483012309
 # tau_max = 32.858056193896196
+
+# The 7 values obtained from v3 optimization are
+# mu      = 1.3980875041410008
+# mu0     = 1.5997385641936739
+# alpha   = 3.8373579048667117
+# delta1  = -0.5497159353657516
+# delta2  = 0.12206808487464499
+# tau_min = 0.00047431784713861797
+# tau_max = 39.313297221735766
+
+#------------------------------------------------------------------------------#
 
 t_i=0   # [s]
 t_f=150 # [s]
