@@ -1519,7 +1519,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             print('Number of significative pulses: ', n_of_sig_pulses)
             print('-------------------------------------')
 
-        return n_of_sig_pulses
+        return n_of_sig_pulses, len(pulses_param_list)
 
 
     # check that the parameters are in the correct range
@@ -1530,8 +1530,10 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
     assert tau_max>0
     assert tau_max>tau_min
 
+    out_test = open('n_of_pulses.txt','w')
+
     cnt=0
-    grb_list_sim = []
+    #grb_list_sim = []
     while (cnt<N_grb):
         lc = LC(### 7 parameters
                 mu=mu,
@@ -1555,7 +1557,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             del(lc)
             continue
         # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
-        n_of_sig_pulses = count_significative_pulses(lc, verbose = False)
+        n_of_sig_pulses, n_of_total_pulses = count_significative_pulses(lc, verbose = False)
 
         # convert the lc generated from the avalance into a GRB object
         grb = GRB('lc_candidate.txt', 
@@ -1593,11 +1595,12 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                           instrument=instrument,
                           path=export_path)
                 grb.name           = 'lc'+str(cnt)+'.txt'
-                grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
+                #grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
             grb_list_sim.append(grb)
+            out_test.write("{0} {1} {2}\n".format(grb.name, grb.num_of_sig_pulses, n_of_total_pulses))
             cnt+=1
         del(lc)
-
+    #out_test.close
     return grb_list_sim
 
 ################################################################################
