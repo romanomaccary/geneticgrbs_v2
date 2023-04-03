@@ -35,7 +35,7 @@ else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
 from statistical_test import *
-from avalanche import LC, Restored_LC
+from avalanche import LC #, Restored_LC
 
 export_path='../simulations/'
 
@@ -91,29 +91,29 @@ instrument = 'batse'
 #instrument = 'sax'
 #instrument = 'sax_lr'
 if instrument=='batse':
-    res           = 0.064 # time resolution of the light curves [ms]
-    eff_area      = 3600  # effective area of instrument [cm2]
-    bg_level      = 10.67 # background level [cnt/cm2/s]
-    t90_threshold = 2     # [s] --> used to select only _long_ GRBs
-    sn_threshold  = 70
+    res           = instr_batse['res']
+    eff_area      = instr_batse['eff_area']
+    bg_level      = instr_batse['bg_level']
+    t90_threshold = instr_batse['t90_threshold']
+    sn_threshold  = instr_batse['sn_threshold']
 elif instrument=='swift':
-    res           = 0.064            # time resolution of the light curves [ms]
-    eff_area      = 1400             # effective area of instrument [cm2]
-    bg_level      = (10000/eff_area) # background level [cnt/cm2/s]
-    t90_threshold = 2                # [s] --> used to select only _long_ GRBs
-    sn_threshold  = 15
+    res           = instr_swift['res']
+    eff_area      = instr_swift['eff_area']
+    bg_level      = instr_swift['bg_level']
+    t90_threshold = instr_swift['t90_threshold']
+    sn_threshold  = instr_swift['sn_threshold']
 elif instrument=='sax':
-    res           = 0.0078125       # time resolution of the light curves [s]
-    eff_area      = 420             # effective area of instrument [cm2]
-    bg_level      = (1000/eff_area) # background level [cnt/cm2/s]
-    t90_threshold = 2               # [s] --> used to select only _long_ GRBs
-    sn_threshold  = 10
+    res           = instr_sax['res']
+    eff_area      = instr_sax['eff_area']
+    bg_level      = instr_sax['bg_level']
+    t90_threshold = instr_sax['t90_threshold']
+    sn_threshold  = instr_sax['sn_threshold']
 elif instrument=='sax_lr':
-    res           = 1               # time resolution of the light curves [s]
-    eff_area      = 420             # effective area of instrument [cm2]
-    bg_level      = (1000/eff_area) # background level [cnt/cm2/s]
-    t90_threshold = 2               # [s] --> used to select only _long_ GRBs
-    sn_threshold  = 10
+    res           = instr_sax_lr['res']
+    eff_area      = instr_sax_lr['eff_area']
+    bg_level      = instr_sax_lr['bg_level']
+    t90_threshold = instr_sax_lr['t90_threshold']
+    sn_threshold  = instr_sax_lr['sn_threshold']
 else:
     raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax", "sax_lr".')
 

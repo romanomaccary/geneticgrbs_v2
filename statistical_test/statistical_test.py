@@ -55,7 +55,76 @@ class GRB:
         copy_grb = GRB(self.name, self.times, self.counts, self.errs, self.t90, self.data_file_path)
         return copy_grb
 
-        
+################################################################################
+
+# Dictionaries for instruments where to store their properties:
+# - name         : name of the instrument
+# - res          : time resolution of the instrument [s]
+# - eff_area     : effective area of instrument [cm2]
+# - bg_level     : background level [cnt/cm2/s]
+# - t90_threshold: used to select only _long_ GRBs [s]
+# - sn_threshold : used to select only lc with high S2N    
+
+name_batse          = 'batse'
+res_batse           = 0.064
+eff_area_batse      = 3600
+bg_level_batse      = 10.67
+t90_threshold_batse = 2
+sn_threshold_batse  = 70
+instr_batse         = {
+    "name"         : name_batse,
+    "res"          : res_batse,
+    "eff_area"     : eff_area_batse,
+    "bg_level"     : bg_level_batse,
+    "t90_threshold": t90_threshold_batse,
+    "sn_threshold" : sn_threshold_batse
+}
+
+name_swift          = 'swift'
+res_swift           = 0.064
+eff_area_swift      = 1400
+bg_level_swift      = (10000/eff_area_swift)
+t90_threshold_swift = 2
+sn_threshold_swift  = 15
+instr_swift         = {
+    "name"         : name_swift,
+    "res"          : res_swift,
+    "eff_area"     : eff_area_swift,
+    "bg_level"     : bg_level_swift,
+    "t90_threshold": t90_threshold_swift,
+    "sn_threshold" : sn_threshold_swift
+}
+
+name_sax          = 'sax'
+res_sax           = 0.0078125
+eff_area_sax      = 420
+bg_level_sax      = (1000/eff_area_sax)
+t90_threshold_sax = 2
+sn_threshold_sax  = 10
+instr_sax         = {
+    "name"         : name_sax,
+    "res"          : res_sax,
+    "eff_area"     : eff_area_sax,
+    "bg_level"     : bg_level_sax,
+    "t90_threshold": t90_threshold_sax,
+    "sn_threshold" : sn_threshold_sax
+}
+
+name_sax_lr          = 'sax_lr'
+res_sax_lr           = 1
+eff_area_sax_lr      = eff_area_sax
+bg_level_sax_lr      = bg_level_sax
+t90_threshold_sax_lr = t90_threshold_sax
+sn_threshold_sax_lr  = sn_threshold_sax
+instr_sax_lr         = {
+    "name"         : name_sax_lr,
+    "res"          : res_sax_lr,
+    "eff_area"     : eff_area_sax_lr,
+    "bg_level"     : bg_level_sax_lr,
+    "t90_threshold": t90_threshold_sax_lr,
+    "sn_threshold" : sn_threshold_sax_lr
+}
+
 
 ################################################################################
 
@@ -697,7 +766,7 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064,
         averaged_fluxes_square += fluxes_to_sum**2
         averaged_fluxes_cube   += fluxes_to_sum**3
         if compute_rms:
-            averaged_fluxes_cube_square = fluxes_to_sum**6
+            averaged_fluxes_cube_square += fluxes_to_sum**6
 
     averaged_fluxes        /= len(grb_list)
     averaged_fluxes_square /= len(grb_list)
