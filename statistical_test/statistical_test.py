@@ -765,7 +765,7 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064,
         averaged_fluxes_square += fluxes_to_sum**2
         averaged_fluxes_cube   += fluxes_to_sum**3
         if compute_rms:
-            averaged_fluxes_cube_square = fluxes_to_sum**6
+            averaged_fluxes_cube_square += fluxes_to_sum**6
 
     averaged_fluxes        /= len(grb_list)
     averaged_fluxes_square /= len(grb_list)
