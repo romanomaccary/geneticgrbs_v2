@@ -19,8 +19,8 @@ rc('text', usetex=True)
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
-user='LB'
-#user='AF'
+#user='LB'
+user='AF'
 #user='bach'
 if user=='bach':
     sys.path.append('/home/')
@@ -84,7 +84,7 @@ tau_max = 26
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=1000
+N_grb=1
 
 instrument = 'batse'
 #instrument = 'swift'

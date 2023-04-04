@@ -43,13 +43,14 @@ class GRB:
     """
     Class for GRBs to save their properties.
     """
-    def __init__(self, grb_name, times, counts, errs, t90, grb_data_file_path):
+    def __init__(self, grb_name, times, counts, errs, t90, grb_data_file_path, num_of_sig_pulses = 0):
         self.name   = grb_name
         self.times  = times
         self.counts = counts
         self.errs   = errs
         self.t90    = t90
         self.data_file_path = grb_data_file_path
+        self.num_of_sig_pulses = num_of_sig_pulses
 
     def copy(self):
         copy_grb = GRB(self.name, self.times, self.counts, self.errs, self.t90, self.data_file_path)
@@ -1574,6 +1575,60 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             savefile.write('{0} {1} {2} {3}\n'.format(times[i], lc[i], err_lc[i], T90))
         savefile.close()
 
+    def count_significative_pulses(LC, verbose = False):
+        """
+        Count the number of significative pulses in a simulated LC. A pulse is significative
+        if its peak rate is bigger than 50*(FWHM)**-0.6 counts/64 ms, where FWHM is the 
+        FWHM of the peak.
+        Input:
+        - LC: object that contains the light curve;
+        Output:
+        - n_of_sig_pulses: number of significative pulses
+        - n_of_total_pulses: number of total pulses generated for the LC
+        """
+        pulses_param_list = lc._lc_params
+        ampl = lc._ampl
+        eff_area = lc._eff_area
+
+        n_of_sig_pulses = 0
+        n_of_total_pulses = len(pulses_param_list)
+
+        for pulse in pulses_param_list:
+            # Reads parameters of the pulse and generates it
+            norm = pulse['norm']
+            t_delay = pulse['t_delay']
+            tau = pulse['tau']
+            tau_r = pulse['tau_r']
+
+            pulse = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
+
+            # Find peak rate
+            peak_rate = np.max(pulse)
+
+            # Evaluate the FWHM of the pulse (analytical evaluation)
+            t_1 = t_delay - tau_r *np.sqrt(np.log(2))
+            t_2 = t_delay + tau *np.log(2)
+            peak_fwhm = t_2 - t_1
+
+            if verbose:
+                print('----')
+                print('Pulse peak rate: ', peak_rate, 'counts/64 ms')
+                print('Pulse FWHM: ', peak_fwhm, 's' )
+            
+            # Evaluate the minimum peak rate for the pulse to be significative (CG formula) 
+            # and check if the peak rate of the pulse is above the minimum  
+            minimum_peak_rate = 50 * peak_fwhm**(-0.6)
+            if peak_rate >= minimum_peak_rate:
+                n_of_sig_pulses += 1
+        
+        if verbose:
+            print('-------------------------------------')
+            print('Number of generated pulses: ', len(pulses_param_list))
+            print('Number of significative pulses: ', n_of_sig_pulses)
+            print('-------------------------------------')
+
+        return n_of_sig_pulses, n_of_total_pulses
+
 
     # check that the parameters are in the correct range
     assert delta1<0
@@ -1582,6 +1637,8 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
     assert tau_min>0
     assert tau_max>0
     assert tau_max>tau_min
+
+    out_test = open('n_of_pulses.txt','w')
 
     cnt=0
     grb_list_sim = []
@@ -1607,14 +1664,17 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             # skip it and continue in the generation process
             del(lc)
             continue
-        
+        # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
+        n_of_sig_pulses, n_of_total_pulses = count_significative_pulses(lc, verbose = False)
+
         # convert the lc generated from the avalance into a GRB object
         grb = GRB('lc_candidate.txt', 
                   lc._times, 
                   lc._plot_lc, 
                   lc._err_lc, 
-                  lc._t90, 
-                  export_path+instrument+'/'+'lc_candidate.txt')
+                  lc._t90,
+                  export_path+instrument+'/'+'lc_candidate.txt',  
+                  n_of_sig_pulses)
         # we use a temporary list that contains only _one_ lc, then we
         # check if that GRB satisfies the constraints imposed, ad if that is
         # the case, we append it to the final list of GRBs
@@ -1643,11 +1703,12 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                           instrument=instrument,
                           path=export_path)
                 grb.name           = 'lc'+str(cnt)+'.txt'
-                grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
+                #grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
             grb_list_sim.append(grb)
+            out_test.write("{0} {1} {2}\n".format(grb.name, grb.num_of_sig_pulses, n_of_total_pulses))
             cnt+=1
         del(lc)
-
+    #out_test.close
     return grb_list_sim
 
 ################################################################################
