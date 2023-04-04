@@ -1487,11 +1487,12 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
         - n_of_sig_pulses: number of significative pulses
         - n_of_total_pulses: number of total pulses generated for the LC
         """
-        n_of_sig_pulses = 0
-        n_of_total_pulses = len(pulses_param_list)
         pulses_param_list = lc._lc_params
         ampl = lc._ampl
         eff_area = lc._eff_area
+
+        n_of_sig_pulses = 0
+        n_of_total_pulses = len(pulses_param_list)
 
         for pulse in pulses_param_list:
             # Reads parameters of the pulse and generates it
@@ -1513,7 +1514,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             if verbose:
                 print('----')
                 print('Pulse peak rate: ', peak_rate, 'counts/64 ms')
-                print('Pulse FWHM: ',peak_fwhm, 's' )
+                print('Pulse FWHM: ', peak_fwhm, 's' )
             
             # Evaluate the minimum peak rate for the pulse to be significative (CG formula) 
             # and check if the peak rate of the pulse is above the minimum  
@@ -1541,7 +1542,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
     out_test = open('n_of_pulses.txt','w')
 
     cnt=0
-    #grb_list_sim = []
+    grb_list_sim = []
     while (cnt<N_grb):
         lc = LC(### 7 parameters
                 mu=mu,
