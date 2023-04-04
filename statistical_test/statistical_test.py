@@ -1485,13 +1485,16 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
         - LC: object that contains the light curve;
         Output:
         - n_of_sig_pulses: number of significative pulses
+        - n_of_total_pulses: number of total pulses generated for the LC
         """
         n_of_sig_pulses = 0
+        n_of_total_pulses = len(pulses_param_list)
         pulses_param_list = lc._lc_params
         ampl = lc._ampl
         eff_area = lc._eff_area
 
         for pulse in pulses_param_list:
+            # Reads parameters of the pulse and generates it
             norm = pulse['norm']
             t_delay = pulse['t_delay']
             tau = pulse['tau']
@@ -1499,7 +1502,10 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
 
             pulse = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
 
-            max_peak_rate = np.max(pulse)
+            # Find peak rate
+            peak_rate = np.max(pulse)
+
+            # Evaluate the FWHM of the pulse (analytical evaluation)
             t_1 = t_delay - tau_r *np.sqrt(np.log(2))
             t_2 = t_delay + tau *np.log(2)
             peak_fwhm = t_2 - t_1
@@ -1509,8 +1515,10 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                 print('Pulse peak rate: ', max_peak_rate, 'counts/64 ms')
                 print('Pulse FWHM: ',peak_fwhm, 's' )
             
-            minimum_max_peak_rate = 50 * peak_fwhm**(-0.6)
-            if max_peak_rate >= minimum_max_peak_rate:
+            # Evaluate the minimum peak rate for the pulse to be significative (CG formula) 
+            # and check if the peak rate of the pulse is above the minimum  
+            minimum_peak_rate = 50 * peak_fwhm**(-0.6)
+            if peak_rate >= minimum_peak_rate:
                 n_of_sig_pulses += 1
         
         if verbose:
@@ -1519,7 +1527,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             print('Number of significative pulses: ', n_of_sig_pulses)
             print('-------------------------------------')
 
-        return n_of_sig_pulses, len(pulses_param_list)
+        return n_of_sig_pulses, n_of_total_pulses
 
 
     # check that the parameters are in the correct range
