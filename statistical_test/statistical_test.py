@@ -1512,7 +1512,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
 
             if verbose:
                 print('----')
-                print('Pulse peak rate: ', max_peak_rate, 'counts/64 ms')
+                print('Pulse peak rate: ', peak_rate, 'counts/64 ms')
                 print('Pulse FWHM: ',peak_fwhm, 's' )
             
             # Evaluate the minimum peak rate for the pulse to be significative (CG formula) 
