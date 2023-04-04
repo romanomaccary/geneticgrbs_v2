@@ -9,6 +9,7 @@ import ctypes
 from scipy.signal import savgol_filter
 from scipy import signal
 from scipy import stats
+from sklearn.utils import resample
 from sklearn.neighbors import KernelDensity
 from tqdm import tqdm
 
@@ -40,7 +41,7 @@ from avalanche import LC
 
 class GRB:
     """
-    Class for GRBs where to store their properties.
+    Class for GRBs to save their properties.
     """
     def __init__(self, grb_name, times, counts, errs, t90, grb_data_file_path):
         self.name   = grb_name
@@ -56,7 +57,7 @@ class GRB:
 
 ################################################################################
 
-# Dictionaries for instruments where to store their properties:
+# Dictionaries where the properties of instruments are stored:
 # - name         : name of the instrument
 # - res          : time resolution of the instrument [s]
 # - eff_area     : effective area of instrument [cm2]
@@ -572,7 +573,7 @@ def load_lc_sax_lr(path):
 def load_lc_sim(path):
     """
     Load the simulated light curves, which were previously generated and saved
-    as files, named 'lcXXX.txt', one file for each simulated GRB ('XXX' is the 
+    as files, named 'lcXXX.txt', one file for each simulated GRB ("XXX" is the 
     index of the GRB generated). The columns in the files are: 'times', 
     'counts', 'errs', 't90'. We put each light curve in a 'GRB' object inside
     a list. 
@@ -587,7 +588,7 @@ def load_lc_sim(path):
         left_idx  = grb_file.find('lc') + len('lc')
         right_idx = grb_file.find('.txt')
         grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string
-        times, counts, errs, t90 = np.loadtxt(path + grb_file, unpack=True)
+        times, counts, errs, t90 = np.loadtxt(path+grb_file, unpack=True)
         times  = np.float32(times)
         counts = np.float32(counts)
         errs   = np.float32(errs)
@@ -747,6 +748,7 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064,
     - averaged_fluxes:        <(F/F_p)>
     - averaged_fluxes_cube:   <(F/F_p)^3>
     - averaged_fluxes_rms : ( <(F/F_p)^2> - <F/F_p>^2 )^(1/2)
+    - averaged_fluxes_rms : ( <(F/F_p)^6> - <(F/F_p)^3>^2 )^(1/2) (optional)
     """
     n_steps                = int(t_f/bin_time)
     averaged_fluxes        = np.zeros(n_steps)
@@ -892,12 +894,11 @@ def compute_kde_log_duration(duration_list, x_left=-2, x_right=5, h_opt=0.09):
 
 ################################################################################
 
-def compute_loss(averaged_fluxes=None,      averaged_fluxes_sim=None,
-                 averaged_fluxes_rms=None,  averaged_fluxes_rms_sim=None,
-                 averaged_fluxes_cube=None, averaged_fluxes_cube_sim=None,
-                 acf=None,                  acf_sim=None,
-                 duration=None,             duration_sim=None,
-                 log=False, verbose=False):
+def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
+                 averaged_fluxes_cube, averaged_fluxes_cube_sim,
+                 acf,                  acf_sim,
+                 duration,             duration_sim,
+                 log=False,            verbose=False):
     """
     Compute the loss to be used for the optimization in the Genetic Algorithm.
     Input:
@@ -915,14 +916,19 @@ def compute_loss(averaged_fluxes=None,      averaged_fluxes_sim=None,
         # 'duration'     is already in log scale, since it is the output of compute_kde_log_duration()
         # 'duration_sim' is already in log scale, since it is the output of compute_kde_log_duration()
 
+    w1 = 1.
+    w2 = 1.
+    w3 = 1.
+    w4 = 1.
+
     l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
     l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
     l2_loss_acf         = np.sqrt( np.sum(np.power((acf-acf_sim),2)) )
     l2_loss_duration    = np.sqrt( np.sum(np.power((duration-duration_sim),2)) )
-    l2_loss             = (1./4)*l2_loss_fluxes      + \
-                          (1./4)*l2_loss_fluxes_cube + \
-                          (1./4)*l2_loss_acf         + \
-                          (1./4)*l2_loss_duration
+    l2_loss             = w1 * (1./4) * l2_loss_fluxes      + \
+                          w2 * (1./4) * l2_loss_fluxes_cube + \
+                          w3 * (1./4) * l2_loss_acf         + \
+                          w4 * (1./4) * l2_loss_duration
     if verbose:
         # WE SHOULD CHECK WHAT IS THE ORDER OF MAGNITUDE OF EACH LOSS, SO THAT
         # WE KNOW HOW MUCH THEY CONTRIBUTE TO THE TOTAL!
@@ -939,24 +945,37 @@ def compute_loss(averaged_fluxes=None,      averaged_fluxes_sim=None,
 
 def make_plot(instrument, test_times, 
               # plot 1
-              averaged_fluxes,      averaged_fluxes_sim,
-              averaged_fluxes_rms,  averaged_fluxes_rms_sim,
+              averaged_fluxes,      
+              averaged_fluxes_sim,
+              averaged_fluxes_rms,  
+              averaged_fluxes_rms_sim,
               # plot 2
-              averaged_fluxes_cube, averaged_fluxes_cube_sim,
+              averaged_fluxes_cube, 
+              averaged_fluxes_cube_sim,
               # plot 3
-              steps, steps_sim, bin_time, 
-              acf, acf_sim,
+              steps, 
+              steps_sim, 
+              bin_time, 
+              acf, 
+              acf_sim,
               # plot 4
-              duration, duration_sim,
+              duration, 
+              duration_sim,
               # mode
-              log=True, hist=False, 
+              log=True, 
+              hist=False, 
               # error bars
-              err_bars=False, sigma=1,
-              averaged_fluxes_cube_rms=None, averaged_fluxes_cube_rms_sim=None,
-              acf_rms=None,                  acf_rms_sim=None,
-              n_grb_real=None,               n_grb_sim=None, 
+              err_bars=False, 
+              sigma=1,
+              averaged_fluxes_cube_rms=None, 
+              averaged_fluxes_cube_rms_sim=None,
+              acf_rms=None,                  
+              acf_rms_sim=None,
+              n_grb_real=None,               
+              n_grb_sim=None, 
               # save plot
-              save_fig=False, name_fig='fig.pdf'):
+              save_fig=False, 
+              name_fig='fig.pdf'):
     """
     Make plot as in Stern et al., 1996.
     """
@@ -988,7 +1007,6 @@ def make_plot(instrument, test_times,
     #--------------------------------------------------------------------------#
     # <(F/F_p)>
     #--------------------------------------------------------------------------#
-    #print('- plotting <(F/F_p)>...')
 
     # plots
     ax[0,0].plot(test_times**(1/3),     averaged_fluxes,             color='b', alpha=1.00, label = label_instr)
@@ -1034,12 +1052,10 @@ def make_plot(instrument, test_times,
     ax[0,0].xaxis.set_tick_params(labelsize=14)
     ax[0,0].yaxis.set_tick_params(labelsize=14)
     ax[0,0].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
-    #print('\tdone')
 
     #--------------------------------------------------------------------------#
     # <(F/F_p)^3>
     #--------------------------------------------------------------------------#
-    #print('- plotting <(F/F_p)^3>...')
 
     # plots
     ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube,     color='b', label=label_instr)
@@ -1081,12 +1097,10 @@ def make_plot(instrument, test_times,
     ax[0,1].xaxis.set_tick_params(labelsize=14)
     ax[0,1].yaxis.set_tick_params(labelsize=14)
     ax[0,1].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
-    #print('\tdone')
 
     #--------------------------------------------------------------------------#
     # AUTOCORRELATION
     #--------------------------------------------------------------------------#
-    #print('- plotting the autocorrelation...')
 
     # plots
     ax[1,0].plot((steps    *bin_time)**(1/3), acf,     color='b', label=label_instr)
@@ -1123,37 +1137,86 @@ def make_plot(instrument, test_times,
     ax[1,0].xaxis.set_tick_params(labelsize=14)
     ax[1,0].yaxis.set_tick_params(labelsize=14)
     ax[1,0].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
-    #print('\tdone')
 
     #--------------------------------------------------------------------------#
     # HISTOGRAM OF DURATIONS
     #--------------------------------------------------------------------------#
-    #print('- plotting the distribution of the durations...')
 
     if log:
         duration     = np.log10(duration)
         duration_sim = np.log10(duration_sim)
+    if log:
+        range_hist = [-1.0, 3.5]
+    else:
+        range_hist = None
 
     if hist:
         # histogram
-        n_bins='auto'
-        n1, bins, patches = ax[1,1].hist(x=duration,
-                                         bins=n_bins,
-                                         alpha=1.00,
-                                         label=label_instr, 
-                                         color='b',
-                                         histtype='step',
-                                         linewidth=4,
-                                         density=True)
-        n2, bins, patches = ax[1,1].hist(x=duration_sim,
-                                         bins=n_bins,
-                                         alpha=0.75,
-                                         label='Simulated', 
-                                         color='r',
-                                         histtype='step',
-                                         linewidth=4,
-                                         density=True)           
-    
+        n_bins=30
+        #n1, bins, patches = ax[1,1].hist(x=duration,
+        #                                 bins=n_bins,
+        #                                 alpha=1.00,
+        #                                 label=label_instr, 
+        #                                 color='b',
+        #                                 histtype='step',
+        #                                 linewidth=4,
+        #                                 range=range_hist,
+        #                                 density=False)
+        #n2, bins, patches = ax[1,1].hist(x=duration_sim,
+        #                                 bins=n_bins,
+        #                                 alpha=0.75,
+        #                                 label='Simulated', 
+        #                                 color='r',
+        #                                 histtype='step',
+        #                                 linewidth=4,
+        #                                 range=range_hist,
+        #                                 density=False)
+        n1, bins = np.histogram(a=duration,     bins=n_bins, range=range_hist)
+        n2, bins = np.histogram(a=duration_sim, bins=n_bins, range=range_hist)
+
+        bin_centres = 0.5 * (bins[:-1] + bins[1:])
+
+        ax[1,1].bar(x=bins[:-1], 
+                    height=n1/(np.diff(bins)[0]*len(duration)),     
+                    width=np.diff(bins), 
+                    align='edge',
+                    #facecolor='None',
+                    #edgecolor='b',
+                    #linewidth=2,
+                    alpha=0.6,
+                    color='b',
+                    label=label_instr)
+        ax[1,1].bar(x=bins[:-1], 
+                    height=n2/(np.diff(bins)[0]*len(duration_sim)), 
+                    width=np.diff(bins), 
+                    align='edge',
+                    #facecolor='None',
+                    edgecolor='r',
+                    linewidth=2,
+                    alpha=0.4,
+                    color='r',
+                    label='Simulated')
+
+        ax[1,1].set_ylim(-0.025,1.0)
+
+        if err_bars:
+            # Plot the error bars, centred on (bin_centre, bin_count), with length y_error
+            ax[1,1].errorbar(x=bin_centres, 
+                             y=n1/(np.diff(bins)[0]*len(duration)),
+                             yerr=sigma*np.sqrt(n1)/(np.diff(bins)[0]*len(duration)), 
+                             fmt='.', 
+                             color='b',
+                             capsize=3,
+                             elinewidth=1.5)
+            ax[1,1].errorbar(x=bin_centres, 
+                             y=n2/(np.diff(bins)[0]*len(duration_sim)),
+                             yerr=sigma*np.sqrt(n2)/(np.diff(bins)[0]*len(duration_sim)), 
+                             fmt='.', 
+                             color='r',
+                             capsize=3,
+                             elinewidth=1.5)
+
+
     else: 
         # kernel density estimation
         h_opt = 0.09 # values obtained with GridSearch optimization (see the notebook in DEBUG section)
@@ -1161,13 +1224,50 @@ def make_plot(instrument, test_times,
             x_grid = np.linspace(-2,    5, 1000)
         else:
             x_grid = np.linspace(-2, 1000, 1000)
-        y_plot_real   = stats.norm.pdf(x_grid, duration[:, None],     h_opt)
-        y_plot_sim    = stats.norm.pdf(x_grid, duration_sim[:, None], h_opt)
-        y_plot_real  /= (len(duration))
-        y_plot_sim   /= (len(duration_sim))
+        y_plot_real  = stats.norm.pdf(x_grid, duration[:, None],     h_opt)
+        y_plot_sim   = stats.norm.pdf(x_grid, duration_sim[:, None], h_opt)
+        y_plot_real /= (len(duration))
+        y_plot_sim  /= (len(duration_sim))
+        kde_real     = y_plot_real.sum(0)
+        kde_sim      = y_plot_sim.sum(0)
         # plot
-        ax[1,1].plot(x_grid, y_plot_real.sum(0), c='b', lw=3, label=label_instr)
-        ax[1,1].plot(x_grid, y_plot_sim.sum(0),  c='r', lw=3, label='Simulated')
+        ax[1,1].plot(x_grid, kde_real, c='b', lw=3, label=label_instr, zorder=5)
+        ax[1,1].plot(x_grid, kde_sim,  c='r', lw=3, label='Simulated', zorder=6)
+        # errors
+        if err_bars:
+            n_resample=500
+            kde_real_r_stack     = np.zeros([len(kde_real),n_resample])
+            kde_real_r_stack_sim = np.zeros([len(kde_sim), n_resample])
+            for i in range(n_resample):
+                dur_resampled_real = resample(duration,     replace=True)
+                dur_resampled_sim  = resample(duration_sim, replace=True)
+                y_plot_real_r      = stats.norm.pdf(x_grid, dur_resampled_real[:, None], h_opt)
+                y_plot_sim_r       = stats.norm.pdf(x_grid, dur_resampled_sim[:, None],  h_opt)
+                y_plot_real_r     /= (len(dur_resampled_real))
+                y_plot_sim_r      /= (len(dur_resampled_sim))
+                kde_real_r         = y_plot_real_r.sum(0)
+                kde_sim_r          = y_plot_sim_r.sum(0)
+                kde_real_r_stack[:,i]     = kde_real_r
+                kde_real_r_stack_sim[:,i] = kde_sim_r
+                # plot
+                # ax[1,1].plot(x_grid, kde_real_r, c='cyan',   lw=1, alpha=0.05, zorder=3)
+                # ax[1,1].plot(x_grid, kde_sim_r,  c='orange', lw=1, alpha=0.05, zorder=4)
+            rms     = np.std(kde_real_r_stack,     axis=1)
+            rms_sim = np.std(kde_real_r_stack_sim, axis=1)
+            errs     = rms     #/ np.sqrt(n_resample)
+            errs_sim = rms_sim #/ np.sqrt(n_resample)
+            ax[1,1].fill_between(x_grid,
+                                 kde_real-sigma*errs,
+                                 kde_real+sigma*errs,
+                                 color='b',
+                                 alpha=0.25,
+                                 zorder=1) 
+            ax[1,1].fill_between(x_grid,
+                                 kde_sim-sigma*errs_sim,
+                                 kde_sim+sigma*errs_sim,
+                                 color='r',
+                                 alpha=0.25,
+                                 zorder=2)
 
     # set scale
     if log:
@@ -1186,7 +1286,6 @@ def make_plot(instrument, test_times,
     ax[1,1].xaxis.set_tick_params(labelsize=14)
     ax[1,1].yaxis.set_tick_params(labelsize=14)
     ax[1,1].legend(prop={'size':15}, loc="upper left", facecolor='white', framealpha=0.5)
-    #print('\tdone')
 
     #from scipy.stats import ks_2samp
     #ks_test_res = ks_2samp(n1, n2)
