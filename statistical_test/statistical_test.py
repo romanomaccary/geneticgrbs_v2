@@ -43,13 +43,21 @@ class GRB:
     """
     Class for GRBs to save their properties.
     """
-    def __init__(self, grb_name, times, counts, errs, t90, grb_data_file_path, num_of_sig_pulses = 0):
+    def __init__(self, 
+                 grb_name, 
+                 times, 
+                 counts, 
+                 errs, 
+                 t90, 
+                 grb_data_file_path, 
+                 num_of_sig_pulses=0):
+                 
         self.name   = grb_name
         self.times  = times
         self.counts = counts
         self.errs   = errs
         self.t90    = t90
-        self.data_file_path = grb_data_file_path
+        self.data_file_path    = grb_data_file_path
         self.num_of_sig_pulses = num_of_sig_pulses
 
     def copy(self):
@@ -1140,7 +1148,7 @@ def make_plot(instrument, test_times,
     ax[1,0].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
 
     #--------------------------------------------------------------------------#
-    # HISTOGRAM OF DURATIONS
+    # DISTRIBUTION OF DURATIONS
     #--------------------------------------------------------------------------#
 
     if log:
@@ -1575,7 +1583,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             savefile.write('{0} {1} {2} {3}\n'.format(times[i], lc[i], err_lc[i], T90))
         savefile.close()
 
-    def count_significative_pulses(LC, verbose = False):
+    def count_significative_pulses(LC, verbose=False):
         """
         Count the number of significative pulses in a simulated LC. A pulse is significative
         if its peak rate is bigger than 50*(FWHM)**-0.6 counts/64 ms, where FWHM is the 
@@ -1587,18 +1595,18 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
         - n_of_total_pulses: number of total pulses generated for the LC
         """
         pulses_param_list = lc._lc_params
-        ampl = lc._ampl
-        eff_area = lc._eff_area
+        ampl              = lc._ampl
+        eff_area          = lc._eff_area
 
-        n_of_sig_pulses = 0
+        n_of_sig_pulses   = 0
         n_of_total_pulses = len(pulses_param_list)
 
         for pulse in pulses_param_list:
             # Reads parameters of the pulse and generates it
-            norm = pulse['norm']
+            norm    = pulse['norm']
             t_delay = pulse['t_delay']
-            tau = pulse['tau']
-            tau_r = pulse['tau_r']
+            tau     = pulse['tau']
+            tau_r   = pulse['tau_r']
 
             pulse = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
 
