@@ -30,7 +30,7 @@ user='LB'
 if user=='bach':
     sys.path.append('/home/')
 elif user=='LB':
-    sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/lc_pulse_avalanche')
+    sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/lc_pulse_avalanche')
 elif user=='AF':
     sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
 else:
