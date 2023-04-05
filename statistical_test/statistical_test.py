@@ -1620,6 +1620,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
 
             if verbose:
                 print('----')
+                print('Delay time: ', t_delay, 's')
                 print('Pulse peak rate: ', peak_rate, 'counts/64 ms')
                 print('Pulse FWHM: ', peak_fwhm, 's' )
             
@@ -1673,7 +1674,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             del(lc)
             continue
         # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
-        n_of_sig_pulses, n_of_total_pulses = count_significative_pulses(lc, verbose = False)
+        n_of_sig_pulses, n_of_total_pulses = count_significative_pulses(lc, verbose = True)
 
         # convert the lc generated from the avalance into a GRB object
         grb = GRB('lc_candidate.txt', 
