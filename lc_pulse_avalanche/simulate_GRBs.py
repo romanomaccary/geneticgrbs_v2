@@ -84,7 +84,7 @@ tau_max = 26
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=1
+N_grb=500
 
 instrument = 'batse'
 #instrument = 'swift'

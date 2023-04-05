@@ -1609,10 +1609,10 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             tau     = pulse['tau']
             tau_r   = pulse['tau_r']
 
-            pulse = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
+            pulse_curve = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
 
             # Find peak rate
-            peak_rate = np.max(pulse)
+            peak_rate = np.max(pulse_curve)
 
             # Evaluate the FWHM of the pulse (analytical evaluation)
             t_1 = t_delay - tau_r *np.sqrt(np.log(2))
@@ -1638,8 +1638,12 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             print('Number of significative pulses: ', n_of_sig_pulses)
             print('-------------------------------------')
 
-        return n_of_sig_pulses, n_of_total_pulses
-
+        return n_of_sig_pulses, n_of_total_pulses, significative_pulses
+    
+    def getPulsesTimeDistance(pulses):
+        delay_times = np.sort(np.array([pulse['t_delay'] for pulse in pulses]))
+        time_distances = np.diff(delay_times)
+        return time_distances
 
     # check that the parameters are in the correct range
     assert delta1<0
@@ -1649,8 +1653,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
     assert tau_max>0
     assert tau_max>tau_min
 
-    #out_test = open('n_of_pulses.txt','w')
-
+    pulse_time_distances = []
     cnt=0
     grb_list_sim = []
     while (cnt<N_grb):
@@ -1676,7 +1679,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             del(lc)
             continue
         # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
-        n_of_sig_pulses, n_of_total_pulses, sig_pulses = count_significative_pulses(lc, verbose = True)
+        n_of_sig_pulses, n_of_total_pulses, sig_pulses = count_significative_pulses(lc, verbose = False)
 
         # convert the lc generated from the avalance into a GRB object
         grb = GRB('lc_candidate.txt', 
@@ -1715,11 +1718,16 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                           path=export_path)
                 grb.name           = 'lc'+str(cnt)+'.txt'
                 #grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
+            
+            #get all the time distances between the generated peaks and save them to a file. 
+            pulse_time_distances.extend(getPulsesTimeDistance(sig_pulses))
+            np.savetxt('time_distances.txt',np.array(pulse_time_distances))
+            ###############################################################################
+
             grb_list_sim.append(grb)
-            #out_test.write("{0} {1} {2}\n".format(grb.name, grb.num_of_sig_pulses, n_of_total_pulses))
             cnt+=1
         del(lc)
-    #out_test.close
+
     return grb_list_sim
 
 ################################################################################
