@@ -42,12 +42,12 @@ if user=='bach':
     sax_path   = '/astrodata/guidorzi/BeppoSAX_GRBM/'
 elif user=='LB':
     # library paths
-    sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/statistical_test')
-    sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/lc_pulse_avalanche')
+    sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/statistical_test')
+    sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/lc_pulse_avalanche')
     # real data
-    batse_path = '/home/lorenzo/Desktop/Astrophysics/PYTHON/DATA/CGRO_BATSE/'
-    swift_path = '/home/lorenzo/Desktop/Astrophysics/PYTHON/DATA/Swift_BAT/'
-    sax_path   = '/home/lorenzo/Desktop/Astrophysics/PYTHON/DATA/BeppoSAX_GRBM/'
+    batse_path = '/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/DATA/CGRO_BATSE/'
+    swift_path = '/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/DATA/Swift_BAT/'
+    sax_path   = '/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/DATA/BeppoSAX_GRBM/'
 elif user=='AF':
     # libraries
     sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/statistical_test')
@@ -113,11 +113,11 @@ crossover_probability = 0.5   # 'None' means couples parent k with parent k+1, o
 initial_population    = None  # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
 crossover_type        = "scattered"
-parallel_processing   = ["process", 50] # None
+parallel_processing   = ["process", 50]        # None
 
 num_generations       = 10                     # Number of generations.
 sol_per_pop           = 2000                   # Number of solutions in the population.
-num_parents_mating    = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
+num_parents_mating    = int(0.10*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.01                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
@@ -132,13 +132,13 @@ mutation_probability  = 0.01                   # by default is 'None', otherwise
 # tau_max=26
 
 # We impose constraints on the range of values that the 7 parameter can assume
-range_mu      = {"low": 0.80,            "high": 1.6}
-range_mu0     = {"low": 0.80,            "high": 1.6} 
-range_alpha   = {"low": 1,               "high": 12} 
+range_mu      = {"low": 0.90,            "high": 2}
+range_mu0     = {"low": 0.90,            "high": 2} 
+range_alpha   = {"low": 1,               "high": 15} 
 range_delta1  = {"low": -1.5,            "high": -0.25-1.e-6} 
 range_delta2  = {"low": np.log10(1.e-9), "high": np.log10(0.25)}           # sample uniformly in log space
 range_tau_min = {"low": np.log10(1.e-6), "high": np.log10(bin_time-1.e-6)} # sample uniformly in log space
-range_tau_max = {"low": bin_time+15,     "high": 40} 
+range_tau_max = {"low": bin_time+20,     "high": 60} 
 
 range_constraints = [range_mu, 
                      range_mu0,
@@ -209,7 +209,7 @@ print('-------------------------------------------------------------------------
 
 # Set the number of simulated GRBs to produce equal to the number of real GRBs
 # that passed the constraint selection
-N_grb=1000 #len(grb_list_real)
+N_grb=2000 #len(grb_list_real)
 
 
 ################################################################################
@@ -236,7 +236,7 @@ duration_real = [ evaluateDuration20(times=grb.times,
                                      filter=True,
                                      t90=grb.t90,
                                      bin_time=bin_time)[0] for grb in grb_list_real ]
-duration_distr_real = compute_kde_duration(duration_list=duration_real)
+duration_distr_real = compute_kde_log_duration(duration_list=duration_real)
 
 
 ################################################################################
@@ -293,7 +293,7 @@ def fitness_func(solution, solution_idx=None):
                                         filter=True,
                                         t90=grb.t90,
                                         bin_time=bin_time)[0] for grb in grb_list_sim ]
-    duration_distr_sim = compute_kde_duration(duration_list=duration_sim)
+    duration_distr_sim = compute_kde_log_duration(duration_list=duration_sim)
     #--------------------------------------------------------------------------#
     # Compute loss
     #--------------------------------------------------------------------------#
@@ -440,6 +440,9 @@ file.write('\n')
 file.write("INPUT")
 file.write('\n')
 file.write('################################################################################')
+file.write('\n')
+file.write('\n')
+file.write('N_GRBs_per_set       = {}'.format(N_grb))
 file.write('\n')
 file.write('\n')
 file.write('num_generations      = {}'.format(num_generations))
