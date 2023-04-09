@@ -1525,10 +1525,11 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 
 def generate_GRBs(N_grb, # number of simulated GRBs to produce
                   mu, mu0, alpha, delta1, delta2, tau_min, tau_max, # 7 parameters
-                  instrument, bin_time, eff_area, bg_level, # instrument parameters
-                  t90_threshold, sn_threshold, t_f, filter=True, # constraint parameters
-                  export_files=False, export_path='None', # other parameters
-                  n_cut=2000, with_bg=False, seed=None # other parameters
+                  instrument, bin_time, eff_area, bg_level,         # instrument parameters
+                  t90_threshold, sn_threshold, t_f, filter=True,    # constraint parameters
+                  export_files=False, export_path='None',           # other parameters
+                  n_cut=2000, with_bg=False, seed=None,             # other parameters
+                  test_pulse_distr=False                            # other parameters
                   ):
     """
     AAA
@@ -1557,6 +1558,11 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
     ### other parameters
     - n_cut:
     - with_bg:
+    - seed: random seed;
+    - test_pulse_distr: if True, it appends to each GRB object also the info
+                        on the number of significative pulses inside that GRB,
+                        and we also compute the time distances between all the
+                        pulses in that GRB;
     Output:
     -grb_list_sim: list containing N_grb GRB objects, each lc satisfying the
                 imposed constraints;
@@ -1598,9 +1604,9 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
         ampl              = lc._ampl
         eff_area          = lc._eff_area
 
-        n_of_sig_pulses   = 0
+        n_of_sig_pulses      = 0
         significative_pulses = []
-        n_of_total_pulses = len(pulses_param_list)
+        n_of_total_pulses    = len(pulses_param_list)
 
         for pulse in pulses_param_list:
             # Reads parameters of the pulse and generates it
@@ -1645,6 +1651,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
         time_distances = np.diff(delay_times)
         return time_distances
 
+
     # check that the parameters are in the correct range
     assert delta1<0
     assert delta2>=0
@@ -1653,9 +1660,9 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
     assert tau_max>0
     assert tau_max>tau_min
 
-    pulse_time_distances = []
     cnt=0
-    grb_list_sim = []
+    grb_list_sim         = []
+    pulse_time_distances = []
     while (cnt<N_grb):
         lc = LC(### 7 parameters
                 mu=mu,
@@ -1678,8 +1685,12 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             # skip it and continue in the generation process
             del(lc)
             continue
-        # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
-        n_of_sig_pulses, n_of_total_pulses, sig_pulses = count_significative_pulses(lc, verbose = False)
+
+        if test_pulse_distr:
+            # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
+            n_of_sig_pulses, n_of_total_pulses, sig_pulses = count_significative_pulses(lc, verbose=False)
+        else: 
+            n_of_sig_pulses = 0
 
         # convert the lc generated from the avalance into a GRB object
         grb = GRB('lc_candidate.txt', 
@@ -1719,9 +1730,10 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                 grb.name           = 'lc'+str(cnt)+'.txt'
                 #grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
             
-            #get all the time distances between the generated peaks and save them to a file. 
-            pulse_time_distances.extend(getPulsesTimeDistance(sig_pulses))
-            np.savetxt('time_distances.txt',np.array(pulse_time_distances))
+            if test_pulse_distr:
+                #get all the time distances between the generated peaks and save them to a file. 
+                pulse_time_distances.extend(getPulsesTimeDistance(sig_pulses))
+                np.savetxt('time_distances.txt',np.array(pulse_time_distances))
             ###############################################################################
 
             grb_list_sim.append(grb)
