@@ -1523,7 +1523,7 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 
 ################################################################################
 
-def generate_GRBs(N_grb, # number of simulated GRBs to produce
+def generate_GRBs(N_grb,                                            # number of simulated GRBs to produce
                   mu, mu0, alpha, delta1, delta2, tau_min, tau_max, # 7 parameters
                   instrument, bin_time, eff_area, bg_level,         # instrument parameters
                   t90_threshold, sn_threshold, t_f, filter=True,    # constraint parameters
@@ -1532,10 +1532,11 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                   test_pulse_distr=False                            # other parameters
                   ):
     """
-    AAA
-    AAA
-    AAA
-    AAA
+    This function generates a list of GRBs using the avalanche by Stern+96. As
+    input it takes the 7 parameters needed for the avalance model, and the 
+    parameters of the instrument considered. As output it returns a list, where 
+    each element of the list is an RGB object, that has passed the cosntraints 
+    selection (see "apply_constraints()" function). 
     Input:
     - N_grb: total number of simulated GRBs to produce in output;
     ### 7 parameters
@@ -1556,6 +1557,9 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
     - t_f:
     - filter:
     ### other parameters
+    - export_files: if True, every GRB that passed the constraint selection is
+                    exorted into an external file;
+    - export_path
     - n_cut:
     - with_bg:
     - seed: random seed;
@@ -1690,7 +1694,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
             # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
             n_of_sig_pulses, n_of_total_pulses, sig_pulses = count_significative_pulses(lc, verbose=False)
         else: 
-            n_of_sig_pulses = 0
+            n_of_sig_pulses = None
 
         # convert the lc generated from the avalance into a GRB object
         grb = GRB('lc_candidate.txt', 
@@ -1727,7 +1731,7 @@ def generate_GRBs(N_grb, # number of simulated GRBs to produce
                           idx=cnt, 
                           instrument=instrument,
                           path=export_path)
-                grb.name           = 'lc'+str(cnt)+'.txt'
+                grb.name = 'lc'+str(cnt)+'.txt'
                 #grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
             
             if test_pulse_distr:
