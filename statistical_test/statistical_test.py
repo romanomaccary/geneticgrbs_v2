@@ -1634,6 +1634,11 @@ def generate_GRBs(N_grb,                                            # number of 
         significative_pulses = []
         n_of_total_pulses    = len(pulses_param_list)
 
+        delay_factor = 2 
+        minimum_pulse_delay = delay_factor * bin_time
+        last_t_delay = 0 
+        #current_delay = np.inf
+
         for pulse in pulses_param_list:
             # Reads parameters of the pulse and generates it
             norm    = pulse['norm']
@@ -1642,6 +1647,9 @@ def generate_GRBs(N_grb,                                            # number of 
             tau_r   = pulse['tau_r']
 
             pulse_curve = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
+
+            #Evaluate delay with previous pulse
+            current_delay = t_delay - last_t_delay
 
             # Find peak rate
             peak_rate = np.max(pulse_curve)
@@ -1662,7 +1670,9 @@ def generate_GRBs(N_grb,                                            # number of 
             minimum_peak_rate = 50 * peak_fwhm**(-0.6)
             if peak_rate >= minimum_peak_rate:
                 n_of_sig_pulses += 1
-                significative_pulses.append(pulse)
+                if current_delay > minimum_pulse_delay:
+                    significative_pulses.append(pulse)
+                    last_t_delay = t_delay
         
         if verbose:
             print('-------------------------------------')
@@ -1689,6 +1699,9 @@ def generate_GRBs(N_grb,                                            # number of 
     cnt=0
     grb_list_sim         = []
     pulse_time_distances = []
+
+    #if test_pulse_distr: n_of_peaks_file = open('')
+
     while (cnt<N_grb):
         lc = LC(### 7 parameters
                 mu=mu,
@@ -1716,7 +1729,7 @@ def generate_GRBs(N_grb,                                            # number of 
             # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
             n_of_sig_pulses, n_of_total_pulses, sig_pulses = count_significative_pulses(lc, verbose=False)
         else: 
-            n_of_sig_pulses = None
+            n_of_sig_pulses, n_of_total_pulses, sig_pulses = None, None, None
 
         # convert the lc generated from the avalance into a GRB object
         grb = GRB('lc_candidate.txt', 
