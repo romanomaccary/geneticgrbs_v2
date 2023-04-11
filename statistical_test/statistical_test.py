@@ -1584,7 +1584,7 @@ def generate_GRBs(N_grb,                                            # number of 
         - path: path where to store the results of the simulations;
         """
         outfile  = path+instrument+'/'+'lc'+str(idx)+'.txt'
-        savefile = open(outfile, 'w')
+        savefile = open(outfile, 'w', encoding='utf-8')
         times    = LC._times
         lc       = LC._plot_lc
         err_lc   = LC._err_lc

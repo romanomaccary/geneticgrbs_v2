@@ -19,15 +19,15 @@ rc('text', usetex=True)
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
-#user='LB'
-user='AF'
+user='LB'
+#user='AF'
 #user='bach'
 if user=='bach':
-    sys.path.append('/home/')
-    sys.path.append('/home/')
+    sys.path.append('...')
+    sys.path.append('...')
 elif user=='LB':
-    sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/statistical_test')
-    sys.path.append('/home/lorenzo/git/lc_pulse_avalanche/lc_pulse_avalanche')
+    sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/statistical_test')
+    sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/lc_pulse_avalanche')
 elif user=='AF':
     sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/statistical_test')
     sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
@@ -79,12 +79,21 @@ tau_max = 26
 # tau_min = 0.00047431784713861797
 # tau_max = 39.313297221735766
 
+# The 7 values obtained from v4 optimization are
+# mu      = 1.7377495777582268
+# mu0     = 1.2674137674116688
+# alpha   = 6.56892665444723
+# delta1  = -0.5989803252226719
+# delta2  = 0.02306881143876948
+# tau_min = 6.478038929262871e-06
+# tau_max = 45.936383095147605
+
 #------------------------------------------------------------------------------#
 
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=500
+N_grb=2000
 
 instrument = 'batse'
 #instrument = 'swift'
