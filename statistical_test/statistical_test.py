@@ -1345,16 +1345,16 @@ def make_plot_errs(test_times,
                    # plot 2
                    averaged_fluxes_cube, 
                    averaged_fluxes_cube_sim,
+                   averaged_fluxes_cube_rms, 
+                   averaged_fluxes_cube_rms_sim,
                    # plot 3
                    steps, 
                    bin_time, 
                    acf,                  
                    acf_sim,
-                   # 
-                   averaged_fluxes_cube_rms, 
-                   averaged_fluxes_cube_rms_sim,
                    acf_rms,
                    acf_rms_sim,
+                   #
                    n_grb_real,
                    n_grb_sim, 
                    # save plot
@@ -1397,7 +1397,6 @@ def make_plot_errs(test_times,
     ax[0,0].axhline(y=-sigma3, xmin=test_times[0]**(1/3), xmax=test_times[-1]**(1/3), c='r', ls='--')
     # set labels
     ax[0,0].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',         size=18)
-    ax[0,0].set_ylabel(r'$ \langle F/F_p\rangle$', size=18)
     # set limits
     ax[0,0].set_ylim(-5,5)
     # other
