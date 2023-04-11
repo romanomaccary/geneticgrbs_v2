@@ -74,6 +74,7 @@ class GRB:
 # - t90_threshold: used to select only _long_ GRBs [s]
 # - sn_threshold : used to select only lc with high S2N    
 
+# BATSE
 name_batse          = 'batse'
 res_batse           = 0.064
 eff_area_batse      = 3600
@@ -89,6 +90,14 @@ instr_batse         = {
     "sn_threshold" : sn_threshold_batse
 }
 
+# Swift
+# - Effective area:
+#   https://swift.gsfc.nasa.gov/proposals/tech_appd/swiftta_v17/node27.html)
+#   Approximately 1400 cm^2.
+# - Background:
+#   https://swift.gsfc.nasa.gov/proposals/tech_appd/swiftta_v17/node32.html
+#   The typical BAT background event rate in the full array above threshold is 
+#   about 10 000 counts per second.
 name_swift          = 'swift'
 res_swift           = 0.064
 eff_area_swift      = 1400
@@ -104,6 +113,20 @@ instr_swift         = {
     "sn_threshold" : sn_threshold_swift
 }
 
+# BeppoSAX
+# - Catalog and Instrument:
+#   https://ui.adsabs.harvard.edu/abs/2009ApJS..180..192F/abstract)
+# - Geometric Area:
+#   circa 1136 cm^2 per pannello. L'area efficace dipende fortemente da energia
+#    e direzione di arrivo dei fotoni
+# - Effectiva Area:
+#   https://iopscience.iop.org/article/10.1086/308737/fulltext/50075.text.html
+#   420 cm^2 secondo questa reference (nel migliore dei casi)
+# - Background: Misura delle performance in volo dello strumento
+#   https://ui.adsabs.harvard.edu/abs/1997SPIE.3114..186F/abstract)
+#   Qui è presente una misura del bkg medio: 1000 cnt/s (pag. 4, paragrafo 3)
+#
+# BeppoSAX (HR)
 name_sax          = 'sax'
 res_sax           = 0.0078125
 eff_area_sax      = 420
@@ -118,7 +141,7 @@ instr_sax         = {
     "t90_threshold": t90_threshold_sax,
     "sn_threshold" : sn_threshold_sax
 }
-
+# BeppoSAX (LR)
 name_sax_lr          = 'sax_lr'
 res_sax_lr           = 1
 eff_area_sax_lr      = eff_area_sax
