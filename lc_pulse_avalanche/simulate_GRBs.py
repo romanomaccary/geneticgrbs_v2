@@ -130,7 +130,7 @@ else:
 ################################################################################
 ################################################################################
 
-_ = generate_GRBs(# number of simulated GRBs to produce
+test = generate_GRBs(# number of simulated GRBs to produce
                   N_grb=N_grb, 
                   # 7 parameters
                   mu=mu, 

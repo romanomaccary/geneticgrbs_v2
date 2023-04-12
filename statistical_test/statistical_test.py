@@ -1637,7 +1637,6 @@ def generate_GRBs(N_grb,                                            # number of 
         delay_factor = 2 
         minimum_pulse_delay = delay_factor * bin_time
         last_t_delay = 0 
-        #current_delay = np.inf
 
         for pulse in pulses_param_list:
             # Reads parameters of the pulse and generates it
@@ -1699,8 +1698,6 @@ def generate_GRBs(N_grb,                                            # number of 
     cnt=0
     grb_list_sim         = []
     pulse_time_distances = []
-
-    #if test_pulse_distr: n_of_peaks_file = open('')
 
     while (cnt<N_grb):
         lc = LC(### 7 parameters
