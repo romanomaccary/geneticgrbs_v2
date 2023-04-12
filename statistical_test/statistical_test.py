@@ -1054,12 +1054,12 @@ def make_plot(instrument, test_times,
                              averaged_fluxes-sigma*errs,
                              averaged_fluxes+sigma*errs,
                              color='b',
-                             alpha=0.25) 
+                             alpha=0.2) 
         ax[0,0].fill_between(test_times**(1/3),
                              averaged_fluxes_sim-sigma*errs_sim,
                              averaged_fluxes_sim+sigma*errs_sim,
                              color='r',
-                             alpha=0.25)
+                             alpha=0.2)
     # set scale
     if log:
         ax[0,0].set_yscale('log', base=10) 
@@ -1101,12 +1101,12 @@ def make_plot(instrument, test_times,
                              averaged_fluxes_cube-sigma*errs,
                              averaged_fluxes_cube+sigma*errs,
                              color='b',
-                             alpha=0.25) 
+                             alpha=0.2) 
         ax[0,1].fill_between(test_times**(1/3),
                              averaged_fluxes_cube_sim-sigma*errs_sim,
                              averaged_fluxes_cube_sim+sigma*errs_sim,
                              color='r',
-                             alpha=0.25)
+                             alpha=0.2)
 
     # set scale
     if log:
@@ -1146,12 +1146,12 @@ def make_plot(instrument, test_times,
                              acf-sigma*errs,
                              acf+sigma*errs,
                              color='b',
-                             alpha=0.25) 
+                             alpha=0.2) 
         ax[1,0].fill_between((steps_sim*bin_time)**(1/3),
                              acf_sim-sigma*errs_sim,
                              acf_sim+sigma*errs_sim,
                              color='r',
-                             alpha=0.25)
+                             alpha=0.2)
     # set scale
     if log:
         ax[1,0].set_yscale('log', base=10)
@@ -1292,13 +1292,13 @@ def make_plot(instrument, test_times,
                                  kde_real-sigma*errs,
                                  kde_real+sigma*errs,
                                  color='b',
-                                 alpha=0.25,
+                                 alpha=0.2,
                                  zorder=1) 
             ax[1,1].fill_between(x_grid,
                                  kde_sim-sigma*errs_sim,
                                  kde_sim+sigma*errs_sim,
                                  color='r',
-                                 alpha=0.25,
+                                 alpha=0.2,
                                  zorder=2)
 
     # set scale
@@ -1354,6 +1354,9 @@ def make_plot_errs(test_times,
                    acf_sim,
                    acf_rms,
                    acf_rms_sim,
+                   # plot 4
+                   duration, 
+                   duration_sim,
                    #
                    n_grb_real,
                    n_grb_sim, 
@@ -1460,9 +1463,58 @@ def make_plot_errs(test_times,
     # 
     #--------------------------------------------------------------------------#
 
-    # plots
-    ax[1,1].plot([0,1],[0,1], c='k')
-    ax[1,1].plot([1,0],[0,1], c='k')
+    if 1:
+        ax[1,1].plot([0,1],[0,1], c='k')
+        ax[1,1].plot([1,0],[0,1], c='k')
+    else:
+        label = r'$\frac{(N events)_{sim}-(N events)_{real}}{\sqrt{\sigma^2_{sim}+\sigma^2_{real}}}$'
+        #
+        duration     = np.log10(duration)
+        duration_sim = np.log10(duration_sim)
+        # kernel density estimation
+        h_opt        = 0.09 # values obtained with GridSearch optimization (see the notebook in DEBUG section)
+        x_grid       = np.linspace(-2,    5, 1000)
+        y_plot_real  = stats.norm.pdf(x_grid, duration[:, None],     h_opt)
+        y_plot_sim   = stats.norm.pdf(x_grid, duration_sim[:, None], h_opt)
+        y_plot_real /= (len(duration))
+        y_plot_sim  /= (len(duration_sim))
+        kde_real     = y_plot_real.sum(0)
+        kde_sim      = y_plot_sim.sum(0)
+        # errors
+        n_resample=500
+        kde_real_r_stack     = np.zeros([len(kde_real),n_resample])
+        kde_real_r_stack_sim = np.zeros([len(kde_sim), n_resample])
+        for i in range(n_resample):
+            dur_resampled_real = resample(duration,     replace=True)
+            dur_resampled_sim  = resample(duration_sim, replace=True)
+            y_plot_real_r      = stats.norm.pdf(x_grid, dur_resampled_real[:, None], h_opt)
+            y_plot_sim_r       = stats.norm.pdf(x_grid, dur_resampled_sim[:, None],  h_opt)
+            y_plot_real_r     /= (len(dur_resampled_real))
+            y_plot_sim_r      /= (len(dur_resampled_sim))
+            kde_real_r         = y_plot_real_r.sum(0)
+            kde_sim_r          = y_plot_sim_r.sum(0)
+            kde_real_r_stack[:,i]     = kde_real_r
+            kde_real_r_stack_sim[:,i] = kde_sim_r
+        rms      = np.std(kde_real_r_stack,     axis=1)
+        rms_sim  = np.std(kde_real_r_stack_sim, axis=1)
+        errs     = rms     #/ np.sqrt(n_resample)
+        errs_sim = rms_sim #/ np.sqrt(n_resample)
+        ax[1,1].plot(x_grid, (kde_sim-kde_real)/np.sqrt(errs_sim**2+errs**2), c='b', label=label)
+        # sigma
+        ax[1,1].axhline(y=+sigma,  xmin=x_grid[0], xmax=x_grid[-1], c='k', ls='--', label=r'$1.96\sigma$')
+        ax[1,1].axhline(y=-sigma,  xmin=x_grid[0], xmax=x_grid[-1], c='k', ls='--')
+        ax[1,1].axhline(y=+sigma3, xmin=x_grid[0], xmax=x_grid[-1], c='r', ls='--', label=r'$3\sigma$')
+        ax[1,1].axhline(y=-sigma3, xmin=x_grid[0], xmax=x_grid[-1], c='r', ls='--')
+        # set labels
+        ax[1,1].set_xlabel(r'$\log\mathrm{duration}$ [s]', size=18)
+        # set limits
+        ax[1,1].set_xlim(-1.0,3.5)
+        # other
+        ax[1,1].grid(True, which="major", lw=1.0, ls="-")
+        ax[1,1].grid(True, which="minor", lw=0.3, ls="-")
+        ax[1,1].xaxis.set_tick_params(labelsize=14)
+        ax[1,1].yaxis.set_tick_params(labelsize=14)
+        ax[1,1].legend(prop={'size':15}, loc="best", facecolor='white', framealpha=0.5)
 
     #--------------------------------------------------------------------------#
     #--------------------------------------------------------------------------#
