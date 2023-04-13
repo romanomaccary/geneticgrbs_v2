@@ -1688,7 +1688,9 @@ def generate_GRBs(N_grb,                                            # number of 
 
         delay_factor = 2 
         minimum_pulse_delay = delay_factor * bin_time
-        last_t_delay = 0 
+        last_t_delay = 0
+        last_fwhm = 0
+        bluring_thresh = 3 
 
         for pulse in pulses_param_list:
             # Reads parameters of the pulse and generates it
@@ -1721,9 +1723,12 @@ def generate_GRBs(N_grb,                                            # number of 
             minimum_peak_rate = 50 * peak_fwhm**(-0.6)
             if peak_rate >= minimum_peak_rate:
                 if current_delay > minimum_pulse_delay:
+                    #bluring_level = current_delay / np.sqrt(peak_fwhm**2 + last_fwhm**2)
+                    #if bluring_level >= bluring_thresh:
                     significative_pulses.append(pulse)
                     n_of_sig_pulses += 1
                     last_t_delay = t_delay
+                    last_fwhm = peak_fwhm
                     
         
         if verbose:
