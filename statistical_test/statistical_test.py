@@ -1720,10 +1720,11 @@ def generate_GRBs(N_grb,                                            # number of 
             # and check if the peak rate of the pulse is above the minimum  
             minimum_peak_rate = 50 * peak_fwhm**(-0.6)
             if peak_rate >= minimum_peak_rate:
-                n_of_sig_pulses += 1
                 if current_delay > minimum_pulse_delay:
                     significative_pulses.append(pulse)
+                    n_of_sig_pulses += 1
                     last_t_delay = t_delay
+                    
         
         if verbose:
             print('-------------------------------------')
