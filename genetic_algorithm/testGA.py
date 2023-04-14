@@ -136,7 +136,7 @@ range_mu      = {"low": 0.90,            "high": 2}
 range_mu0     = {"low": 0.90,            "high": 2} 
 range_alpha   = {"low": 1,               "high": 15} 
 range_delta1  = {"low": -1.5,            "high": -0.25-1.e-6} 
-range_delta2  = {"low": np.log10(1.e-9), "high": np.log10(0.25)}           # sample uniformly in log space
+range_delta2  = {"low": 1.e-9,           "high": 0.25}
 range_tau_min = {"low": np.log10(1.e-6), "high": np.log10(bin_time-1.e-6)} # sample uniformly in log space
 range_tau_max = {"low": bin_time+20,     "high": 60} 
 
@@ -255,7 +255,7 @@ def fitness_func(solution, solution_idx=None):
                                  mu0=solution[1],
                                  alpha=solution[2],
                                  delta1=solution[3],
-                                 delta2=10**solution[4],   # sample uniformly in log space
+                                 delta2=solution[4],
                                  tau_min=10**solution[5],  # sample uniformly in log space
                                  tau_max=solution[6],
                                  # instrument parameters:
@@ -336,7 +336,7 @@ def on_generation(ga_instance):
     print("    - mu0     = {solution}".format(solution=solution[1]))
     print("    - alpha   = {solution}".format(solution=solution[2]))
     print("    - delta1  = {solution}".format(solution=solution[3]))
-    print("    - delta2  = {solution}".format(solution=10**(solution[4])))
+    print("    - delta2  = {solution}".format(solution=solution[4]))
     print("    - tau_min = {solution}".format(solution=10**(solution[5])))
     print("    - tau_max = {solution}".format(solution=solution[6]))
 
@@ -421,7 +421,7 @@ print("    - mu      = {solution}".format(solution=solution[0]))
 print("    - mu0     = {solution}".format(solution=solution[1]))
 print("    - alpha   = {solution}".format(solution=solution[2]))
 print("    - delta1  = {solution}".format(solution=solution[3]))
-print("    - delta2  = {solution}".format(solution=10**(solution[4])))
+print("    - delta2  = {solution}".format(solution=solution[4]))
 print("    - tau_min = {solution}".format(solution=10**(solution[5])))
 print("    - tau_max = {solution}".format(solution=solution[6]))
 print("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
@@ -490,7 +490,7 @@ file.write("    - alpha   = {solution}".format(solution=solution[2]))
 file.write('\n')
 file.write("    - delta1  = {solution}".format(solution=solution[3]))
 file.write('\n')
-file.write("    - delta2  = {solution}".format(solution=10**(solution[4])))
+file.write("    - delta2  = {solution}".format(solution=solution[4]))
 file.write('\n')
 file.write("    - tau_min = {solution}".format(solution=10**(solution[5])))
 file.write('\n')

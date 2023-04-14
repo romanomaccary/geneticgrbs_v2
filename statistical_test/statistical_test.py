@@ -1460,7 +1460,7 @@ def make_plot_errs(test_times,
     ax[1,0].legend(prop={'size':15}, loc="best", facecolor='white', framealpha=0.5)
 
     #--------------------------------------------------------------------------#
-    # 
+    # DISTRIBUTION OF DURATIONS
     #--------------------------------------------------------------------------#
 
     if 1:
