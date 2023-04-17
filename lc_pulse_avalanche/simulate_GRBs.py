@@ -93,7 +93,7 @@ tau_max = 26
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=2000
+N_grb=500
 
 instrument = 'batse'
 #instrument = 'swift'
@@ -129,7 +129,8 @@ else:
 
 ################################################################################
 ################################################################################
-
+#from datetime import datetime
+#start = datetime.now()
 test = generate_GRBs(# number of simulated GRBs to produce
                   N_grb=N_grb, 
                   # 7 parameters
@@ -155,7 +156,8 @@ test = generate_GRBs(# number of simulated GRBs to produce
                   export_path=export_path, 
                   n_cut=2000, 
                   with_bg=False,
-                  test_pulse_distr=True)
+                  test_pulse_distr=False)
 
+#print((datetime.now() - start).seconds)
 ################################################################################
 ################################################################################
