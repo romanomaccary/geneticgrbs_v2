@@ -230,14 +230,13 @@ def evaluateDuration20(times, counts, t90=None, t90_frac=15, bin_time=None, filt
             print('Error in "evaluateDuration20()" during the "savgol_filter()"...')
             exit()
 
-
-    threshold_level = 0.2
+    threshold_level = 0.20
     c_max           = np.max(counts)
     c_threshold     = c_max * threshold_level
     selected_times  = times[counts >= c_threshold]
     tstart          = selected_times[ 0]
     tstop           = selected_times[-1]
-    duration        = tstop - tstart # T20
+    duration        = tstop - tstart # T20%
     assert duration>0
 
     return np.array( [duration, tstart, tstop] )
@@ -1606,7 +1605,8 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 def generate_GRBs(N_grb,                                            # number of simulated GRBs to produce
                   mu, mu0, alpha, delta1, delta2, tau_min, tau_max, # 7 parameters
                   instrument, bin_time, eff_area, bg_level,         # instrument parameters
-                  t90_threshold, sn_threshold, t_f, filter=True,    # constraint parameters
+                  sn_threshold, t_f,                                # constraint parameters 
+                  t90_threshold, t90_frac=15, filter=True,          # constraint parameters
                   export_files=False, export_path='None',           # other parameters
                   n_cut=2000, with_bg=False, seed=None,             # other parameters
                   test_pulse_distr=False                            # other parameters
@@ -1632,9 +1632,10 @@ def generate_GRBs(N_grb,                                            # number of 
     - eff_area:
     - bg_level;
     ### constraint parameters
-    - t90_threshold:
     - sn_threshold: 
     - t_f:
+    - t90_threshold:
+    - t90_frac:
     - filter:
     ### other parameters
     - export_files: if True, every GRB that passed the constraint selection is
@@ -1791,6 +1792,9 @@ def generate_GRBs(N_grb,                                            # number of 
             n_of_sig_pulses, n_of_total_pulses, sig_pulses = count_significative_pulses(lc, verbose=False)
         else: 
             n_of_sig_pulses, n_of_total_pulses, sig_pulses = None, None, None
+        
+        # initialize T20% to None
+        t20_in=None
 
         # convert the lc generated from the avalance into a GRB object
         grb = GRB('lc_candidate.txt', 
@@ -1799,6 +1803,7 @@ def generate_GRBs(N_grb,                                            # number of 
                   lc._err_lc, 
                   lc._t90,
                   export_path+instrument+'/'+'lc_candidate.txt',  
+                  t20_in,
                   n_of_sig_pulses)
         # we use a temporary list that contains only _one_ lc, then we
         # check if that GRB satisfies the constraints imposed, ad if that is
@@ -1815,6 +1820,7 @@ def generate_GRBs(N_grb,                                            # number of 
         grb_list_sim_temp = apply_constraints(grb_list=grb_list_sim_temp, 
                                               bin_time=bin_time, 
                                               t90_threshold=t90_threshold, 
+                                              t90_frac=t90_frac,
                                               sn_threshold=sn_threshold, 
                                               t_f=t_f,
                                               filter=filter,
