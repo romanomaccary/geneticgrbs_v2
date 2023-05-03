@@ -50,18 +50,20 @@ class GRB:
                  errs, 
                  t90, 
                  grb_data_file_path, 
-                 num_of_sig_pulses=0):
+                 t20=-1, 
+                 num_of_sig_pulses=-1):
                  
         self.name   = grb_name
         self.times  = times
         self.counts = counts
         self.errs   = errs
         self.t90    = t90
+        self.t20    = t20
         self.data_file_path    = grb_data_file_path
         self.num_of_sig_pulses = num_of_sig_pulses
 
     def copy(self):
-        copy_grb = GRB(self.name, self.times, self.counts, self.errs, self.t90, self.data_file_path)
+        copy_grb = GRB(self.name, self.times, self.counts, self.errs, self.t90, self.data_file_path, self.t20, self.num_of_sig_pulses)
         return copy_grb
 
 ################################################################################
@@ -195,7 +197,7 @@ instr_sax_lr         = {
 
 ################################################################################
 
-def evaluateDuration20(times, counts, t90=None, bin_time=None, filter=True):
+def evaluateDuration20(times, counts, t90=None, t90_frac=15, bin_time=None, filter=True):
     """
     Compute the duration of the GRB event as described in [Stern et al., 1996].
     We define the starting time when the signal reaches the 20% of the value of
@@ -208,13 +210,14 @@ def evaluateDuration20(times, counts, t90=None, bin_time=None, filter=True):
       - counts: counts per bin of the GRB;
       - t90: T90 duration of the GRB;
       - bin_time: temporal bin size of the instrument [s];
+      - t90_frac: fraction of T90 to be used as window length;
       - filter: boolean variable. If True, it activates the smoothing savgol
                 filter before computing the T20% duration;
     Output:
       - duration: T20%, that is, the duration at 20% level;
     """
     if filter:
-        t90_frac = 5.
+        t90_frac = t90_frac
         window   = int(t90/t90_frac/bin_time)
         window   = window if window%2==1 else window+1
 
@@ -234,14 +237,14 @@ def evaluateDuration20(times, counts, t90=None, bin_time=None, filter=True):
     selected_times  = times[counts >= c_threshold]
     tstart          = selected_times[ 0]
     tstop           = selected_times[-1]
-    duration        = tstop - tstart
+    duration        = tstop - tstart # T20
     assert duration>0
 
     return np.array( [duration, tstart, tstop] )
 
 ################################################################################
 
-def evaluateGRB_SN(times, counts, errs, t90, bin_time, filter):
+def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter):
     """
     Compute the S/N ratio between the total signal from a GRB and the background
     in a time interval equal to the GRB duration, as defined in Stern+96, i.e.,
@@ -260,17 +263,18 @@ def evaluateGRB_SN(times, counts, errs, t90, bin_time, filter):
     Output:
      - s2n: signal to noise ratio;
     """
-    _, tstart, tstop = evaluateDuration20(times=times, 
-                                          counts=counts,
-                                          t90=t90, 
-                                          bin_time=bin_time,
-                                          filter=filter)
+    T20, tstart, tstop = evaluateDuration20(times=times, 
+                                            counts=counts,
+                                            t90=t90, 
+                                            t90_frac=t90_frac, 
+                                            bin_time=bin_time,
+                                            filter=filter)
     
     event_times_mask = np.logical_and(times>=tstart, times<=tstop)
     sum_grb_counts   = np.sum( counts[event_times_mask] )
     sum_errs         = np.sqrt( np.sum(errs[event_times_mask]**2) )
     s2n              = np.abs( sum_grb_counts/sum_errs )
-    return s2n
+    return s2n, T20
 
 
 def evaluateGRB_SN_peak(counts, errs):
@@ -634,7 +638,7 @@ def load_lc_sim(path):
 ################################################################################
 
 def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, 
-                      sn_distr=False, filter=True, verbose=True):
+                      t90_frac=15, sn_distr=False, filter=True, verbose=True):
     """
     Given as input a list of GBR objects, the function outputs a list containing
     only the GRBs that satisfy the following constraint:
@@ -665,12 +669,13 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
         t90     = np.float32(grb.t90)
         i_c_max = np.argmax(counts)
         try:
-            s_n = evaluateGRB_SN(times=times, 
-                                 counts=counts, 
-                                 errs=errs, 
-                                 t90=t90,
-                                 bin_time=bin_time,
-                                 filter=filter)
+            s_n, T20 = evaluateGRB_SN(times=times, 
+                                      counts=counts, 
+                                      errs=errs, 
+                                      t90=t90,
+                                      t90_frac=t90_frac,
+                                      bin_time=bin_time,
+                                      filter=filter)
         except AssertionError:
             #remove GRB if the t20% is negative
             grb_with_neg_t20 += 1
@@ -682,6 +687,7 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
         #cond_2 = s_n_peak>sn_threshold
         cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
         if ( cond_1 and cond_2 and cond_3 ):
+            grb.t20 = T20
             good_grb_list.append(grb)
 
     if verbose:
