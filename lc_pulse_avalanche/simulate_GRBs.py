@@ -44,13 +44,13 @@ export_path='../simulations/'
 ################################################################################
 
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are
-mu      = 1.2 
-mu0     = 1
-alpha   = 4
-delta1  = -0.5
-delta2  = 0
-tau_min = 0.02
-tau_max = 26
+# mu      = 1.2 
+# mu0     = 1
+# alpha   = 4
+# delta1  = -0.5
+# delta2  = 0
+# tau_min = 0.02
+# tau_max = 26
 
 # The 7 values obtained from v1 optimization are
 # mu      = 1.3712230777324108
@@ -80,20 +80,20 @@ tau_max = 26
 # tau_max = 39.313297221735766
 
 # The 7 values obtained from v4 optimization are
-# mu      = 1.7377495777582268
-# mu0     = 1.2674137674116688
-# alpha   = 6.56892665444723
-# delta1  = -0.5989803252226719
-# delta2  = 0.02306881143876948
-# tau_min = 6.478038929262871e-06
-# tau_max = 45.936383095147605
+mu      = 1.7377495777582268
+mu0     = 1.2674137674116688
+alpha   = 6.56892665444723
+delta1  = -0.5989803252226719
+delta2  = 0.02306881143876948
+tau_min = 6.478038929262871e-06
+tau_max = 45.936383095147605
 
 #------------------------------------------------------------------------------#
 
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=500
+N_grb=2000
 
 instrument = 'batse'
 #instrument = 'swift'

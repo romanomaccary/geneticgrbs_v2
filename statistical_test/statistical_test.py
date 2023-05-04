@@ -218,7 +218,7 @@ def evaluateDuration20(times, counts, t90=None, t90_frac=15, bin_time=None, filt
     """
     if filter:
         t90_frac = t90_frac
-        window   = int(t90/t90_frac/bin_time)+1
+        window   = int(t90/t90_frac/bin_time)+2
         window   = window if window%2==1 else window+1
 
         try:
