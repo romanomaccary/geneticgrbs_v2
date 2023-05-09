@@ -150,6 +150,7 @@ else:
 ################################################################################
 #from datetime import datetime
 #start = datetime.now()
+test_pulse_distr = True # False
 test  = generate_GRBs(# number of simulated GRBs to produce
                       N_grb=N_grb, 
                       # 7 parameters
@@ -175,7 +176,13 @@ test  = generate_GRBs(# number of simulated GRBs to produce
                       export_path=export_path, 
                       n_cut=2000, 
                       with_bg=False,
-                      test_pulse_distr=False)
+                      test_pulse_distr=test_pulse_distr)
+
+if test_pulse_distr:
+    pulse_out_file=open('./n_of_pulses.txt', 'w')
+    for grb in test:
+        pulse_out_file.write('{0}\n'.format(grb.num_of_sig_pulses))
+    pulse_out_file.close()
 
 #print((datetime.now() - start).seconds)
 ################################################################################

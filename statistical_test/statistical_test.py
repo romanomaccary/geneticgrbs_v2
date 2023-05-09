@@ -1849,10 +1849,10 @@ def generate_GRBs(N_grb,                                            # number of 
                 grb.name = 'lc'+str(cnt)+'.txt'
                 #grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
             
-            #if test_pulse_distr:
-            #    #get all the time distances between the generated peaks and save them to a file. 
-            #    pulse_time_distances.extend(getPulsesTimeDistance(sig_pulses))
-            #    np.savetxt('time_distances.txt',np.array(pulse_time_distances))
+            if test_pulse_distr:
+                #get all the time distances between the generated peaks and save them to a file. 
+                pulse_time_distances.extend(getPulsesTimeDistance(sig_pulses))
+                np.savetxt('time_distances.txt',np.array(pulse_time_distances))
             ###############################################################################
 
             grb_list_sim.append(grb)
