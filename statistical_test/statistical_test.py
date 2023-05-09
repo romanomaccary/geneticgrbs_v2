@@ -76,6 +76,7 @@ class GRB:
 # - t90_threshold: used to select only _long_ GRBs [s]
 # - sn_threshold : used to select only lc with high S2N    
 
+
 # BATSE
 name_batse          = 'batse'
 res_batse           = 0.064
@@ -99,7 +100,7 @@ instr_batse         = {
 # - Background:
 #   https://swift.gsfc.nasa.gov/proposals/tech_appd/swiftta_v17/node32.html
 #   The typical BAT background event rate in the full array above threshold is 
-#   about 10 000 counts per second.
+#   about 10000 counts per second.
 name_swift          = 'swift'
 res_swift           = 0.064
 eff_area_swift      = 1400
