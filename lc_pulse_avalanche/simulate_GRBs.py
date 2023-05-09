@@ -148,8 +148,8 @@ else:
 
 ################################################################################
 ################################################################################
-from datetime import datetime
-start = datetime.now()
+#from datetime import datetime
+#start = datetime.now()
 test  = generate_GRBs(# number of simulated GRBs to produce
                       N_grb=N_grb, 
                       # 7 parameters
@@ -177,6 +177,6 @@ test  = generate_GRBs(# number of simulated GRBs to produce
                       with_bg=False,
                       test_pulse_distr=False)
 
-print((datetime.now() - start).seconds)
+#print((datetime.now() - start).seconds)
 ################################################################################
 ################################################################################

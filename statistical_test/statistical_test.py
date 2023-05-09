@@ -623,7 +623,19 @@ def load_lc_sim(path):
         left_idx  = grb_file.find('lc') + len('lc')
         right_idx = grb_file.find('.txt')
         grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string
+        # read files
         times, counts, errs, t90 = np.loadtxt(path+grb_file, unpack=True)
+        #with open(path+grb_file, 'r', encoding='utf-8', errors='ignore') as f:
+        #    times  = []
+        #    counts = []
+        #    errs   = []
+        #    t90    = []
+        #    for line in f:
+        #        values = line.split()
+        #        times.append(float(values[0]))
+        #        counts.append(float(values[1]))
+        #        errs.append(float(values[2]))
+        #        t90.append(float(values[3]))
         times  = np.float32(times)
         counts = np.float32(counts)
         errs   = np.float32(errs)
