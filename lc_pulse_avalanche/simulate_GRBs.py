@@ -80,13 +80,31 @@ export_path='../simulations/'
 # tau_max = 39.313297221735766
 
 # The 7 values obtained from v4 optimization are
-mu      = 1.7377495777582268
-mu0     = 1.2674137674116688
-alpha   = 6.56892665444723
-delta1  = -0.5989803252226719
-delta2  = 0.02306881143876948
-tau_min = 6.478038929262871e-06
-tau_max = 45.936383095147605
+# mu      = 1.7377495777582268
+# mu0     = 1.2674137674116688
+# alpha   = 6.56892665444723
+# delta1  = -0.5989803252226719
+# delta2  = 0.02306881143876948
+# tau_min = 6.478038929262871e-06
+# tau_max = 45.936383095147605
+
+# The 7 values obtained from v5 optimization are
+# mu      = 1.8642165398675894
+# mu0     = 0.9460684332226531
+# alpha   = 6.539055496753974
+# delta1  = -0.7805636907606287
+# delta2  = 0.07414591188731365
+# tau_min = 6.350848178629759e-06
+# tau_max = 52.41492789344243
+
+# The 7 values obtained from v6 optimization are
+mu      = 1.5355877552761932
+mu0     = 1.534168123065679
+alpha   = 3.1200524011794863
+delta1  = -0.7655182486991188
+delta2  = 0.2206237762670341
+tau_min = 0.0018477209878527603
+tau_max = 50.124910976218175
 
 #------------------------------------------------------------------------------#
 
@@ -99,6 +117,7 @@ instrument = 'batse'
 #instrument = 'swift'
 #instrument = 'sax'
 #instrument = 'sax_lr'
+
 if instrument=='batse':
     res           = instr_batse['res']
     eff_area      = instr_batse['eff_area']
@@ -129,35 +148,35 @@ else:
 
 ################################################################################
 ################################################################################
-#from datetime import datetime
-#start = datetime.now()
-test = generate_GRBs(# number of simulated GRBs to produce
-                  N_grb=N_grb, 
-                  # 7 parameters
-                  mu=mu, 
-                  mu0=mu0, 
-                  alpha=alpha, 
-                  delta1=delta1, 
-                  delta2=delta2,  
-                  tau_min=tau_min, 
-                  tau_max=tau_max, 
-                  # instrument parameters
-                  instrument=instrument, 
-                  bin_time=res, 
-                  eff_area=eff_area,
-                  bg_level=bg_level, 
-                  # constraint parameters
-                  t90_threshold=t90_threshold,
-                  sn_threshold=sn_threshold, 
-                  t_f=t_f, 
-                  filter=True,
-                  # other parameters
-                  export_files=True, 
-                  export_path=export_path, 
-                  n_cut=2000, 
-                  with_bg=False,
-                  test_pulse_distr=False)
+from datetime import datetime
+start = datetime.now()
+test  = generate_GRBs(# number of simulated GRBs to produce
+                      N_grb=N_grb, 
+                      # 7 parameters
+                      mu=mu, 
+                      mu0=mu0, 
+                      alpha=alpha, 
+                      delta1=delta1, 
+                      delta2=delta2,  
+                      tau_min=tau_min, 
+                      tau_max=tau_max, 
+                      # instrument parameters
+                      instrument=instrument, 
+                      bin_time=res, 
+                      eff_area=eff_area,
+                      bg_level=bg_level, 
+                      # constraint parameters
+                      t90_threshold=t90_threshold,
+                      sn_threshold=sn_threshold, 
+                      t_f=t_f, 
+                      filter=True,
+                      # other parameters
+                      export_files=True, 
+                      export_path=export_path, 
+                      n_cut=2000, 
+                      with_bg=False,
+                      test_pulse_distr=False)
 
-#print((datetime.now() - start).seconds)
+print((datetime.now() - start).seconds)
 ################################################################################
 ################################################################################
