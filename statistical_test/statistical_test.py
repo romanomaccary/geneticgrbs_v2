@@ -1641,6 +1641,7 @@ def generate_GRBs(N_grb,                                            # number of 
     - tau_min:
     - tau_max:
     ### instrument parameters
+    - instrument:
     - res:
     - eff_area:
     - bg_level;
@@ -1656,15 +1657,14 @@ def generate_GRBs(N_grb,                                            # number of 
     - export_path
     - n_cut:
     - with_bg:
-    - seed: random seed;
+    - seed:
     - test_pulse_distr: if True, it appends to each GRB object also the info
                         on the number of significative pulses inside that GRB,
                         and we also compute the time distances between all the
                         pulses in that GRB;
     Output:
     -grb_list_sim: list containing N_grb GRB objects, each lc satisfying the
-                imposed constraints;
-
+                   imposed constraints;
     """
 
     def export_lc(LC, idx, instrument, path='../simulations/'):
@@ -1706,10 +1706,10 @@ def generate_GRBs(N_grb,                                            # number of 
         significative_pulses = []
         n_of_total_pulses    = len(pulses_param_list)
 
-        delay_factor = 2 
+        delay_factor   = 2 
         minimum_pulse_delay = delay_factor * bin_time
-        last_t_delay = 0
-        last_fwhm = 0
+        last_t_delay   = 0
+        last_fwhm      = 0
         bluring_thresh = 3 
 
         for pulse in pulses_param_list:
@@ -1728,15 +1728,15 @@ def generate_GRBs(N_grb,                                            # number of 
             peak_rate = np.max(pulse_curve)
 
             # Evaluate the FWHM of the pulse (analytical evaluation)
-            t_1 = t_delay - tau_r *np.sqrt(np.log(2))
-            t_2 = t_delay + tau *np.log(2)
+            t_1 = t_delay - tau_r * np.sqrt(np.log(2))
+            t_2 = t_delay + tau   * np.log(2)
             peak_fwhm = t_2 - t_1
 
             if verbose:
                 print('----')
-                print('Delay time: ', t_delay, 's')
+                print('Delay time: ',      t_delay,   's')
                 print('Pulse peak rate: ', peak_rate, 'counts/64 ms')
-                print('Pulse FWHM: ', peak_fwhm, 's' )
+                print('Pulse FWHM: ',      peak_fwhm, 's' )
             
             # Evaluate the minimum peak rate for the pulse to be significative (CG formula) 
             # and check if the peak rate of the pulse is above the minimum  
@@ -1747,10 +1747,9 @@ def generate_GRBs(N_grb,                                            # number of 
                     #if bluring_level >= bluring_thresh:
                     significative_pulses.append(pulse)
                     n_of_sig_pulses += 1
-                    last_t_delay = t_delay
-                    last_fwhm = peak_fwhm
-                    
-        
+                    last_t_delay    = t_delay
+                    last_fwhm       = peak_fwhm
+
         if verbose:
             print('-------------------------------------')
             print('Number of generated pulses: ', len(pulses_param_list))
@@ -1763,7 +1762,6 @@ def generate_GRBs(N_grb,                                            # number of 
         delay_times = np.sort(np.array([pulse['t_delay'] for pulse in pulses]))
         time_distances = np.diff(delay_times)
         return time_distances
-
 
     # check that the parameters are in the correct range
     assert delta1<0
@@ -1848,25 +1846,17 @@ def generate_GRBs(N_grb,                                            # number of 
                           path=export_path)
                 grb.name = 'lc'+str(cnt)+'.txt'
                 #grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
-            
+
             if test_pulse_distr:
                 #get all the time distances between the generated peaks and save them to a file. 
                 pulse_time_distances.extend(getPulsesTimeDistance(sig_pulses))
                 np.savetxt('time_distances.txt',np.array(pulse_time_distances))
-            ###############################################################################
+            ####################################################################
 
             grb_list_sim.append(grb)
             cnt+=1
         del(lc)
 
     return grb_list_sim
-
-################################################################################
-
-
-
-################################################################################
-
-
 
 ################################################################################

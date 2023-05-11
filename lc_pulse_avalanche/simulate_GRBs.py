@@ -80,13 +80,13 @@ export_path='../simulations/'
 # tau_max = 39.313297221735766
 
 # The 7 values obtained from v4 optimization are
-# mu      = 1.7377495777582268
-# mu0     = 1.2674137674116688
-# alpha   = 6.56892665444723
-# delta1  = -0.5989803252226719
-# delta2  = 0.02306881143876948
-# tau_min = 6.478038929262871e-06
-# tau_max = 45.936383095147605
+mu      = 1.7377495777582268
+mu0     = 1.2674137674116688
+alpha   = 6.56892665444723
+delta1  = -0.5989803252226719
+delta2  = 0.02306881143876948
+tau_min = 6.478038929262871e-06
+tau_max = 45.936383095147605
 
 # The 7 values obtained from v5 optimization are
 # mu      = 1.8642165398675894
@@ -98,13 +98,13 @@ export_path='../simulations/'
 # tau_max = 52.41492789344243
 
 # The 7 values obtained from v6 optimization are
-mu      = 1.5355877552761932
-mu0     = 1.534168123065679
-alpha   = 3.1200524011794863
-delta1  = -0.7655182486991188
-delta2  = 0.2206237762670341
-tau_min = 0.0018477209878527603
-tau_max = 50.124910976218175
+#mu      = 1.5355877552761932
+#mu0     = 1.534168123065679
+#alpha   = 3.1200524011794863
+#delta1  = -0.7655182486991188
+#delta2  = 0.2206237762670341
+#tau_min = 0.0018477209878527603
+#tau_max = 50.124910976218175
 
 #------------------------------------------------------------------------------#
 
@@ -148,8 +148,9 @@ else:
 
 ################################################################################
 ################################################################################
-#from datetime import datetime
-#start = datetime.now()
+from datetime import datetime
+start = datetime.now()
+
 test_pulse_distr = True # False
 test  = generate_GRBs(# number of simulated GRBs to produce
                       N_grb=N_grb, 
@@ -184,6 +185,6 @@ if test_pulse_distr:
         pulse_out_file.write('{0}\n'.format(grb.num_of_sig_pulses))
     pulse_out_file.close()
 
-#print((datetime.now() - start).seconds)
+print((datetime.now() - start).seconds)
 ################################################################################
 ################################################################################
