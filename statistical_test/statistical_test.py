@@ -625,7 +625,11 @@ def load_lc_sim(path):
         right_idx = grb_file.find('.txt')
         grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string
         # read files
-        times, counts, errs, t90 = np.loadtxt(path+grb_file, unpack=True)
+        try: 
+            times, counts, errs, t90, n_pulses = np.loadtxt(path+grb_file, unpack=True) # works with "export_grb()"
+        except:
+            times, counts, errs, t90 = np.loadtxt(path+grb_file, unpack=True) # works with "export_LC()"
+            n_pulses = np.array([-1])
         #with open(path+grb_file, 'r', encoding='utf-8', errors='ignore') as f:
         #    times  = []
         #    counts = []
@@ -641,7 +645,13 @@ def load_lc_sim(path):
         counts = np.float32(counts)
         errs   = np.float32(errs)
         t90    = np.float32(t90)
-        grb    = GRB(grb_name, times, counts, errs, t90[0], path+grb_file)
+        grb    = GRB(grb_name=grb_name, 
+                     times=times, 
+                     counts=counts, 
+                     errs=errs, 
+                     t90=t90[0], 
+                     grb_data_file_path=path+grb_file, 
+                     num_of_sig_pulses=n_pulses[0])
         grb_list_sim.append(grb)
 
     print("Total number of simulated GRBs: ", len(grb_sim_names))
@@ -1666,6 +1676,26 @@ def generate_GRBs(N_grb,                                            # number of 
     -grb_list_sim: list containing N_grb GRB objects, each lc satisfying the
                    imposed constraints;
     """
+    def export_grb(grb, idx, instrument, path='../simulations/'):
+        """
+        Export the simulated grb in a file with these columns: 
+            times, counts, err_counts, T90, num of sig. pulses.
+        Input:
+        - grb: object that contains the GRB;
+        - idx: number of the light curve;
+        - instrument: string with the name of the instrument;
+        - path: path where to store the results of the simulations;
+        """
+        outfile  = path+instrument+'/'+'lc'+str(idx)+'.txt'
+        savefile = open(outfile, 'w', encoding='utf-8')
+        times    = grb.times
+        lc       = grb.counts
+        err_lc   = grb.errs
+        T90      = grb.t90
+        n_pulses = grb.num_of_sig_pulses
+        for i in range(len(times)):
+            savefile.write('{0} {1} {2} {3} {4}\n'.format(times[i], lc[i], err_lc[i], T90, n_pulses))
+        savefile.close()
 
     def export_lc(LC, idx, instrument, path='../simulations/'):
         """
@@ -1840,10 +1870,14 @@ def generate_GRBs(N_grb,                                            # number of 
         # constraints selection
         if (len(grb_list_sim_temp)==1):
             if export_files:
-                export_lc(LC=lc, 
-                          idx=cnt, 
-                          instrument=instrument,
-                          path=export_path)
+                export_grb(grb=grb, 
+                           idx=cnt, 
+                           instrument=instrument,
+                           path=export_path)
+                #export_lc(LC=lc, 
+                #          idx=cnt, 
+                #          instrument=instrument,
+                #          path=export_path)
                 grb.name = 'lc'+str(cnt)+'.txt'
                 #grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
 
