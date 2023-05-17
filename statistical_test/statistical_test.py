@@ -1770,7 +1770,7 @@ def generate_GRBs(N_grb,                                            # number of 
             
             # Evaluate the minimum peak rate for the pulse to be significative (CG formula) 
             # and check if the peak rate of the pulse is above the minimum  
-            minimum_peak_rate = 50 * peak_fwhm**(-0.6)
+            minimum_peak_rate = 25 * peak_fwhm**(-0.6)
             if peak_rate >= minimum_peak_rate:
                 if current_delay > minimum_pulse_delay:
                     #bluring_level = current_delay / np.sqrt(peak_fwhm**2 + last_fwhm**2)
