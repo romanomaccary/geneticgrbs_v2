@@ -80,6 +80,7 @@ if instrument=='batse':
     eff_area      = 3600  # effective area of instrument [cm2]
     bg_level      = 10.67 # background level [cnt/cm2/s]
     t90_threshold = 2     # [s] --> used to select only _long_ GRBs
+    t90_frac      = 15
     sn_threshold  = 70    # signal-to-noise ratio
     bin_time      = 0.064 # [s] temporal bins for BATSE (its time resolution)
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
@@ -89,6 +90,7 @@ elif instrument=='swift':
     eff_area      = 1400             # effective area of instrument [cm2]
     bg_level      = (10000/eff_area) # background level [cnt/cm2/s]
     t90_threshold = 2                # [s] --> used to select only _long_ GRBs
+    t90_frac      = 15
     sn_threshold  = 20               # signal-to-noise ratio
     bin_time      = 0.064            # [s] temporal bins for Swift (its time resolution)
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
@@ -99,6 +101,7 @@ elif instrument=='sax':
     eff_area      = 420             # effective area of instrument [cm2]
     bg_level      = (1000/eff_area) # background level [cnt/cm2/s]
     t90_threshold = 2               # [s] --> used to select only _long_ GRBs
+    t90_frac      = 15
     sn_threshold  = 10              # signal-to-noise ratio
     #bin_time     = 1.0             # [s] temporal bins for BeppoSAX
     bin_time      = 0.0078125       # [s] temporal bins for BeppoSAX (HR)
@@ -121,6 +124,8 @@ num_parents_mating    = int(0.10*sol_per_pop)  # Number of solutions to be selec
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.01                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
+
+test_pulse_distr      = True
 
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
@@ -175,8 +180,20 @@ if instrument=='batse':
     grb_list_real = apply_constraints(grb_list=grb_list_real, 
                                       bin_time=bin_time, 
                                       t90_threshold=t90_threshold, 
+                                      t90_frac=t90_frac,
                                       sn_threshold=sn_threshold, 
                                       t_f=t_f)
+    # load MEPSA results on BATSE
+    mepsa_out_file_list_temp = []
+    for i in range(len(grb_list_real)):
+        name = grb_list_real[i].name
+        mepsa_out_file_list_temp.append(name)
+    reb_factor          = np.inf
+    peak_sn_level       = 5
+    mepsa_out_file_list = [ batse_path+'PEAKS_ALL/peaks_'+el+'_all_bs_2.txt' for el in mepsa_out_file_list_temp ]
+    n_of_pulses_real    = readMEPSAres(mepsa_out_file_list=mepsa_out_file_list, 
+                                            maximum_reb_factor=reb_factor, 
+                                            sn_level=peak_sn_level)
 ### Load the Swift GRBs
 elif instrument=='swift': 
     # load all data
@@ -184,7 +201,8 @@ elif instrument=='swift':
     # apply constraints
     grb_list_real = apply_constraints(grb_list=grb_list_real, 
                                       bin_time=bin_time, 
-                                      t90_threshold=t90_threshold, 
+                                      t90_threshold=t90_threshold,
+                                      t90_frac=t90_frac, 
                                       sn_threshold=sn_threshold, 
                                       t_f=t_f)
 ### Load the BeppoSAX GRBs
@@ -195,6 +213,7 @@ elif instrument=='sax':
     grb_list_real = apply_constraints(grb_list=grb_list_real, 
                                       bin_time=bin_time, 
                                       t90_threshold=t90_threshold, 
+                                      t90_frac=t90_frac,
                                       sn_threshold=sn_threshold, 
                                       t_f=t_f)
 else:
@@ -264,13 +283,20 @@ def fitness_func(solution, solution_idx=None):
                                  eff_area=eff_area,
                                  bg_level=bg_level,
                                  # constraint parameters:
-                                 t90_threshold=t90_threshold,
                                  sn_threshold=sn_threshold,
+                                 t90_threshold=t90_threshold,
+                                 t90_frac=t90_frac,
                                  t_f=t_f,
+                                 filter=True,
                                  # other parameters:
                                  export_files=False,
                                  n_cut=2000,
-                                 with_bg=False)
+                                 with_bg=False,
+                                 test_pulse_distr=test_pulse_distr)
+    if test_pulse_distr:
+        n_of_pulses_sim = [ grb.num_of_sig_pulses for grb in grb_list_sim ]
+    else:
+        n_of_pulses_sim = -999
     #--------------------------------------------------------------------------#
     # Compute average quantities of simulated data needed for the loss function
     #--------------------------------------------------------------------------#
@@ -288,11 +314,12 @@ def fitness_func(solution, solution_idx=None):
                                                       bin_time=bin_time,
                                                       mode='scipy')
     ### TEST 4: Duration
-    duration_sim = [ evaluateDuration20(times=grb.times, 
-                                        counts=grb.counts,
-                                        filter=True,
-                                        t90=grb.t90,
-                                        bin_time=bin_time)[0] for grb in grb_list_sim ]
+    #duration_sim = [ evaluateDuration20(times=grb.times, 
+    #                                    counts=grb.counts,
+    #                                    filter=True,
+    #                                    t90=grb.t90,
+    #                                    bin_time=bin_time)[0] for grb in grb_list_sim ]
+    duration_sim       = np.array( [ grb.t20 for grb in grb_list_sim ] )
     duration_distr_sim = compute_kde_log_duration(duration_list=duration_sim)
     #--------------------------------------------------------------------------#
     # Compute loss
@@ -304,7 +331,10 @@ def fitness_func(solution, solution_idx=None):
                            acf=acf_real, 
                            acf_sim=acf_sim,
                            duration=duration_distr_real, 
-                           duration_sim=duration_distr_sim)
+                           duration_sim=duration_distr_sim,
+                           n_of_pulses=n_of_pulses_real,
+                           n_of_pulses_sim=n_of_pulses_sim,
+                           test_pulse_distr=test_pulse_distr)
     fitness = 1.0 / (l2_loss + 1.e-9)
     return fitness
 
@@ -443,7 +473,6 @@ file.write('####################################################################
 file.write('\n')
 file.write('\n')
 file.write('N_GRBs_per_set       = {}'.format(N_grb))
-file.write('\n')
 file.write('\n')
 file.write('num_generations      = {}'.format(num_generations))
 file.write('\n')

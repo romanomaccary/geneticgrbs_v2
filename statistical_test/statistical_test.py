@@ -958,6 +958,7 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
                  averaged_fluxes_cube, averaged_fluxes_cube_sim,
                  acf,                  acf_sim,
                  duration,             duration_sim,
+                 n_of_pulses,          n_of_pulses_sim,     test_pulse_distr,
                  log=False,            verbose=False):
     """
     Compute the loss to be used for the optimization in the Genetic Algorithm.
@@ -975,6 +976,11 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         acf_sim                  = np.log10(acf_sim)
         # 'duration'     is already in log scale, since it is the output of compute_kde_log_duration()
         # 'duration_sim' is already in log scale, since it is the output of compute_kde_log_duration()
+
+    if test_pulse_distr:
+        pass
+        # faccio il test AD con i dati in n_of_pulses  vs MEPSA(batse)
+
 
     w1 = 1.
     w2 = 1.

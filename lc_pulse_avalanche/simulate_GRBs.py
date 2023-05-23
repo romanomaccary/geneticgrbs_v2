@@ -184,6 +184,7 @@ if test_pulse_distr:
     for grb in test:
         pulse_out_file.write('{0}\n'.format(grb.num_of_sig_pulses))
     pulse_out_file.close()
+#n_of_pulses = [ grb.num_of_sig_pulses for grb in test ]
 
 print((datetime.now() - start).seconds)
 ################################################################################
