@@ -11,6 +11,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import warnings
+warnings.filterwarnings("ignore", message="p-value capped")
+warnings.filterwarnings("ignore", message="p-value floored")
+
 import seaborn as sns
 sns.set_style('darkgrid')
 
@@ -60,7 +64,7 @@ else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
 from statistical_test import *
-from avalanche import LC #, Restored_LC
+from avalanche import LC
 
 
 ################################################################################
@@ -118,8 +122,10 @@ mutation_type         = "random"
 crossover_type        = "scattered"
 parallel_processing   = ["process", 50]        # None
 
+N_grb                 = 2000                   # number of simulated GRBs to produce per set of parameters
+
 num_generations       = 10                     # Number of generations.
-sol_per_pop           = 2000                   # Number of solutions in the population.
+sol_per_pop           = 2000                   # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.10*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
@@ -226,10 +232,6 @@ print('* {} data loaded in {:0.0f} sec'.format(instrument,(end_load_time-init_lo
 print('--------------------------------------------------------------------------------')
 
 
-# Set the number of simulated GRBs to produce equal to the number of real GRBs
-# that passed the constraint selection
-N_grb=2000 #len(grb_list_real)
-
 
 ################################################################################
 # COMPUTE AVERAGE QUANTITIES OF REAL DATA
@@ -296,7 +298,7 @@ def fitness_func(solution, solution_idx=None):
     if test_pulse_distr:
         n_of_pulses_sim = [ grb.num_of_sig_pulses for grb in grb_list_sim ]
     else:
-        n_of_pulses_sim = -999
+        n_of_pulses_sim = None
     #--------------------------------------------------------------------------#
     # Compute average quantities of simulated data needed for the loss function
     #--------------------------------------------------------------------------#

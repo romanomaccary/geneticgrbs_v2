@@ -995,8 +995,8 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
                  averaged_fluxes_cube, averaged_fluxes_cube_sim,
                  acf,                  acf_sim,
                  duration,             duration_sim,
-                 n_of_pulses,          n_of_pulses_sim,        test_pulse_distr,
-                 log=False,            verbose=False):
+                 n_of_pulses,          n_of_pulses_sim,   
+                 test_pulse_distr=False, log=False, verbose=False):
     """
     Compute the loss to be used for the optimization in the Genetic Algorithm.
     Input:
@@ -1016,7 +1016,7 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
 
     if test_pulse_distr:
         # Perform the AD 2-populations compatibility test between:
-        # - la distribuzione del numero di impulsi calcolata da MEPSA (su dati BATSE), e
+        # - la distribuzione del numero di impulsi calcolata da MEPSA (su dati BATSE)
         # - la distribuzione del numero di impulsi calcolato con il nostro codice (sulla simulazione corrente)
         n_mepsa_real, bins = np.histogram(n_of_pulses,     bins='auto', density=True)
         n_peaks_sim,     _ = np.histogram(n_of_pulses_sim, bins=bins,   density=True)
@@ -1937,10 +1937,10 @@ def generate_GRBs(N_grb,                                            # number of 
                 grb.name = 'lc'+str(cnt)+'.txt'
                 #grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
 
-            if test_pulse_distr:
-                #get all the time distances between the generated peaks and save them to a file. 
-                pulse_time_distances.extend(getPulsesTimeDistance(sig_pulses))
-                np.savetxt('time_distances.txt',np.array(pulse_time_distances))
+            #if test_pulse_distr:
+            #    #get all the time distances between the generated peaks and save them to a file. 
+            #    pulse_time_distances.extend(getPulsesTimeDistance(sig_pulses))
+            #    np.savetxt('time_distances.txt',np.array(pulse_time_distances))
             ####################################################################
 
             grb_list_sim.append(grb)
