@@ -35,7 +35,7 @@ else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
 from statistical_test import *
-from avalanche import LC #, Restored_LC
+from avalanche import LC 
 
 export_path='../simulations/'
 
@@ -151,7 +151,7 @@ else:
 from datetime import datetime
 start = datetime.now()
 
-test_pulse_distr = True # False
+test_pulse_distr = True
 test  = generate_GRBs(# number of simulated GRBs to produce
                       N_grb=N_grb, 
                       # 7 parameters
@@ -184,7 +184,9 @@ if test_pulse_distr:
     for grb in test:
         pulse_out_file.write('{0}\n'.format(grb.num_of_sig_pulses))
     pulse_out_file.close()
-#n_of_pulses = [ grb.num_of_sig_pulses for grb in test ]
+
+if test_pulse_distr:
+    n_of_pulses = [ grb.num_of_sig_pulses for grb in test ]
 
 print((datetime.now() - start).seconds)
 ################################################################################

@@ -11,6 +11,8 @@ from scipy import signal
 from scipy import stats
 from sklearn.utils import resample
 from sklearn.neighbors import KernelDensity
+from scipy.stats import anderson_ksamp, ks_2samp
+from scipy.special import expit
 from tqdm import tqdm
 
 import seaborn as sns
@@ -954,11 +956,46 @@ def compute_kde_log_duration(duration_list, x_left=-2, x_right=5, h_opt=0.09):
 
 ################################################################################
 
+def AD_2pop_test(distr_1, distr_2):
+    """ 
+    Perform AD 2-population statistical tests.
+    Returns the p-value of the test.
+    """
+    res_ad = anderson_ksamp([distr_1,distr_2])
+    #print('AD (p-value): ', res_ad.significance_level)
+    return res_ad.significance_level 
+
+def KS_2pop_test(distr_1, distr_2):
+    """ 
+    Perform KS 2-population statistical tests.
+    Returns the p-value of the test.
+    """
+    res_ks = ks_2samp(distr_1,distr_2)
+    #print('KS (p-value): ', res_ks.pvalue)
+    return res_ks.pvalue 
+    
+################################################################################
+
+def loss_AD(p_AD):
+    """
+    Since the p-value of the Anderson-Darling test caps at 25%, then we can 
+    rescale the sigmoid in such a way that it reaches the value 0.999 at x=0.25:
+        y = expit(x) = 1/(1+exp(-x))
+        x = - log((1/y)-1),    with y=0.99
+    """
+    perc_cap  = 0.25
+    threshold = 0.999
+    x_ = - np.log((1./threshold)-1)
+    y  = 1-expit(p_AD*(x_/perc_cap))
+    return y
+
+################################################################################
+
 def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
                  averaged_fluxes_cube, averaged_fluxes_cube_sim,
                  acf,                  acf_sim,
                  duration,             duration_sim,
-                 n_of_pulses,          n_of_pulses_sim,     test_pulse_distr,
+                 n_of_pulses,          n_of_pulses_sim,        test_pulse_distr,
                  log=False,            verbose=False):
     """
     Compute the loss to be used for the optimization in the Genetic Algorithm.
@@ -978,23 +1015,36 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         # 'duration_sim' is already in log scale, since it is the output of compute_kde_log_duration()
 
     if test_pulse_distr:
-        pass
-        # faccio il test AD con i dati in n_of_pulses  vs MEPSA(batse)
+        # Perform the AD 2-populations compatibility test between:
+        # - la distribuzione del numero di impulsi calcolata da MEPSA (su dati BATSE), e
+        # - la distribuzione del numero di impulsi calcolato con il nostro codice (sulla simulazione corrente)
+        n_mepsa_real, bins = np.histogram(n_of_pulses,     bins='auto', density=True)
+        n_peaks_sim,     _ = np.histogram(n_of_pulses_sim, bins=bins,   density=True)
+        p_AD    = AD_2pop_test(distr_1=n_mepsa_real, distr_2=n_peaks_sim)
+        loss_AD = loss_AD(p_AD=p_AD)
 
-
-    w1 = 1.
-    w2 = 1.
-    w3 = 1.
-    w4 = 1.
+    #w1 = 1.
+    #w2 = 1.
+    #w3 = 1.
+    #w4 = 1.
 
     l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
     l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
     l2_loss_acf         = np.sqrt( np.sum(np.power((acf-acf_sim),2)) )
     l2_loss_duration    = np.sqrt( np.sum(np.power((duration-duration_sim),2)) )
-    l2_loss             = w1 * (1./4) * l2_loss_fluxes      + \
-                          w2 * (1./4) * l2_loss_fluxes_cube + \
-                          w3 * (1./4) * l2_loss_acf         + \
-                          w4 * (1./4) * l2_loss_duration
+    #l2_loss             = w1 * (1./4) * l2_loss_fluxes      + \
+    #                      w2 * (1./4) * l2_loss_fluxes_cube + \
+    #                      w3 * (1./4) * l2_loss_acf         + \
+    #                      w4 * (1./4) * l2_loss_duration
+    l2_loss             = l2_loss_fluxes      + \
+                          l2_loss_fluxes_cube + \
+                          l2_loss_acf         + \
+                          l2_loss_duration    + \
+                          loss_AD
+    
+    print('loss_AD =', loss_AD)
+    print('l2_loss =', l2_loss)
+
     if verbose:
         # WE SHOULD CHECK WHAT IS THE ORDER OF MAGNITUDE OF EACH LOSS, SO THAT
         # WE KNOW HOW MUCH THEY CONTRIBUTE TO THE TOTAL!
