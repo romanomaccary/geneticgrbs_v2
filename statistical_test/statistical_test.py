@@ -1014,36 +1014,37 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         # 'duration'     is already in log scale, since it is the output of compute_kde_log_duration()
         # 'duration_sim' is already in log scale, since it is the output of compute_kde_log_duration()
 
+    w1 = 1.
+    w2 = 1.
+    w3 = 1.
+    w4 = 1.
+    w5 = 1.
+
+    l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
+    l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
+    l2_loss_acf         = np.sqrt( np.sum(np.power((acf-acf_sim),2)) )
+    l2_loss_duration    = np.sqrt( np.sum(np.power((duration-duration_sim),2)) )
+    l_AD                = 0.
     if test_pulse_distr:
         # Perform the AD 2-populations compatibility test between:
         # - la distribuzione del numero di impulsi calcolata da MEPSA (su dati BATSE)
         # - la distribuzione del numero di impulsi calcolato con il nostro codice (sulla simulazione corrente)
         n_mepsa_real, bins = np.histogram(n_of_pulses,     bins='auto', density=True)
         n_peaks_sim,     _ = np.histogram(n_of_pulses_sim, bins=bins,   density=True)
-        p_AD    = AD_2pop_test(distr_1=n_mepsa_real, distr_2=n_peaks_sim)
-        loss_AD = loss_AD(p_AD=p_AD)
-
-    #w1 = 1.
-    #w2 = 1.
-    #w3 = 1.
-    #w4 = 1.
-
-    l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
-    l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
-    l2_loss_acf         = np.sqrt( np.sum(np.power((acf-acf_sim),2)) )
-    l2_loss_duration    = np.sqrt( np.sum(np.power((duration-duration_sim),2)) )
-    #l2_loss             = w1 * (1./4) * l2_loss_fluxes      + \
-    #                      w2 * (1./4) * l2_loss_fluxes_cube + \
-    #                      w3 * (1./4) * l2_loss_acf         + \
-    #                      w4 * (1./4) * l2_loss_duration
-    l2_loss             = l2_loss_fluxes      + \
-                          l2_loss_fluxes_cube + \
-                          l2_loss_acf         + \
-                          l2_loss_duration    + \
-                          loss_AD
-    
-    print('loss_AD =', loss_AD)
-    print('l2_loss =', l2_loss)
+        p_AD               = AD_2pop_test(distr_1=n_mepsa_real, 
+                                          distr_2=n_peaks_sim)
+        l_AD               = loss_AD(p_AD=p_AD)
+    # total loss
+    l2_loss = w1 * l2_loss_fluxes      + \
+              w2 * l2_loss_fluxes_cube + \
+              w3 * l2_loss_acf         + \
+              w4 * l2_loss_duration    + \
+              w5 * l_AD   
+    # divide to obtain the _average_ value of the loss
+    if test_pulse_distr:
+        l2_loss *= (1./5)
+    else:
+        l2_loss *= (1./4)
 
     if verbose:
         # WE SHOULD CHECK WHAT IS THE ORDER OF MAGNITUDE OF EACH LOSS, SO THAT
