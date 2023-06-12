@@ -189,7 +189,7 @@ if instrument=='batse':
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold, 
                                       t_f=t_f)
-    # load MEPSA results on BATSE
+    # load MEPSA results on BATSE (only those that satisfy the contraints!!!)
     mepsa_out_file_list_temp = []
     for i in range(len(grb_list_real)):
         name = grb_list_real[i].name
@@ -198,8 +198,8 @@ if instrument=='batse':
     peak_sn_level       = 5
     mepsa_out_file_list = [ batse_path+'PEAKS_ALL/peaks_'+el+'_all_bs_2.txt' for el in mepsa_out_file_list_temp ]
     n_of_pulses_real    = readMEPSAres(mepsa_out_file_list=mepsa_out_file_list, 
-                                            maximum_reb_factor=reb_factor, 
-                                            sn_level=peak_sn_level)
+                                       maximum_reb_factor=reb_factor, 
+                                       sn_level=peak_sn_level)
 ### Load the Swift GRBs
 elif instrument=='swift': 
     # load all data
@@ -292,7 +292,7 @@ def fitness_func(solution, solution_idx=None):
                                  filter=True,
                                  # other parameters:
                                  export_files=False,
-                                 n_cut=2000,
+                                 n_cut=4000,
                                  with_bg=False,
                                  test_pulse_distr=test_pulse_distr)
     if test_pulse_distr:
@@ -422,6 +422,7 @@ print('\n')
 print('--------------------------------------------------------------------------------')
 print('* Model run in {:0.0f} sec'.format((end_run_time-init_run_time)))
 print('--------------------------------------------------------------------------------')
+
 
 ################################################################################
 # SAVE THE MODEL

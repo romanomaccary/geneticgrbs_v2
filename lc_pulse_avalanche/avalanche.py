@@ -4,11 +4,9 @@ from math import exp, log
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.random import exponential, lognormal, normal, uniform
-from scipy.stats import loguniform
+from scipy.stats import poisson
+#from scipy.stats import loguniform
 import os, h5py
-
-SEED=42
-np.random.seed(SEED)
 
 """
 The 7 free parameters to be optimized are:
@@ -34,6 +32,13 @@ Parameters BeppoSAX:
     - eff_area = ??? [cm2]
     - bg_level = ??? [cnt/cm2/s]
 """
+
+#SEED=42
+#np.random.seed(SEED)
+
+is_poisson=True   # use Poisson     distribution for mu_s and mu_b
+#is_poisson=False # use Exponential distribution for mu_s and mu_b
+
 #==============================================================================#
 # Define the class LC describing the light curve.                              #
 #==============================================================================#
@@ -160,7 +165,12 @@ class LC(object):
         #     p2(mu_b) = exp(-mu_b/mu)/mu
         # mu: average, 
         # mu_b: actual number of child pulses.
-        mu_b = round(exponential(scale=self._mu))
+        if is_poisson: # Our code
+            mu_b = poisson.rvs(mu=self._mu, 
+                               size=1, 
+                               random_state=None)
+        else: # Anastasia
+            mu_b = round(exponential(scale=self._mu))
                 
         if self._verbose:
             print("Number of child pulses:", mu_b)
@@ -232,9 +242,16 @@ class LC(object):
    
         # the number of spontaneous primary pulses (mu_s) is given by: 
         #     p5(mu_s) = exp(-mu_s/mu0)/mu0
-        mu_s = round(exponential(scale=self._mu0))
-        if mu_s == 0:  
-            mu_s = 1 
+        if is_poisson: # Our code
+            mu_s=0
+            while (mu_s==0):
+                mu_s=poisson.rvs(mu=self._mu0, 
+                                 size=1, 
+                                 random_state=None)
+        else: # Anastasia code
+            mu_s = round(exponential(scale=self._mu0))
+            if mu_s==0:  
+                mu_s=1 
             
         if self._verbose:
             print("Number of spontaneous (primary) pulses:", mu_s)
