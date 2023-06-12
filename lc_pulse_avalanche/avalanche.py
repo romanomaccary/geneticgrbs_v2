@@ -33,6 +33,7 @@ Parameters BeppoSAX:
     - bg_level = ??? [cnt/cm2/s]
 """
 
+SEED=None
 #SEED=42
 #np.random.seed(SEED)
 
