@@ -170,6 +170,7 @@ class LC(object):
             mu_b = poisson.rvs(mu=self._mu, 
                                size=1, 
                                random_state=None)
+            mu_b = mu_b[0]
         else: # Anastasia
             mu_b = round(exponential(scale=self._mu))
                 
@@ -244,15 +245,16 @@ class LC(object):
         # the number of spontaneous primary pulses (mu_s) is given by: 
         #     p5(mu_s) = exp(-mu_s/mu0)/mu0
         if is_poisson: # Our code
-            mu_s=0
+            mu_s = 0
             while (mu_s==0):
-                mu_s=poisson.rvs(mu=self._mu0, 
-                                 size=1, 
-                                 random_state=None)
+                mu_s = poisson.rvs(mu=self._mu0, 
+                                   size=1, 
+                                   random_state=None)
+                mu_s = mu_s[0]
         else: # Anastasia code
             mu_s = round(exponential(scale=self._mu0))
-            if mu_s==0:  
-                mu_s=1 
+            if (mu_s==0):  
+                mu_s = 1 
             
         if self._verbose:
             print("Number of spontaneous (primary) pulses:", mu_s)

@@ -22,6 +22,7 @@ from matplotlib import rc
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 rc('text', usetex=True)
 
+SEED=None
 #SEED=42
 #np.random.seed(SEED)
 
