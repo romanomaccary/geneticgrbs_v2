@@ -11,13 +11,19 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# increase the recursion limit
+rec_lim=16000
+if sys.getrecursionlimit()<rec_lim:
+    sys.setrecursionlimit(rec_lim)
+
+# suppress some warnings
 import warnings
 warnings.filterwarnings("ignore", message="p-value capped")
 warnings.filterwarnings("ignore", message="p-value floored")
 
+# plots
 import seaborn as sns
 sns.set_style('darkgrid')
-
 from matplotlib import rc
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 rc('text', usetex=True)
