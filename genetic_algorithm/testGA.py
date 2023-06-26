@@ -596,6 +596,38 @@ for i in range(num_generations+1):
 file.close()
 
 ################################################################################
+# EXPORT DATA FOR THE PLOT 2
+################################################################################
+# here we save the parameters of ALL the individuals in the last generation,
+# along with their associated fitness.
+
+# all fitness values in the LAST epoch:
+last_gen_fitness = np.array(ga_GRB.solutions_fitness[-sol_per_pop:])
+
+# all solutions in the LAST epoch:
+last_gen_sol     = np.array(ga_GRB.solutions[-sol_per_pop:])
+last_gen_mu      = np.array(last_gen_sol[:,0]) # array with all the mu      of the LAST generation 
+last_gen_mu0     = np.array(last_gen_sol[:,1]) # array with all the mu0     of the LAST generation
+last_gen_alpha   = np.array(last_gen_sol[:,2]) # array with all the alpha   of the LAST generation
+last_gen_delta1  = np.array(last_gen_sol[:,3]) # array with all the delta1  of the LAST generation
+last_gen_delta2  = np.array(last_gen_sol[:,4]) # array with all the delta1  of the LAST generation
+last_gen_tau_min = np.array(last_gen_sol[:,5]) # array with all the tau_min of the LAST generation
+last_gen_tau_max = np.array(last_gen_sol[:,6]) # array with all the tau_max of the LAST generation
+
+data_last_gen = {
+    'mu':      last_gen_mu,
+    'mu0':     last_gen_mu0,
+    'alpha':   last_gen_alpha,
+    'delta1':  last_gen_delta1,
+    'delta2':  last_gen_delta2,
+    'tau_min': last_gen_tau_min,
+    'tau_max': last_gen_tau_max,
+    'fitness': last_gen_fitness
+}
+df_last_gen = pd.DataFrame(data_last_gen)
+df_last_gen.to_csv('./df_last_gen.csv', index=False)
+
+################################################################################
 ################################################################################
 
 print('\n\n')
