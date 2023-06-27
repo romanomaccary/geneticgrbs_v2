@@ -270,7 +270,7 @@ duration_distr_real = compute_kde_log_duration(duration_list=duration_real)
 # DEFINE FITNESS FUNCTION OF THE GENETIC ALGORITHM
 ################################################################################
 
-def fitness_func(solution, solution_idx=None):
+def fitness_func(ga_instance, solution, solution_idx=None):
     global loss_list
     #--------------------------------------------------------------------------#
     # Generate the GRBs
