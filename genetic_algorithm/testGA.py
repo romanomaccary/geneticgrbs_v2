@@ -12,7 +12,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # increase the recursion limit
-rec_lim=16000
+rec_lim=40000
 if sys.getrecursionlimit()<rec_lim:
     sys.setrecursionlimit(rec_lim)
 
@@ -298,7 +298,7 @@ def fitness_func(solution, solution_idx=None):
                                  filter=True,
                                  # other parameters:
                                  export_files=False,
-                                 n_cut=4000,
+                                 n_cut=2500,
                                  with_bg=False,
                                  test_pulse_distr=test_pulse_distr)
     if test_pulse_distr:
