@@ -177,7 +177,6 @@ print('START')
 print('################################################################################')
 print('\n\n')
 
-
 ################################################################################
 # LOAD REAL DATA
 ################################################################################
@@ -195,7 +194,7 @@ if instrument=='batse':
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold, 
                                       t_f=t_f)
-    # load MEPSA results on BATSE (only those that satisfy the contraints!!!)
+    # load MEPSA results on BATSE (only those that satisfy the constraint!)
     mepsa_out_file_list_temp = []
     for i in range(len(grb_list_real)):
         name = grb_list_real[i].name
@@ -203,7 +202,7 @@ if instrument=='batse':
     reb_factor          = np.inf
     peak_sn_level       = 5
     mepsa_out_file_list = [ batse_path+'PEAKS_ALL/peaks_'+el+'_all_bs_2.txt' for el in mepsa_out_file_list_temp ]
-    n_of_pulses_real    = readMEPSAres(mepsa_out_file_list=mepsa_out_file_list, 
+    n_of_pulses_real    = readMEPSAres(mepsa_out_file_list=mepsa_out_file_list, # mepsa results on BATSE data
                                        maximum_reb_factor=reb_factor, 
                                        sn_level=peak_sn_level)
 ### Load the Swift GRBs
@@ -238,7 +237,6 @@ print('* {} data loaded in {:0.0f} sec'.format(instrument,(end_load_time-init_lo
 print('--------------------------------------------------------------------------------')
 
 
-
 ################################################################################
 # COMPUTE AVERAGE QUANTITIES OF REAL DATA
 ################################################################################
@@ -246,19 +244,19 @@ print('-------------------------------------------------------------------------
 ### TEST 1&2: Average Peak-Aligned Profiles
 averaged_fluxes_real, \
 averaged_fluxes_cube_real, \
-averaged_fluxes_rms_real = compute_average_quantities(grb_list=grb_list_real, 
-                                                      t_f=t_f, 
+averaged_fluxes_rms_real = compute_average_quantities(grb_list=grb_list_real,
+                                                      t_f=t_f,
                                                       bin_time=bin_time,
                                                       filter=True)
 ### TEST 3: Autocorrelation
-N_lim = np.min( [N_grb, len(grb_list_real)] ) 
+N_lim = np.min( [N_grb, len(grb_list_real)] )
 steps_real, acf_real = compute_autocorrelation(grb_list=grb_list_real,
                                                N_lim=N_lim,
                                                t_max=t_f,
                                                bin_time=bin_time,
                                                mode='scipy')
 ### TEST 4: Duration
-duration_real = [ evaluateDuration20(times=grb.times, 
+duration_real = [ evaluateDuration20(times=grb.times,
                                      counts=grb.counts,
                                      filter=True,
                                      t90=grb.t90,

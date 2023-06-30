@@ -1027,11 +1027,12 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
     l2_loss_duration    = np.sqrt( np.sum(np.power((duration-duration_sim),2)) )
     l_AD                = 0.
     if test_pulse_distr:
+        nbin=20
         # Perform the AD 2-populations compatibility test between:
-        # - la distribuzione del numero di impulsi calcolata da MEPSA (su dati BATSE)
+        # - la distribuzione del numero di impulsi calcolata da MEPSA (su dati reali di BATSE)
         # - la distribuzione del numero di impulsi calcolato con il nostro codice (sulla simulazione corrente)
-        n_mepsa_real, bins = np.histogram(n_of_pulses,     bins='auto', density=True)
-        n_peaks_sim,     _ = np.histogram(n_of_pulses_sim, bins=bins,   density=True)
+        n_mepsa_real, bins = np.histogram(n_of_pulses,     bins=nbin, density=True)
+        n_peaks_sim,     _ = np.histogram(n_of_pulses_sim, bins=nbin, density=True)
         p_AD               = AD_2pop_test(distr_1=n_mepsa_real, 
                                           distr_2=n_peaks_sim)
         l_AD               = loss_AD(p_AD=p_AD)
