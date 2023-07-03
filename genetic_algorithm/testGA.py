@@ -6,27 +6,27 @@ import os
 import sys
 import time
 import pygad
-#import yaml, h5py
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# increase the recursion limit
+### Increase the recursion limit
 rec_lim=40000
 if sys.getrecursionlimit()<rec_lim:
     sys.setrecursionlimit(rec_lim)
 
-# suppress some warnings
+### Suppress some warnings
 import warnings
 warnings.filterwarnings("ignore", message="p-value capped")
 warnings.filterwarnings("ignore", message="p-value floored")
 
-# plots
-import seaborn as sns
-sns.set_style('darkgrid')
-from matplotlib import rc
-rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
-rc('text', usetex=True)
+### Plots
+#import seaborn as sns
+#sns.set_style('darkgrid')
+#from matplotlib import rc
+#rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+#rc('text', usetex=True)
+save_plot=0
 
 random_seed=None
 #random_seed=42
@@ -38,7 +38,7 @@ print_time=True
 # SET PATHS
 ################################################################################
 
-# Set the username for the path of the files:
+### Set the username for the path of the files:
 #user='LB'
 #user='AF'
 user='bach'
@@ -77,7 +77,7 @@ from avalanche import LC
 # SET PARAMETERS
 ################################################################################
 
-# Choose the instrument
+### Choose the instrument
 instrument = 'batse'
 #instrument = 'swift'
 #instrument = 'sax'
@@ -126,18 +126,21 @@ crossover_probability = 0.5   # 'None' means couples parent k with parent k+1, o
 initial_population    = None  # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
 crossover_type        = "scattered"
-parallel_processing   = ["process", 50]        # None
+# options for parallelization:
+#parallel_processing  = ["process", 50]      
+parallel_processing   = ["thread", 50]       
+#parallel_processing  = None
 
 N_grb                 = 2000                   # number of simulated GRBs to produce per set of parameters
 
-num_generations       = 10                     # Number of generations.
-sol_per_pop           = 2000                   # Number of solutions in the population (i.e., number of different sets per generation).
+num_generations       = 15                     # Number of generations.
+sol_per_pop           = 1000                   # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.10*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.01                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
-test_pulse_distr      = True                   # add a fifth metric regarding the distribution of number of pulses per GRB
+test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB
 
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
@@ -169,13 +172,12 @@ num_genes = len(range_constraints) # 7
 
 save_model = 0 
 
-#------------------------------------------------------------------------------#
-
 print('\n\n')
 print('################################################################################')
 print('START')
 print('################################################################################')
 print('\n\n')
+
 
 ################################################################################
 # LOAD REAL DATA
@@ -417,6 +419,7 @@ ga_GRB.summary()
 ################################################################################
 
 init_run_time = time.perf_counter()
+print('Starting the GA...\n')
 # Run the GA to optimize the parameters of the function.
 ga_GRB.run()
 #ga_GRB.plot_fitness()
@@ -432,12 +435,12 @@ print('-------------------------------------------------------------------------
 # SAVE THE MODEL
 ################################################################################
 
-# Save the GA instance.
+### Save the GA instance
 if save_model:
     filename_model = 'geneticGRB'
-    ga_instance.save(filename=filename_model)
+    ga_GRB.save(filename=filename_model)
 
-# # Load the saved GA instance.
+### Load the saved GA instance
 # loaded_ga_instance = pygad.load(filename=filename)
 # loaded_ga_instance.plot_fitness()
 
@@ -547,44 +550,19 @@ file.write('####################################################################
 file.close()
 #------------------------------------------------------------------------------#
 
+
 ################################################################################
-# EXPORT PLOT
+# EXPORT DATA FOR THE PLOT 1
 ################################################################################
 
 best_loss = np.array(ga_GRB.best_solutions_fitness)**(-1)
-print('best_loss[-1] =', best_loss[-1])
-plt.plot(best_loss, ls='-', lw=2, c='b')
-#plt.yscale('log')
-plt.xlabel(r'Generation')
-plt.ylabel(r'Best Loss')
-plt.savefig('fig01.pdf')
-plt.clf()
-
-
 loss_list = np.array(ga_GRB.solutions_fitness)**(-1)
 avg_loss  = np.zeros(num_generations+1)
 std_loss  = np.zeros(num_generations+1)
 for i in range(num_generations+1):
-        avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
-        std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
-plt.errorbar(np.arange(num_generations+1), avg_loss, yerr=std_loss/np.sqrt(sol_per_pop), ls='-', lw=2, c='b')
-#plt.yscale('log')
-plt.xlabel(r'Generation')
-plt.ylabel(r'Average Loss')
-plt.savefig('fig02.pdf')
-plt.clf()
-
-
-plt.plot(std_loss, ls='-', lw=2, c='b')
-plt.xlabel(r'Generation')
-plt.ylabel(r'Standard Deviation of the loss')
-plt.savefig('fig03.pdf')
-plt.clf()
-
-
-################################################################################
-# EXPORT DATA FOR THE PLOT
-################################################################################
+    avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
+    std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
+#print('best_loss[-1] =', best_loss[-1])
 
 datafile = './datafile.txt'
 file = open(datafile, 'w')
@@ -592,6 +570,33 @@ file.write('# generation\t best_loss\t avg_loss\t std_loss\t std_loss/sqrt(sol_p
 for i in range(num_generations+1):
     file.write('{0} {1} {2} {3} {4}\n'.format(i, best_loss[i], avg_loss[i], std_loss[i], std_loss[i]/np.sqrt(sol_per_pop)))
 file.close()
+
+
+################################################################################
+# EXPORT PLOT 1
+################################################################################
+
+if save_plot:
+    plt.plot(best_loss, ls='-', lw=2, c='b')
+    #plt.yscale('log')
+    plt.xlabel(r'Generation')
+    plt.ylabel(r'Best Loss')
+    plt.savefig('fig01.pdf')
+    plt.clf()
+
+    plt.errorbar(np.arange(num_generations+1), avg_loss, yerr=std_loss/np.sqrt(sol_per_pop), ls='-', lw=2, c='b')
+    #plt.yscale('log')
+    plt.xlabel(r'Generation')
+    plt.ylabel(r'Average Loss')
+    plt.savefig('fig02.pdf')
+    plt.clf()
+
+    plt.plot(std_loss, ls='-', lw=2, c='b')
+    plt.xlabel(r'Generation')
+    plt.ylabel(r'Standard Deviation of the loss')
+    plt.savefig('fig03.pdf')
+    plt.clf()
+
 
 ################################################################################
 # EXPORT DATA FOR THE PLOT 2
@@ -624,6 +629,7 @@ data_last_gen = {
 }
 df_last_gen = pd.DataFrame(data_last_gen)
 df_last_gen.to_csv('./df_last_gen.csv', index=False)
+
 
 ################################################################################
 ################################################################################
