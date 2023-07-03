@@ -140,7 +140,7 @@ keep_parents          = 0                      # if 0, keep NO parents (the ones
 keep_elitism          = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.01                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
-test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB
+test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
 
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2

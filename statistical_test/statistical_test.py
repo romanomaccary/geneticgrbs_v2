@@ -1019,7 +1019,7 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
     w2 = 1.
     w3 = 1.
     w4 = 1.
-    w5 = 1.
+    w5 = 0
 
     l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
     l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
