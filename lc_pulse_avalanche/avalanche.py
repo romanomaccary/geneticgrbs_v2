@@ -50,9 +50,9 @@ class LC(object):
     avalanche model ('chain reaction') proposed by Stern & Svensson, ApJ, 
     469: L109 (1996).
     
-    :mu: average value of the exponential distribution that samples the 
+    :mu: average value of the Poisson distribution that samples the 
          number of child pulses, which is mu_b; average number of baby pulses
-    :mu0: average value of the exponential distribution that samples the 
+    :mu0: average value of the Poisson distribution that samples the 
           number of primary pulses, which is mu_s;
           average number of spontaneous (initial) pulses per GRB
     :alpha: delay parameter
@@ -63,7 +63,7 @@ class LC(object):
               (time constant of spontaneous pulse); should be smaller than res
     :tau_max: upper boundary of log-normal probability distribution of tau_0
     :t_min: GRB LC start time
-    :t_max: GRB LC stop  time
+    :t_max: GRB LC stop time
     :res: GRB LC time resolution (s)
     :eff_area: effective area of instrument (cm2)
     :bg_level: background level (cnt/cm2/s)
@@ -148,16 +148,19 @@ class LC(object):
         :tau1: parent pulse width (decay rime), scalar
         :t_shift: time delay relative to the parent pulse
 
-        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-        Mi sembra che la definizione di t_shift data due righe sopra non sia 
-        corretta, cioe' mi pare che ogni volta che chiami la funzione ricorsiva
-        devi passare il delay TOTALE, ovvero la somma di tutti i delay dei
-        pulses genitori!
+        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        t_shift: time delay relative to the parent pulse
+        INITIAL parent pulse, or the IMMEDIATE parent pulse? It should be the INITIAL
 
         LB: 't_shift' should be the time delay of the immediate parent pulse with 
         respect to the initial invisible trigger event; the time delay of the 
         child pulse w.r.t the parent event instead is computed here below.
-        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA       
+
+        Mi sembra che la definizione di t_shift data due righe sopra non sia 
+        corretta, cioe' mi pare che ogni volta che chiami la funzione ricorsiva
+        devi passare il delay TOTALE, ovvero la somma di tutti i delay dei
+        pulses genitori!
+        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 
 
         :returns: an array of count rates
         """
@@ -181,7 +184,8 @@ class LC(object):
         for i in range(mu_b):
            
             # the time const of the child pulse (tau) is given by:
-            #     p4(tau/tau1) = 1/(delta2 - delta1), tau1 - time const of the parent pulse
+            #     p4(tau/tau1) = 1/(delta2 - delta1)
+            # tau1: time const of the parent pulse
             tau = tau1 * exp(uniform(low=self._delta1, high=self._delta2))
             
             # rise time
@@ -239,10 +243,10 @@ class LC(object):
             inspect.getdoc(self.generate_avalanche)
             
         """
-        Start pulse avalanche
+        Starting pulse avalanche
         """
    
-        # the number of spontaneous primary pulses (mu_s) is given by: 
+        # The number of spontaneous primary pulses (mu_s) is given by: 
         #     p5(mu_s) = exp(-mu_s/mu0)/mu0
         if is_poisson: # Our code
             mu_s = 0
@@ -331,24 +335,23 @@ class LC(object):
         weights    = list(map(lambda x: x**(-3/2), population))
         weights    = weights / np.sum(weights)
         ampl       = np.random.choice(population, p=weights) / self._max_raw_pcr
-
         self._ampl = ampl
 
         self._peak_value = self._max_raw_pcr * ampl
 
         # lc from avalanche scaled + Poissonian bg added
-        if self._with_bg: # with    background
-            self._plot_lc = self._raw_lc * ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+        if self._with_bg: # with background
+            self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
             self._err_lc  = np.sqrt(self._plot_lc)
         else:             # without background
-            self._plot_lc = self._raw_lc * ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
             self._err_lc  = np.sqrt(self._plot_lc)
             self._plot_lc = self._plot_lc - self._bg
 
         self._get_lc_properties()
 
         for p in self._lc_params:
-            p['norm'] *= ampl
+            p['norm'] *= self._ampl
 
         norms    = np.empty((0,))
         t_delays = np.empty((0,))
@@ -414,14 +417,14 @@ class LC(object):
         mean, max, and background count rates
         """
         
-        self._aux_index   = np.where(self._raw_lc>self._raw_lc.max()*1e-4)
-        # self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
+        self._aux_index = np.where(self._raw_lc>self._raw_lc.max()*1e-4)
+        #self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
         self._max_snr   = ((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5).max()
         self._aux_times = self._times[self._aux_index[0][0]:self._aux_index[0][-1]] # +1 in the index
         self._aux_lc    = self._plot_lc[self._aux_index[0][0]:self._aux_index[0][-1]]
 
         self._t_start = self._times[self._aux_index[0][0]]
-#       self._t_stop  = self._times[self._aux_index[0][-1]+1]
+        #self._t_stop = self._times[self._aux_index[0][-1]+1]
         self._t_stop  = self._times[self._aux_index[0][-1]]
             
         self._t100 = self._t_stop - self._t_start
@@ -505,11 +508,11 @@ class LC(object):
         # Ask Anastasia why!
         # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         if self._with_bg:
-            #self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
-            self._plot_lc = self._raw_lc * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            #self._plot_lc = self._raw_lc * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
         else:
-            #self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
-            self._plot_lc = self._raw_lc * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            #self._plot_lc = self._raw_lc * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
             self._plot_lc = self._plot_lc - self._bg
 
         self._get_lc_properties()
