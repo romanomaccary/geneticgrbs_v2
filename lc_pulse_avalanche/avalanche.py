@@ -72,6 +72,8 @@ class LC(object):
     :sigma: signal above background level
     :n_cut: maximum number of pulses in avalanche (useful to speed up the 
             simulations but in odds with the "classic" approach)
+    :with_bg: boolean flag for keeping or removing the background level at the end of the generation
+
     """
     
     def __init__(self, mu=1.2, mu0=1, alpha=4, delta1=-0.5, delta2=0, 
@@ -337,7 +339,7 @@ class LC(object):
         ampl       = np.random.choice(population, p=weights) / self._max_raw_pcr
         self._ampl = ampl
 
-        self._peak_value = self._max_raw_pcr * ampl
+        self._peak_value = self._max_raw_pcr * self._ampl
 
         # lc from avalanche scaled + Poissonian bg added
         if self._with_bg: # with background
@@ -503,10 +505,6 @@ class LC(object):
             tau_r         = par['tau_r']
             self._raw_lc += self.norris_pulse(norm, t_delay, tau, tau_r)
 
-        # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-        # Here the multiplicative factor 'ampl' was missing! 
-        # Ask Anastasia why!
-        # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         if self._with_bg:
             self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
             #self._plot_lc = self._raw_lc * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
