@@ -37,9 +37,6 @@ SEED=None
 #SEED=42
 #np.random.seed(SEED)
 
-is_poisson=True   # use Poisson     distribution for mu_s and mu_b
-#is_poisson=False # use Exponential distribution for mu_s and mu_b
-
 #==============================================================================#
 # Define the class LC describing the light curve.                              #
 #==============================================================================#
@@ -73,12 +70,12 @@ class LC(object):
     :n_cut: maximum number of pulses in avalanche (useful to speed up the 
             simulations but in odds with the "classic" approach)
     :with_bg: boolean flag for keeping or removing the background level at the end of the generation
-
+    :use_poisson: boolean flag for using the Poisson or the (rounded) exponential for sampling the number of initial pulses and childs
     """
     
     def __init__(self, mu=1.2, mu0=1, alpha=4, delta1=-0.5, delta2=0, 
                  tau_min=0.2, tau_max=26, t_min=-10, t_max=1000, res=0.256, 
-                 eff_area=3600, bg_level=10.67, with_bg=True, 
+                 eff_area=3600, bg_level=10.67, with_bg=True, use_poisson=True,
                  min_photon_rate=1.3, max_photon_rate=1300, sigma=5, 
                  n_cut=None, verbose=False):
         
@@ -109,6 +106,7 @@ class LC(object):
         self._n_cut = n_cut
         self._n_pulses = 0
         self._with_bg = with_bg
+        self._use_poisson = use_poisson
         
         if self._verbose:
             print("Time resolution: ", self._step)
@@ -171,7 +169,7 @@ class LC(object):
         #     p2(mu_b) = exp(-mu_b/mu)/mu
         # mu: average, 
         # mu_b: actual number of child pulses.
-        if is_poisson: # Our code
+        if self._use_poisson: # Our code
             mu_b = poisson.rvs(mu=self._mu, 
                                size=1, 
                                random_state=None)
@@ -250,7 +248,7 @@ class LC(object):
    
         # The number of spontaneous primary pulses (mu_s) is given by: 
         #     p5(mu_s) = exp(-mu_s/mu0)/mu0
-        if is_poisson: # Our code
+        if self._use_poisson: # Our code
             mu_s = 0
             while (mu_s==0):
                 mu_s = poisson.rvs(mu=self._mu0, 
