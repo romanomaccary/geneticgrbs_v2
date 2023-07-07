@@ -121,35 +121,32 @@ else:
 
 #------------------------------------------------------------------------------#
 
-parent_selection_type = 'sss'
-crossover_probability = 0.5   # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
+# parent_selection_type = "sss"
+# crossover_probability = 0.5   # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
+# initial_population    = None  # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
+# mutation_type         = "random"
+# crossover_type        = "scattered"
+
+parent_selection_type = "tournament" 
+crossover_probability = 1     # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
 initial_population    = None  # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
-crossover_type        = "scattered"
+crossover_type        = "single_point"
+
+num_generations       = 20                     # Number of generations.
+sol_per_pop           = 500                    # Number of solutions in the population (i.e., number of different sets per generation).
+num_parents_mating    = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
+keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
+keep_elitism          = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
+mutation_probability  = 0.025                  # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
+
+N_grb                 = 2000                   # number of simulated GRBs to produce per set of parameters
+test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
+
 # options for parallelization:
 parallel_processing  = ["process", 50]      
 #parallel_processing = ["thread", 50]       
 #parallel_processing = None
-
-N_grb                 = 2000                   # number of simulated GRBs to produce per set of parameters
-
-num_generations       = 20                     # Number of generations.
-sol_per_pop           = 500                    # Number of solutions in the population (i.e., number of different sets per generation).
-num_parents_mating    = int(0.10*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
-keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
-keep_elitism          = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
-mutation_probability  = 0.02                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
-
-test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
-
-# The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
-# mu=1.2
-# mu0=1
-# alpha=4
-# delta1=-0.5
-# delta2=0
-# tau_min=0.02
-# tau_max=26
 
 # We impose constraints on the range of values that the 7 parameter can assume
 range_mu      = {"low": 0.90,            "high": 2}
@@ -159,6 +156,14 @@ range_delta1  = {"low": -1.5,            "high": -0.25-1.e-6}
 range_delta2  = {"low": 0,               "high": 0.25}
 range_tau_min = {"low": np.log10(1.e-6), "high": np.log10(bin_time-1.e-6)} # sample uniformly in log space
 range_tau_max = {"low": bin_time+20,     "high": 60} 
+# The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
+# mu=1.2
+# mu0=1
+# alpha=4
+# delta1=-0.5
+# delta2=0
+# tau_min=0.02
+# tau_max=26
 
 range_constraints = [range_mu, 
                      range_mu0,
@@ -383,260 +388,262 @@ def on_generation(ga_instance):
 # INSTANTIATE THE 'GENETIC ALGORITHM' CLASS
 ################################################################################
 
-ga_GRB = pygad.GA(num_generations=num_generations,
-                  num_parents_mating=num_parents_mating,
-                  sol_per_pop=sol_per_pop,
-                  num_genes=num_genes,
-                  gene_type=float,
-                  initial_population=initial_population,
-                  on_generation=on_generation,
-                  ### fitness function:
-                  fitness_func=fitness_func,
-                  ### parent selection:
-                  parent_selection_type=parent_selection_type,
-                  keep_parents=keep_parents,           
-                  keep_elitism=keep_elitism,           
-                  ### crossover:
-                  crossover_probability=crossover_probability,
-                  crossover_type=crossover_type,
-                  ### mutation:
-                  mutation_type=mutation_type,
-                  mutation_probability=mutation_probability,     
-                  ### set range of parameters:
-                  gene_space=range_constraints,
-                  ### other stuff:
-                  save_best_solutions=True,
-                  save_solutions=True,
-                  parallel_processing=parallel_processing,
-                  random_seed=random_seed)
+if __name__ == '__main__':
 
-# print summary of the GA
-ga_GRB.summary()
+    ga_GRB = pygad.GA(num_generations=num_generations,
+                      num_parents_mating=num_parents_mating,
+                      sol_per_pop=sol_per_pop,
+                      num_genes=num_genes,
+                      gene_type=float,
+                      initial_population=initial_population,
+                      on_generation=on_generation,
+                      ### fitness function:
+                      fitness_func=fitness_func,
+                      ### parent selection:
+                      parent_selection_type=parent_selection_type,
+                      keep_parents=keep_parents,           
+                      keep_elitism=keep_elitism,           
+                      ### crossover:
+                      crossover_probability=crossover_probability,
+                      crossover_type=crossover_type,
+                      ### mutation:
+                      mutation_type=mutation_type,
+                      mutation_probability=mutation_probability,     
+                      ### set range of parameters:
+                      gene_space=range_constraints,
+                      ### other stuff:
+                      save_best_solutions=True,
+                      save_solutions=True,
+                      parallel_processing=parallel_processing,
+                      random_seed=random_seed)
 
-
-################################################################################
-# RUN THE GENETIC ALGORITHM
-################################################################################
-
-init_run_time = time.perf_counter()
-print('Starting the GA...\n')
-# Run the GA to optimize the parameters of the function.
-ga_GRB.run()
-#ga_GRB.plot_fitness()
-end_run_time = time.perf_counter()
-
-print('\n')
-print('--------------------------------------------------------------------------------')
-print('* Model run in {:0.0f} sec'.format((end_run_time-init_run_time)))
-print('--------------------------------------------------------------------------------')
+    # print summary of the GA
+    ga_GRB.summary()
 
 
-################################################################################
-# SAVE THE MODEL
-################################################################################
+    ############################################################################
+    # RUN THE GENETIC ALGORITHM
+    ############################################################################
 
-### Save the GA instance
-if save_model:
-    filename_model = 'geneticGRB'
-    ga_GRB.save(filename=filename_model)
+    init_run_time = time.perf_counter()
+    print('Starting the GA...\n')
+    # Run the GA to optimize the parameters of the function.
+    ga_GRB.run()
+    #ga_GRB.plot_fitness()
+    end_run_time = time.perf_counter()
 
-### Load the saved GA instance
-# loaded_ga_instance = pygad.load(filename=filename)
-# loaded_ga_instance.plot_fitness()
-
-
-################################################################################
-# PRINT FINAL RESULTS
-################################################################################
-
-#------------------------------------------------------------------------------#
-# Print on terminal
-#------------------------------------------------------------------------------#
-solution, solution_fitness, solution_idx = ga_GRB.best_solution(ga_GRB.last_generation_fitness)
-print('\n')
-print('################################################################################')
-print('################################################################################')
-print("* Parameters of the BEST solution:")
-print("    - mu      = {solution}".format(solution=solution[0]))
-print("    - mu0     = {solution}".format(solution=solution[1]))
-print("    - alpha   = {solution}".format(solution=solution[2]))
-print("    - delta1  = {solution}".format(solution=solution[3]))
-print("    - delta2  = {solution}".format(solution=solution[4]))
-print("    - tau_min = {solution}".format(solution=10**(solution[5])))
-print("    - tau_max = {solution}".format(solution=solution[6]))
-print("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
-print("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))
-#print("Index of the best solution          : {solution_idx}".format(solution_idx=solution_idx))
-if ga_GRB.best_solution_generation != -1:
-    print("* Best fitness value reached after N={best_solution_generation} generations.".format(best_solution_generation=ga_GRB.best_solution_generation))
-print('################################################################################')
-print('################################################################################')
-#------------------------------------------------------------------------------#
-# Print on file
-#------------------------------------------------------------------------------#
-file = open("./simulation_info.txt", "w")
-file.write('################################################################################')
-file.write('\n')
-file.write("INPUT")
-file.write('\n')
-file.write('################################################################################')
-file.write('\n')
-file.write('\n')
-file.write('N_GRBs_per_set       = {}'.format(N_grb))
-file.write('\n')
-file.write('num_generations      = {}'.format(num_generations))
-file.write('\n')
-file.write('sol_per_pop          = {}'.format(sol_per_pop))
-file.write('\n')
-file.write('num_parents_mating   = {}'.format(num_parents_mating))
-file.write('\n')
-file.write('keep_parents         = {}'.format(keep_parents))
-file.write('\n')
-file.write('keep_elitism         = {}'.format(keep_elitism))
-file.write('\n')
-file.write('mutation_probability = {}'.format(mutation_probability))
-file.write('\n')
-file.write('\n')
-file.write('range_mu             = {}'.format(range_mu))
-file.write('\n')
-file.write('range_mu0            = {}'.format(range_mu0))
-file.write('\n')
-file.write('range_alpha          = {}'.format(range_alpha))
-file.write('\n')
-file.write('range_delta1         = {}'.format(range_delta1))
-file.write('\n')
-file.write('range_delta2         = {}'.format(range_delta2))
-file.write('\n')
-file.write('range_tau_min        = {}'.format(range_tau_min))
-file.write('\n')
-file.write('range_tau_max        = {}'.format(range_tau_max))
-file.write('\n')
-file.write('\n')
-file.write('################################################################################')
-file.write('\n')
-file.write("OUTPUT")
-file.write('\n')
-file.write('################################################################################')
-file.write('\n')
-file.write('\n')
-file.write("* Parameters of the best solution:")
-file.write('\n')
-file.write("    - mu      = {solution}".format(solution=solution[0]))
-file.write('\n')
-file.write("    - mu0     = {solution}".format(solution=solution[1]))
-file.write('\n')
-file.write("    - alpha   = {solution}".format(solution=solution[2]))
-file.write('\n')
-file.write("    - delta1  = {solution}".format(solution=solution[3]))
-file.write('\n')
-file.write("    - delta2  = {solution}".format(solution=solution[4]))
-file.write('\n')
-file.write("    - tau_min = {solution}".format(solution=10**(solution[5])))
-file.write('\n')
-file.write("    - tau_max = {solution}".format(solution=solution[6]))
-file.write('\n')
-file.write("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
-file.write('\n')
-file.write("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))
-file.write('\n')
-#print("Index of the best solution          : {solution_idx}".format(solution_idx=solution_idx))
-if ga_GRB.best_solution_generation != -1:
-    file.write("* Best fitness value reached after N = {best_solution_generation} generations.".format(best_solution_generation=ga_GRB.best_solution_generation))
-file.write('\n')
-file.write('\n')
-file.write('################################################################################')
-file.write('\n')
-file.write('################################################################################')
-file.close()
-#------------------------------------------------------------------------------#
+    print('\n')
+    print('--------------------------------------------------------------------------------')
+    print('* Model run in {:0.0f} sec'.format((end_run_time-init_run_time)))
+    print('--------------------------------------------------------------------------------')
 
 
-################################################################################
-# EXPORT DATA FOR THE PLOT 1
-################################################################################
+    ############################################################################
+    # SAVE THE MODEL
+    ############################################################################
 
-best_loss = np.array(ga_GRB.best_solutions_fitness)**(-1)
-loss_list = np.array(ga_GRB.solutions_fitness)**(-1)
-avg_loss  = np.zeros(num_generations+1)
-std_loss  = np.zeros(num_generations+1)
-for i in range(num_generations+1):
-    avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
-    std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
-#print('best_loss[-1] =', best_loss[-1])
+    ### Save the GA instance
+    if save_model:
+        filename_model = 'geneticGRB'
+        ga_GRB.save(filename=filename_model)
 
-datafile = './datafile.txt'
-file = open(datafile, 'w')
-file.write('# generation\t best_loss\t avg_loss\t std_loss\t std_loss/sqrt(sol_per_pop)\n')
-for i in range(num_generations+1):
-    file.write('{0} {1} {2} {3} {4}\n'.format(i, best_loss[i], avg_loss[i], std_loss[i], std_loss[i]/np.sqrt(sol_per_pop)))
-file.close()
+    ### Load the saved GA instance
+    # loaded_ga_instance = pygad.load(filename=filename)
+    # loaded_ga_instance.plot_fitness()
 
 
-################################################################################
-# EXPORT PLOT 1
-################################################################################
+    ############################################################################
+    # PRINT FINAL RESULTS
+    ############################################################################
 
-if save_plot:
-    plt.plot(best_loss, ls='-', lw=2, c='b')
-    #plt.yscale('log')
-    plt.xlabel(r'Generation')
-    plt.ylabel(r'Best Loss')
-    plt.savefig('fig01.pdf')
-    plt.clf()
+    #--------------------------------------------------------------------------#
+    # Print on terminal
+    #--------------------------------------------------------------------------#
+    solution, solution_fitness, solution_idx = ga_GRB.best_solution(ga_GRB.last_generation_fitness)
+    print('\n')
+    print('################################################################################')
+    print('################################################################################')
+    print("* Parameters of the BEST solution:")
+    print("    - mu      = {solution}".format(solution=solution[0]))
+    print("    - mu0     = {solution}".format(solution=solution[1]))
+    print("    - alpha   = {solution}".format(solution=solution[2]))
+    print("    - delta1  = {solution}".format(solution=solution[3]))
+    print("    - delta2  = {solution}".format(solution=solution[4]))
+    print("    - tau_min = {solution}".format(solution=10**(solution[5])))
+    print("    - tau_max = {solution}".format(solution=solution[6]))
+    print("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
+    print("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))
+    #print("Index of the best solution          : {solution_idx}".format(solution_idx=solution_idx))
+    if ga_GRB.best_solution_generation != -1:
+        print("* Best fitness value reached after N={best_solution_generation} generations.".format(best_solution_generation=ga_GRB.best_solution_generation))
+    print('################################################################################')
+    print('################################################################################')
+    #--------------------------------------------------------------------------#
+    # Print on file
+    #--------------------------------------------------------------------------#
+    file = open("./simulation_info.txt", "w")
+    file.write('################################################################################')
+    file.write('\n')
+    file.write("INPUT")
+    file.write('\n')
+    file.write('################################################################################')
+    file.write('\n')
+    file.write('\n')
+    file.write('N_GRBs_per_set       = {}'.format(N_grb))
+    file.write('\n')
+    file.write('num_generations      = {}'.format(num_generations))
+    file.write('\n')
+    file.write('sol_per_pop          = {}'.format(sol_per_pop))
+    file.write('\n')
+    file.write('num_parents_mating   = {}'.format(num_parents_mating))
+    file.write('\n')
+    file.write('keep_parents         = {}'.format(keep_parents))
+    file.write('\n')
+    file.write('keep_elitism         = {}'.format(keep_elitism))
+    file.write('\n')
+    file.write('mutation_probability = {}'.format(mutation_probability))
+    file.write('\n')
+    file.write('\n')
+    file.write('range_mu             = {}'.format(range_mu))
+    file.write('\n')
+    file.write('range_mu0            = {}'.format(range_mu0))
+    file.write('\n')
+    file.write('range_alpha          = {}'.format(range_alpha))
+    file.write('\n')
+    file.write('range_delta1         = {}'.format(range_delta1))
+    file.write('\n')
+    file.write('range_delta2         = {}'.format(range_delta2))
+    file.write('\n')
+    file.write('range_tau_min        = {}'.format(range_tau_min))
+    file.write('\n')
+    file.write('range_tau_max        = {}'.format(range_tau_max))
+    file.write('\n')
+    file.write('\n')
+    file.write('################################################################################')
+    file.write('\n')
+    file.write("OUTPUT")
+    file.write('\n')
+    file.write('################################################################################')
+    file.write('\n')
+    file.write('\n')
+    file.write("* Parameters of the best solution:")
+    file.write('\n')
+    file.write("    - mu      = {solution}".format(solution=solution[0]))
+    file.write('\n')
+    file.write("    - mu0     = {solution}".format(solution=solution[1]))
+    file.write('\n')
+    file.write("    - alpha   = {solution}".format(solution=solution[2]))
+    file.write('\n')
+    file.write("    - delta1  = {solution}".format(solution=solution[3]))
+    file.write('\n')
+    file.write("    - delta2  = {solution}".format(solution=solution[4]))
+    file.write('\n')
+    file.write("    - tau_min = {solution}".format(solution=10**(solution[5])))
+    file.write('\n')
+    file.write("    - tau_max = {solution}".format(solution=solution[6]))
+    file.write('\n')
+    file.write("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
+    file.write('\n')
+    file.write("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))
+    file.write('\n')
+    #print("Index of the best solution          : {solution_idx}".format(solution_idx=solution_idx))
+    if ga_GRB.best_solution_generation != -1:
+        file.write("* Best fitness value reached after N = {best_solution_generation} generations.".format(best_solution_generation=ga_GRB.best_solution_generation))
+    file.write('\n')
+    file.write('\n')
+    file.write('################################################################################')
+    file.write('\n')
+    file.write('################################################################################')
+    file.close()
+    #--------------------------------------------------------------------------#
 
-    plt.errorbar(np.arange(num_generations+1), avg_loss, yerr=std_loss/np.sqrt(sol_per_pop), ls='-', lw=2, c='b')
-    #plt.yscale('log')
-    plt.xlabel(r'Generation')
-    plt.ylabel(r'Average Loss')
-    plt.savefig('fig02.pdf')
-    plt.clf()
 
-    plt.plot(std_loss, ls='-', lw=2, c='b')
-    plt.xlabel(r'Generation')
-    plt.ylabel(r'Standard Deviation of the loss')
-    plt.savefig('fig03.pdf')
-    plt.clf()
+    ############################################################################
+    # EXPORT DATA FOR THE PLOT 1
+    ############################################################################
 
+    best_loss = np.array(ga_GRB.best_solutions_fitness)**(-1)
+    loss_list = np.array(ga_GRB.solutions_fitness)**(-1)
+    avg_loss  = np.zeros(num_generations+1)
+    std_loss  = np.zeros(num_generations+1)
+    for i in range(num_generations+1):
+        avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
+        std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
+    #print('best_loss[-1] =', best_loss[-1])
 
-################################################################################
-# EXPORT DATA FOR THE PLOT 2
-################################################################################
-# here we save the parameters of ALL the individuals in the last generation,
-# along with their associated fitness.
-
-# all fitness values in the LAST epoch:
-last_gen_fitness = np.array(ga_GRB.solutions_fitness[-sol_per_pop:])
-
-# all solutions in the LAST epoch:
-last_gen_sol     = np.array(ga_GRB.solutions[-sol_per_pop:])
-last_gen_mu      = np.array(last_gen_sol[:,0]) # array with all the mu      of the LAST generation 
-last_gen_mu0     = np.array(last_gen_sol[:,1]) # array with all the mu0     of the LAST generation
-last_gen_alpha   = np.array(last_gen_sol[:,2]) # array with all the alpha   of the LAST generation
-last_gen_delta1  = np.array(last_gen_sol[:,3]) # array with all the delta1  of the LAST generation
-last_gen_delta2  = np.array(last_gen_sol[:,4]) # array with all the delta1  of the LAST generation
-last_gen_tau_min = np.array(last_gen_sol[:,5]) # array with all the tau_min of the LAST generation
-last_gen_tau_max = np.array(last_gen_sol[:,6]) # array with all the tau_max of the LAST generation
-
-data_last_gen = {
-    'mu':      last_gen_mu,
-    'mu0':     last_gen_mu0,
-    'alpha':   last_gen_alpha,
-    'delta1':  last_gen_delta1,
-    'delta2':  last_gen_delta2,
-    'tau_min': last_gen_tau_min,
-    'tau_max': last_gen_tau_max,
-    'fitness': last_gen_fitness
-}
-df_last_gen = pd.DataFrame(data_last_gen)
-df_last_gen.to_csv('./df_last_gen.csv', index=False)
+    datafile = './datafile.txt'
+    file = open(datafile, 'w')
+    file.write('# generation\t best_loss\t avg_loss\t std_loss\t std_loss/sqrt(sol_per_pop)\n')
+    for i in range(num_generations+1):
+        file.write('{0} {1} {2} {3} {4}\n'.format(i, best_loss[i], avg_loss[i], std_loss[i], std_loss[i]/np.sqrt(sol_per_pop)))
+    file.close()
 
 
-################################################################################
-################################################################################
+    ############################################################################
+    # EXPORT PLOT 1
+    ############################################################################
 
-print('\n\n')
-print('################################################################################')
-print('END')
-print('################################################################################')
-print('\n\n')
+    if save_plot:
+        plt.plot(best_loss, ls='-', lw=2, c='b')
+        #plt.yscale('log')
+        plt.xlabel(r'Generation')
+        plt.ylabel(r'Best Loss')
+        plt.savefig('fig01.pdf')
+        plt.clf()
+
+        plt.errorbar(np.arange(num_generations+1), avg_loss, yerr=std_loss/np.sqrt(sol_per_pop), ls='-', lw=2, c='b')
+        #plt.yscale('log')
+        plt.xlabel(r'Generation')
+        plt.ylabel(r'Average Loss')
+        plt.savefig('fig02.pdf')
+        plt.clf()
+
+        plt.plot(std_loss, ls='-', lw=2, c='b')
+        plt.xlabel(r'Generation')
+        plt.ylabel(r'Standard Deviation of the loss')
+        plt.savefig('fig03.pdf')
+        plt.clf()
+
+
+    ############################################################################
+    # EXPORT DATA FOR THE PLOT 2
+    ############################################################################
+    # here we save the parameters of ALL the individuals in the last generation,
+    # along with their associated fitness.
+
+    # all fitness values in the LAST epoch:
+    last_gen_fitness = np.array(ga_GRB.solutions_fitness[-sol_per_pop:])
+
+    # all solutions in the LAST epoch:
+    last_gen_sol     = np.array(ga_GRB.solutions[-sol_per_pop:])
+    last_gen_mu      = np.array(last_gen_sol[:,0]) # array with all the mu      of the LAST generation 
+    last_gen_mu0     = np.array(last_gen_sol[:,1]) # array with all the mu0     of the LAST generation
+    last_gen_alpha   = np.array(last_gen_sol[:,2]) # array with all the alpha   of the LAST generation
+    last_gen_delta1  = np.array(last_gen_sol[:,3]) # array with all the delta1  of the LAST generation
+    last_gen_delta2  = np.array(last_gen_sol[:,4]) # array with all the delta1  of the LAST generation
+    last_gen_tau_min = np.array(last_gen_sol[:,5]) # array with all the tau_min of the LAST generation
+    last_gen_tau_max = np.array(last_gen_sol[:,6]) # array with all the tau_max of the LAST generation
+
+    data_last_gen = {
+        'mu':      last_gen_mu,
+        'mu0':     last_gen_mu0,
+        'alpha':   last_gen_alpha,
+        'delta1':  last_gen_delta1,
+        'delta2':  last_gen_delta2,
+        'tau_min': last_gen_tau_min,
+        'tau_max': last_gen_tau_max,
+        'fitness': last_gen_fitness
+    }
+    df_last_gen = pd.DataFrame(data_last_gen)
+    df_last_gen.to_csv('./df_last_gen.csv', index=False)
+
+
+    ############################################################################
+    ############################################################################
+
+    print('\n\n')
+    print('################################################################################')
+    print('END')
+    print('################################################################################')
+    print('\n\n')
 
