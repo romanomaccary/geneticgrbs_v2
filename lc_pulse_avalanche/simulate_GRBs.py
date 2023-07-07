@@ -53,6 +53,7 @@ export_path='../simulations/'
 # tau_max = 26
 
 # The 7 values obtained from v1 optimization are
+# (3 loss)
 # mu      = 1.3712230777324108
 # mu0     = 1.292056879500315
 # alpha   = 6.238631180118012
@@ -62,6 +63,7 @@ export_path='../simulations/'
 # tau_max = 23.443421866972386
 
 # The 7 values obtained from v2 optimization are
+# (4 loss)
 # mu      = 1.3824946258409123
 # mu0     = 1.15547634120758
 # alpha   = 5.240511090395332
@@ -71,6 +73,7 @@ export_path='../simulations/'
 # tau_max = 32.858056193896196
 
 # The 7 values obtained from v3 optimization are
+# (4 loss)
 # mu      = 1.3980875041410008
 # mu0     = 1.5997385641936739
 # alpha   = 3.8373579048667117
@@ -80,6 +83,7 @@ export_path='../simulations/'
 # tau_max = 39.313297221735766
 
 # The 7 values obtained from v4 optimization are
+# (4 loss)
 # mu      = 1.7377495777582268
 # mu0     = 1.2674137674116688
 # alpha   = 6.56892665444723
@@ -89,6 +93,7 @@ export_path='../simulations/'
 # tau_max = 45.936383095147605
 
 # The 7 values obtained from v5 optimization are
+# (4 loss)
 # mu      = 1.8642165398675894
 # mu0     = 0.9460684332226531
 # alpha   = 6.539055496753974
@@ -98,6 +103,7 @@ export_path='../simulations/'
 # tau_max = 52.41492789344243
 
 # The 7 values obtained from v6 optimization are
+# (4 loss)
 # mu      = 1.5355877552761932
 # mu0     = 1.534168123065679
 # alpha   = 3.1200524011794863
@@ -107,6 +113,7 @@ export_path='../simulations/'
 # tau_max = 50.124910976218175
 
 # The 7 values obtained from v7 optimization are
+# (5 loss)
 # mu      = 1.5197492009322398
 # mu0     = 1.5588763589949317
 # alpha   = 2.7027204695213194
@@ -116,6 +123,7 @@ export_path='../simulations/'
 # tau_max = 53.18239761751395
 
 # The 7 values obtained from v8 optimization are
+# (5 loss, Poisson)
 mu      = 1.264930172400689
 mu0     = 1.9545413768529967
 alpha   = 1.9791552702076287
@@ -123,6 +131,12 @@ delta1  = -0.5633113305426156
 delta2  = 0.21883657826929145
 tau_min = 0.023468723791192015
 tau_max = 37.80588105257772
+
+# The 7 values obtained from v9 optimization are
+# (1 loss (<F/F_p>), Poisson)
+
+
+
 
 #------------------------------------------------------------------------------#
 
