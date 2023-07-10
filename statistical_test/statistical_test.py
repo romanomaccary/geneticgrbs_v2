@@ -997,7 +997,8 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
                  acf,                  acf_sim,
                  duration,             duration_sim,
                  n_of_pulses,          n_of_pulses_sim,   
-                 test_pulse_distr=False, log=False, verbose=False):
+                 return_individual_loss=False, test_pulse_distr=False,
+                 log=False, verbose=False):
     """
     Compute the loss to be used for the optimization in the Genetic Algorithm.
     Input:
@@ -1058,7 +1059,13 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         # in log scale, since it is the output of the function compute_kde_log_duration())
         pass
                           
-    return l2_loss
+    if return_individual_loss:
+        if test_pulse_distr:
+            return l2_loss, l2_loss_fluxes, l2_loss_fluxes_cube, l2_loss_acf, l2_loss_duration, l_AD
+        else:
+            return l2_loss, l2_loss_fluxes, l2_loss_fluxes_cube, l2_loss_acf, l2_loss_duration
+    else:
+        return l2_loss
 
 ################################################################################
 
