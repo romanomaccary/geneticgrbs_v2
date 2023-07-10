@@ -126,19 +126,24 @@ else:
 # initial_population    = None  # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 # mutation_type         = "random"
 # crossover_type        = "scattered"
+# num_generations       = 20                     # Number of generations.
+# sol_per_pop           = 500                    # Number of solutions in the population (i.e., number of different sets per generation).
+# num_parents_mating    = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
+# keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
+# keep_elitism          = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
+# mutation_probability  = 0.03                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 parent_selection_type = "tournament" 
 crossover_probability = 1     # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
 initial_population    = None  # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
 crossover_type        = "single_point"
-
 num_generations       = 20                     # Number of generations.
 sol_per_pop           = 500                    # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
-keep_elitism          = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
-mutation_probability  = 0.025                  # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
+keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
+mutation_probability  = 0.03                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 N_grb                 = 2000                   # number of simulated GRBs to produce per set of parameters
 test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
@@ -426,7 +431,7 @@ if __name__ == '__main__':
     ############################################################################
 
     init_run_time = time.perf_counter()
-    print('Starting the GA...\n')
+    #print('Starting the GA...\n')
     # Run the GA to optimize the parameters of the function.
     ga_GRB.run()
     #ga_GRB.plot_fitness()
@@ -603,41 +608,40 @@ if __name__ == '__main__':
         plt.ylabel(r'Standard Deviation of the loss')
         plt.savefig('fig03.pdf')
         plt.clf()
-
+    
 
     ############################################################################
     # EXPORT DATA FOR THE PLOT 2
     ############################################################################
-    # here we save the parameters of ALL the individuals in the last generation,
+    # Here we save the parameters of ALL the individuals in ALL generations,
     # along with their associated fitness.
 
-    # all fitness values in the LAST epoch:
-    last_gen_fitness = np.array(ga_GRB.solutions_fitness[-sol_per_pop:])
+    # all fitness values in the ALL epochs:
+    all_gen_fitness = np.array(ga_GRB.solutions_fitness[:])
 
-    # all solutions in the LAST epoch:
-    last_gen_sol     = np.array(ga_GRB.solutions[-sol_per_pop:])
-    last_gen_mu      = np.array(last_gen_sol[:,0]) # array with all the mu      of the LAST generation 
-    last_gen_mu0     = np.array(last_gen_sol[:,1]) # array with all the mu0     of the LAST generation
-    last_gen_alpha   = np.array(last_gen_sol[:,2]) # array with all the alpha   of the LAST generation
-    last_gen_delta1  = np.array(last_gen_sol[:,3]) # array with all the delta1  of the LAST generation
-    last_gen_delta2  = np.array(last_gen_sol[:,4]) # array with all the delta1  of the LAST generation
-    last_gen_tau_min = np.array(last_gen_sol[:,5]) # array with all the tau_min of the LAST generation
-    last_gen_tau_max = np.array(last_gen_sol[:,6]) # array with all the tau_max of the LAST generation
+    # all solutions in the ALL epochs:
+    all_gen_sol     = np.array(ga_GRB.solutions[:])
+    all_gen_mu      = np.array(all_gen_sol[:,0]) # array with all the mu      of the ALL generations 
+    all_gen_mu0     = np.array(all_gen_sol[:,1]) # array with all the mu0     of the ALL generations
+    all_gen_alpha   = np.array(all_gen_sol[:,2]) # array with all the alpha   of the ALL generations
+    all_gen_delta1  = np.array(all_gen_sol[:,3]) # array with all the delta1  of the ALL generations
+    all_gen_delta2  = np.array(all_gen_sol[:,4]) # array with all the delta1  of the ALL generations
+    all_gen_tau_min = np.array(all_gen_sol[:,5]) # array with all the tau_min of the ALL generations
+    all_gen_tau_max = np.array(all_gen_sol[:,6]) # array with all the tau_max of the ALL generations
 
-    data_last_gen = {
-        'mu':      last_gen_mu,
-        'mu0':     last_gen_mu0,
-        'alpha':   last_gen_alpha,
-        'delta1':  last_gen_delta1,
-        'delta2':  last_gen_delta2,
-        'tau_min': last_gen_tau_min,
-        'tau_max': last_gen_tau_max,
-        'fitness': last_gen_fitness
+    data_all_gen = {
+        'mu':      all_gen_mu,
+        'mu0':     all_gen_mu0,
+        'alpha':   all_gen_alpha,
+        'delta1':  all_gen_delta1,
+        'delta2':  all_gen_delta2,
+        'tau_min': all_gen_tau_min,
+        'tau_max': all_gen_tau_max,
+        'fitness': all_gen_fitness
     }
-    df_last_gen = pd.DataFrame(data_last_gen)
-    df_last_gen.to_csv('./df_last_gen.csv', index=False)
-
-
+    df_all_gen = pd.DataFrame(data_all_gen)
+    df_all_gen.to_csv('./df_all_gen.csv', index=False)    
+    
     ############################################################################
     ############################################################################
 

@@ -133,9 +133,17 @@ tau_min = 0.023468723791192015
 tau_max = 37.80588105257772
 
 # The 7 values obtained from v9 optimization are
-# (1 loss (<F/F_p>), Poisson)
+# (4 loss, Poisson)
+# mu      = 1.3329447024643284
+# mu0     = 1.2263029893911657
+# alpha   = 3.273629312229965
+# delta1  = -0.49675439969345714
+# delta2  = 0.12694034684654393
+# tau_min = 0.00011096965026213441
+# tau_max = 41.172294302312366
 
-
+# The 7 values obtained from v10 optimization are
+# (one loss (<F/F_p>), Poisson)
 
 
 #------------------------------------------------------------------------------#
