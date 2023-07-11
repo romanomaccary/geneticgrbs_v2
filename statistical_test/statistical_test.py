@@ -237,7 +237,8 @@ def evaluateDuration20(times, counts, t90=None, t90_frac=15, bin_time=None, filt
     threshold_level = 0.20
     c_max           = np.max(counts)
     c_threshold     = c_max * threshold_level
-    selected_times  = times[counts >= c_threshold]
+    #selected_times = times[counts >= c_threshold]
+    selected_times  = times[ np.where(counts>=c_threshold)[0] ]
     tstart          = selected_times[ 0]
     tstop           = selected_times[-1]
     duration        = tstop - tstart # T20%
@@ -315,7 +316,9 @@ def load_lc_batse(path):
 
     grb_list_batse = []
     grb_not_found  = []
-    for grb_name in tqdm(all_grb_list_batse):
+    print("Loading BATSE data (approx 90 s)...")
+    for grb_name in all_grb_list_batse:
+    #for grb_name in tqdm(all_grb_list_batse):
         try:
             times, counts, errs = np.loadtxt(path+grb_name+'_all_bs.out', unpack=True)
         except:
@@ -363,7 +366,8 @@ def load_lc_swift(path):
 
     grb_list_swift = []
     grb_not_found  = []
-    for grb_name in tqdm(all_grb_list_swift):
+    for grb_name in all_grb_list_swift:
+    #for grb_name in tqdm(all_grb_list_swift):
         try:
             times, counts, errs = np.loadtxt(path+grb_name+'/'+'all_3col.out', unpack=True)
         except:
