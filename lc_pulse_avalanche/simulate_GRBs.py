@@ -152,10 +152,18 @@ tau_max = 37.80588105257772
 # tau_min = 5.535018240950338e-06
 # tau_max = 27.408501454687663
 
-# The 7 values obtained from v10 optimization are
+# The 7 values obtained from v11 optimization are
 # (one loss (<(F/F_p)**3>), Poisson)
+# mu      = 1.275006111708082
+# mu0     = 0.9241332593921731
+# alpha   = 3.9560667766550814
+# delta1  = -0.6039275951949501
+# delta2  = 0.04714747706984365
+# tau_min = 3.1160832088232976e-06
+# tau_max = 27.685109594537607
 
-
+# The 7 values obtained from v122optimization are
+# (one loss (<ACF>), Poisson)
 
 
 #------------------------------------------------------------------------------#

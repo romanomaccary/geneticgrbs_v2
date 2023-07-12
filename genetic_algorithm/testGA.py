@@ -154,8 +154,8 @@ parallel_processing  = ["process", 50]
 #parallel_processing = None
 
 # We impose constraints on the range of values that the 7 parameter can assume
-range_mu      = {"low": 0.90,            "high": 2}
-range_mu0     = {"low": 0.90,            "high": 2} 
+range_mu      = {"low": 0.80,            "high": 2}
+range_mu0     = {"low": 0.80,            "high": 2} 
 range_alpha   = {"low": 1,               "high": 15} 
 range_delta1  = {"low": -1.5,            "high": -0.25-1.e-6} 
 range_delta2  = {"low": 0,               "high": 0.25}
