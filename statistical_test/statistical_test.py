@@ -316,7 +316,8 @@ def load_lc_batse(path):
 
     grb_list_batse = []
     grb_not_found  = []
-    print("Loading BATSE data (approx 90 s)...")
+    print("Loading BATSE data...")
+    #print("Loading BATSE data (approx 90 s)...")
     for grb_name in all_grb_list_batse:
     #for grb_name in tqdm(all_grb_list_batse):
         try:
@@ -627,7 +628,8 @@ def load_lc_sim(path):
     """
     grb_sim_names = os.listdir(path)
     grb_list_sim  = []
-    for grb_file in tqdm(grb_sim_names):
+    for grb_file in grb_sim_names:
+    #for grb_file in tqdm(grb_sim_names):
         left_idx  = grb_file.find('lc') + len('lc')
         right_idx = grb_file.find('.txt')
         grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string

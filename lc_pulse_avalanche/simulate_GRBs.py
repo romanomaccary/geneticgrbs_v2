@@ -162,8 +162,25 @@ tau_max = 37.80588105257772
 # tau_min = 3.1160832088232976e-06
 # tau_max = 27.685109594537607
 
-# The 7 values obtained from v122optimization are
+# The 7 values obtained from v12 optimization are
 # (one loss (<ACF>), Poisson)
+# mu      = 0.9446841808077004
+# mu0     = 0.9681754054935662
+# alpha   = 1.757960546967845
+# delta1  = -0.32164512051516003
+# delta2  = 0.09051446260540383
+# tau_min = 0.0009609765738533678
+# tau_max = 31.1900145774892
+
+# The 7 values obtained from v12 optimization are
+# (one loss (duration distribution), Poisson)
+# mu      = 1.423219221170363
+# mu0     = 1.8486292768207997
+# alpha   = 2.607690092406438
+# delta1  = -0.6637684243758021
+# delta2  = 0.20456507843804805
+# tau_min = 0.007777873403883386
+# tau_max = 47.147406633040376
 
 
 #------------------------------------------------------------------------------#
