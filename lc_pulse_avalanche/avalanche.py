@@ -198,7 +198,7 @@ class LC(object):
             
             # the amplitude (A) of each pulse is given by:
             #     p1(A) = 1, in [0, 1]
-            norm = uniform(low=0.0, high=1)
+            norm = uniform(low=0.0, high=1.0)
             
             self._rates += self.norris_pulse(norm, delta_t, tau, tau_r) 
             

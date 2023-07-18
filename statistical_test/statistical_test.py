@@ -46,27 +46,35 @@ class GRB:
     """
     Class for GRBs to save their properties.
     """
-    def __init__(self, 
-                 grb_name, 
-                 times, 
-                 counts, 
-                 errs, 
-                 t90, 
-                 grb_data_file_path, 
-                 t20=-1, 
-                 num_of_sig_pulses=-1):
-                 
+    def __init__(self,
+                 grb_name,
+                 times,
+                 counts,
+                 errs,
+                 t90,
+                 t20=-1,
+                 num_of_sig_pulses=-1,
+                 grb_data_file_path='./',
+                 minimum_peak_rate_list=[],
+                 peak_rate_list=[],
+                 current_delay_list=[],
+                 minimum_pulse_delay_list=[]):
+
         self.name   = grb_name
         self.times  = times
         self.counts = counts
         self.errs   = errs
         self.t90    = t90
         self.t20    = t20
+        self.minimum_peak_rate_list   = minimum_peak_rate_list
+        self.peak_rate_list           = peak_rate_list
+        self.current_delay_list       = current_delay_list
+        self.minimum_pulse_delay_list = minimum_pulse_delay_list
         self.data_file_path    = grb_data_file_path
         self.num_of_sig_pulses = num_of_sig_pulses
 
     def copy(self):
-        copy_grb = GRB(self.name, self.times, self.counts, self.errs, self.t90, self.data_file_path, self.t20, self.num_of_sig_pulses)
+        copy_grb = GRB(self.name, self.times, self.counts, self.errs, self.t90, self.data_file_path, self.t20, self.num_of_sig_pulses, self.minimum_peak_rate_list, self.peak_rate_list, self.current_delay_list, self.minimum_pulse_delay_list)
         return copy_grb
 
 ################################################################################
@@ -1789,16 +1797,16 @@ def generate_GRBs(N_grb,                                            # number of 
             savefile.write('{0} {1} {2} {3}\n'.format(times[i], lc[i], err_lc[i], T90))
         savefile.close()
 
-    def count_significative_pulses(LC, verbose=False):
+    def count_significative_pulses(lc, verbose=False):
         """
         Count the number of significative pulses in a simulated LC. A pulse is significative
         if its peak rate is bigger than 50*(FWHM)**-0.6 counts/64 ms, where FWHM is the 
         FWHM of the peak.
         Input:
-        - LC: object that contains the light curve;
+        - lc: object that contains the light curve;
         Output:
-        - n_of_sig_pulses: number of significative pulses
-        - n_of_total_pulses: number of total pulses generated for the LC
+        - n_of_sig_pulses: number of significative pulses;
+        - n_of_total_pulses: number of total pulses generated for the LC;
         """
         pulses_param_list = lc._lc_params
         ampl              = lc._ampl
@@ -1814,7 +1822,12 @@ def generate_GRBs(N_grb,                                            # number of 
         last_fwhm      = 0
         bluring_thresh = 3 
 
-        for pulse in pulses_param_list:
+        minimum_peak_rate_list   = []
+        peak_rate_list           = []
+        current_delay_list       = []
+        minimum_pulse_delay_list = []
+
+        for el, pulse in enumerate(pulses_param_list):
             # Reads parameters of the pulse and generates it
             norm    = pulse['norm']
             t_delay = pulse['t_delay']
@@ -1839,18 +1852,35 @@ def generate_GRBs(N_grb,                                            # number of 
                 print('Delay time: ',      t_delay,   's')
                 print('Pulse peak rate: ', peak_rate, 'counts/64 ms')
                 print('Pulse FWHM: ',      peak_fwhm, 's' )
-            
-            # Evaluate the minimum peak rate for the pulse to be significative (CG formula) 
-            # and check if the peak rate of the pulse is above the minimum  
+
+            # Evaluate the minimum peak rate for the pulse to be significative (CG formula) and check if the peak rate of the pulse is above the minimum  
             minimum_peak_rate = 25 * peak_fwhm**(-0.6)
             if peak_rate >= minimum_peak_rate:
-                if current_delay > minimum_pulse_delay:
+                if el==0:
+                    # for the very first pulse, the t_delay should be infinite,
+                    # so the constraint 'current_delay > minimum_pulse_delay' is
+                    # always satisfied!
+                    significative_pulses.append(pulse)
+                    n_of_sig_pulses += 1
+                    last_t_delay     = t_delay
+                    last_fwhm        = peak_fwhm
+                elif current_delay > minimum_pulse_delay:
                     #bluring_level = current_delay / np.sqrt(peak_fwhm**2 + last_fwhm**2)
                     #if bluring_level >= bluring_thresh:
                     significative_pulses.append(pulse)
                     n_of_sig_pulses += 1
-                    last_t_delay    = t_delay
-                    last_fwhm       = peak_fwhm
+                    last_t_delay     = t_delay
+                    last_fwhm        = peak_fwhm
+
+            minimum_peak_rate_list.append(minimum_peak_rate)
+            peak_rate_list.append(peak_rate)
+            current_delay_list.append(current_delay)
+            minimum_pulse_delay_list.append(minimum_pulse_delay)
+
+        lc._minimum_peak_rate_list   = minimum_peak_rate_list
+        lc._peak_rate_list           = peak_rate_list
+        lc._current_delay_list       = current_delay_list
+        lc._minimum_pulse_delay_list = minimum_pulse_delay_list
 
         if verbose:
             print('-------------------------------------')
@@ -1859,9 +1889,9 @@ def generate_GRBs(N_grb,                                            # number of 
             print('-------------------------------------')
 
         return n_of_sig_pulses, n_of_total_pulses, significative_pulses
-    
+
     def getPulsesTimeDistance(pulses):
-        delay_times = np.sort(np.array([pulse['t_delay'] for pulse in pulses]))
+        delay_times    = np.sort(np.array([pulse['t_delay'] for pulse in pulses]))
         time_distances = np.diff(delay_times)
         return time_distances
 
@@ -1902,22 +1932,34 @@ def generate_GRBs(N_grb,                                            # number of 
 
         if test_pulse_distr:
             # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
-            n_of_sig_pulses, n_of_total_pulses, sig_pulses = count_significative_pulses(lc, verbose=False)
-        else: 
-            n_of_sig_pulses, n_of_total_pulses, sig_pulses = None, None, None
-        
+            n_of_sig_pulses, \
+            n_of_total_pulses, \
+            sig_pulses = count_significative_pulses(lc, verbose=False)
+        else:
+            n_of_sig_pulses, \
+            n_of_total_pulses, \
+            sig_pulses                   = None, None, None
+            lc._minimum_peak_rate_list   = None
+            lc._peak_rate_list           = None
+            lc._current_delay_list       = None
+            lc._minimum_pulse_delay_list = None
+
         # initialize T20% to None
         t20_in=None
 
         # convert the lc generated from the avalance into a GRB object
-        grb = GRB('lc_candidate.txt', 
-                  lc._times, 
-                  lc._plot_lc, 
-                  lc._err_lc, 
-                  lc._t90,
-                  export_path+instrument+'/'+'lc_candidate.txt',  
-                  t20_in,
-                  n_of_sig_pulses)
+        grb = GRB(grb_name='lc_candidate.txt',
+                  times=lc._times, 
+                  counts=lc._plot_lc, 
+                  errs=lc._err_lc, 
+                  t90=lc._t90, 
+                  t20=t20_in,
+                  num_of_sig_pulses=n_of_sig_pulses,
+                  grb_data_file_path=export_path+instrument+'/'+'lc_candidate.txt',
+                  minimum_peak_rate_list=lc._minimum_peak_rate_list,
+                  peak_rate_list=lc._peak_rate_list,
+                  current_delay_list=lc._current_delay_list,
+                  minimum_pulse_delay_list=lc._minimum_pulse_delay_list)
         # we use a temporary list that contains only _one_ lc, then we
         # check if that GRB satisfies the constraints imposed, ad if that is
         # the case, we append it to the final list of GRBs
