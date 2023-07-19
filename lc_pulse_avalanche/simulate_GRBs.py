@@ -124,23 +124,23 @@ export_path='../simulations/'
 
 # The 7 values obtained from v8 optimization are
 # (5 loss, Poisson)
-mu      = 1.264930172400689
-mu0     = 1.9545413768529967
-alpha   = 1.9791552702076287
-delta1  = -0.5633113305426156
-delta2  = 0.21883657826929145
-tau_min = 0.023468723791192015
-tau_max = 37.80588105257772
+# mu      = 1.264930172400689
+# mu0     = 1.9545413768529967
+# alpha   = 1.9791552702076287
+# delta1  = -0.5633113305426156
+# delta2  = 0.21883657826929145
+# tau_min = 0.023468723791192015
+# tau_max = 37.80588105257772
 
 # The 7 values obtained from v9 optimization are
 # (4 loss, Poisson)
-# mu      = 1.3329447024643284
-# mu0     = 1.2263029893911657
-# alpha   = 3.273629312229965
-# delta1  = -0.49675439969345714
-# delta2  = 0.12694034684654393
-# tau_min = 0.00011096965026213441
-# tau_max = 41.172294302312366
+mu      = 1.3329447024643284
+mu0     = 1.2263029893911657
+alpha   = 3.273629312229965
+delta1  = -0.49675439969345714
+delta2  = 0.12694034684654393
+tau_min = 0.00011096965026213441
+tau_max = 41.172294302312366
 
 # The 7 values obtained from v10 optimization are
 # (one loss (<F/F_p>), Poisson)
@@ -188,7 +188,7 @@ tau_max = 37.80588105257772
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=2000
+N_grb=5000
 
 instrument = 'batse'
 #instrument = 'swift'
@@ -228,7 +228,7 @@ else:
 from datetime import datetime
 start = datetime.now()
 
-test_pulse_distr = True
+test_pulse_distr = False
 test  = generate_GRBs(# number of simulated GRBs to produce
                       N_grb=N_grb, 
                       # 7 parameters
