@@ -1030,6 +1030,18 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         # 'duration'     is already in log scale, since it is the output of compute_kde_log_duration()
         # 'duration_sim' is already in log scale, since it is the output of compute_kde_log_duration()
 
+    # w_i = \frac{1/L_{\mathrm{tot}}^{(i)}}{\sum_{i=1}^{4} 1/L_{\mathrm{tot}}^{(i)}} 
+    #
+    # L_{tot}^{(1)} = 1.20
+    # L_{tot}^{(2)} = 1.06
+    # L_{tot}^{(3)} = 1.27
+    # L_{tot}^{(4)} = 0.57
+    #
+    # w1 = 0.193
+    # w2 = 0.218
+    # w3 = 0.182
+    # w4 = 0.406
+    
     w1 = 1.
     w2 = 1.
     w3 = 1.

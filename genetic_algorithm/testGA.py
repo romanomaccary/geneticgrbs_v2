@@ -139,11 +139,11 @@ initial_population    = None  # if 'None', the initial population is randomly ch
 mutation_type         = "random"
 crossover_type        = "single_point"
 num_generations       = 20                     # Number of generations.
-sol_per_pop           = 500                    # Number of solutions in the population (i.e., number of different sets per generation).
+sol_per_pop           = 1000                    # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
-mutation_probability  = 0.03                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
+mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 N_grb                 = 2000                   # number of simulated GRBs to produce per set of parameters
 test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
