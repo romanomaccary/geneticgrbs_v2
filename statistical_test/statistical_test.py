@@ -1902,6 +1902,134 @@ def generate_GRBs(N_grb,                                            # number of 
 
         return n_of_sig_pulses, n_of_total_pulses, significative_pulses
 
+#################### NEW VERSION WIP #################################
+
+    def count_significative_pulses_ver2(lc, verbose=False):
+        """
+        NEW VER - TO WRITE
+        Input:
+        - lc: object that contains the light curve;
+        Output:
+        - n_of_sig_pulses: number of significative pulses;
+        - n_of_total_pulses: number of total pulses generated for the LC;
+        """
+        def make_pulse(pulse, ampl, eff_area):
+            norm    = pulse['norm']
+            t_delay = pulse['t_delay']
+            tau     = pulse['tau']
+            tau_r   = pulse['tau_r']
+
+            pulse_curve = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
+            return pulse_curve
+        
+        def evaluate_fwhm(pulse):
+            t_delay = pulse['t_delay']
+            tau     = pulse['tau']
+            tau_r   = pulse['tau_r']
+
+            t_1 = t_delay - tau_r * np.sqrt(np.log(2))
+            t_2 = t_delay + tau   * np.log(2)
+            peak_fwhm = t_2 - t_1
+
+            return peak_fwhm
+
+        pulses_param_list = lc._lc_params
+        ampl              = lc._ampl
+        eff_area          = lc._eff_area
+
+        n_of_sig_pulses      = 0
+        significative_pulses = []
+        n_of_total_pulses    = len(pulses_param_list)
+
+        delay_factor   = 2 
+        minimum_pulse_delay = delay_factor * bin_time
+        last_t_delay   = 0
+        last_fwhm      = 0
+        bluring_thresh = 3 
+
+        minimum_peak_rate_list   = []
+        peak_rate_list           = []
+        current_delay_list       = []
+        minimum_pulse_delay_list = []
+
+        all_pulses = list(map(make_pulse, pulses_param_list))
+        all_pulses = np.reshape(all_pulses, newshape=(len(pulses_param_list), len(all_pulses)))
+
+        fwhms = np.array(list(map(evaluate_fwhm, pulses_param_list)))
+
+        #separability s0.9 = deltaT_min /fwhm
+
+        #from MEPSA paper eq. 3
+        # log s0.9 = -8.28 log SN + 8.42 if logSN < 0.95
+        #            -0.64 log SN + 1.15 if logSN > 0.95
+
+        
+
+        # for el, pulse in enumerate(pulses_param_list):
+        #     # Reads parameters of the pulse and generates it
+        #     norm    = pulse['norm']
+        #     t_delay = pulse['t_delay']
+        #     tau     = pulse['tau']
+        #     tau_r   = pulse['tau_r']
+
+        #     pulse_curve = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
+
+        #     #Evaluate delay with previous pulse
+        #     current_delay = t_delay - last_t_delay
+
+        #     # Find peak rate
+        #     peak_rate = np.max(pulse_curve)
+
+        #     # Evaluate the FWHM of the pulse (analytical evaluation)
+        #     t_1 = t_delay - tau_r * np.sqrt(np.log(2))
+        #     t_2 = t_delay + tau   * np.log(2)
+        #     peak_fwhm = t_2 - t_1
+
+        #     if verbose:
+        #         print('----')
+        #         print('Delay time: ',      t_delay,   's')
+        #         print('Pulse peak rate: ', peak_rate, 'counts/64 ms')
+        #         print('Pulse FWHM: ',      peak_fwhm, 's' )
+
+        #     # Evaluate the minimum peak rate for the pulse to be significative (CG formula) and check if the peak rate of the pulse is above the minimum  
+        #     minimum_peak_rate = 25 * peak_fwhm**(-0.6)
+        #     if peak_rate >= minimum_peak_rate:
+        #         if el==0:
+        #             # for the very first pulse, the t_delay should be infinite,
+        #             # so the constraint 'current_delay > minimum_pulse_delay' is
+        #             # always satisfied!
+        #             significative_pulses.append(pulse)
+        #             n_of_sig_pulses += 1
+        #             last_t_delay     = t_delay
+        #             last_fwhm        = peak_fwhm
+        #         elif current_delay > minimum_pulse_delay:
+        #             #bluring_level = current_delay / np.sqrt(peak_fwhm**2 + last_fwhm**2)
+        #             #if bluring_level >= bluring_thresh:
+        #             significative_pulses.append(pulse)
+        #             n_of_sig_pulses += 1
+        #             last_t_delay     = t_delay
+        #             last_fwhm        = peak_fwhm
+
+        #     minimum_peak_rate_list.append(minimum_peak_rate)
+        #     peak_rate_list.append(peak_rate)
+        #     current_delay_list.append(current_delay)
+        #     minimum_pulse_delay_list.append(minimum_pulse_delay)
+
+        lc._minimum_peak_rate_list   = minimum_peak_rate_list
+        lc._peak_rate_list           = peak_rate_list
+        lc._current_delay_list       = current_delay_list
+        lc._minimum_pulse_delay_list = minimum_pulse_delay_list
+
+        if verbose:
+            print('-------------------------------------')
+            print('Number of generated pulses: ', len(pulses_param_list))
+            print('Number of significative pulses: ', n_of_sig_pulses)
+            print('-------------------------------------')
+
+        return n_of_sig_pulses, n_of_total_pulses, significative_pulses
+
+###################################################################################
+
     def getPulsesTimeDistance(pulses):
         delay_times    = np.sort(np.array([pulse['t_delay'] for pulse in pulses]))
         time_distances = np.diff(delay_times)
