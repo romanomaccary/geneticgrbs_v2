@@ -1932,6 +1932,26 @@ def generate_GRBs(N_grb,                                            # number of 
             peak_fwhm = t_2 - t_1
 
             return peak_fwhm
+        
+        #from MEPSA paper eq. 3
+        # log s0.9 = -8.28 log SN + 8.42 if logSN < 0.95
+        #            -0.64 log SN + 1.15 if logSN > 0.95
+        def test_significativity(pulse_par):
+            logs = pulse_par[0]
+            logSN  = pulse_par[1]
+            significative = False
+            if logSN < 0.95:
+                if logs > -8.25 * logSN + 8.42:
+                    significative = True
+                else:
+                    significative = False
+            else:
+                if logs > -0.64 * logSN + 1.15:
+                    significative = True
+                else:
+                    significative = False
+
+
 
         pulses_param_list = lc._lc_params
         ampl              = lc._ampl
@@ -1952,18 +1972,32 @@ def generate_GRBs(N_grb,                                            # number of 
         current_delay_list       = []
         minimum_pulse_delay_list = []
 
-        all_pulses = list(map(make_pulse, pulses_param_list))
-        all_pulses = np.reshape(all_pulses, newshape=(len(pulses_param_list), len(all_pulses)))
-
+        # EVALUATE SEPARABILITY ######################################
         fwhms = np.array(list(map(evaluate_fwhm, pulses_param_list)))
 
+        ##### TO BE SUBSTITUED WITH A BETTER WAY WITH NUMPY ###########
+        impulses_time = [pulse['t_delay'] for pulse in pulses_param_list]
+        deltaT_min = [min(abs(impulses_time[i] - impulses_time[i-1]), abs(impulses_time[i] - impulses_time[i+1])) for i in range(1,len(impulses_time)-1)  ]
+        deltaT_min.insert(0, abs(impulses_time[1]-impulses_time[0]))
+        deltaT_min.append(abs(impulses_time[-1] - impulses_time[-2]))
+        ###############################################################
+
         #separability s0.9 = deltaT_min /fwhm
+        s = deltaT_min/fwhms
+        log_s = np.log10(s)
+        ###############################################################
 
-        #from MEPSA paper eq. 3
-        # log s0.9 = -8.28 log SN + 8.42 if logSN < 0.95
-        #            -0.64 log SN + 1.15 if logSN > 0.95
-
+        # EVALUATE S/N ################################################
+        all_pulses = list(map(make_pulse, pulses_param_list))
+        all_pulses = np.reshape(all_pulses, newshape=(len(pulses_param_list), len(all_pulses)))
         
+        signal = np.sum(all_pulses, axis = 1)
+        noise = lc._bg * (lc._t_max - lc._t_min)
+
+        log_SN = np.log10(signal/noise)
+        ###############################################################
+
+        significative_pulses = list(map(test_significativity, zip(log_s, log_SN)))
 
         # for el, pulse in enumerate(pulses_param_list):
         #     # Reads parameters of the pulse and generates it
