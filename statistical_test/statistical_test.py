@@ -1999,6 +1999,25 @@ def generate_GRBs(N_grb,                                            # number of 
 
         significative_pulses = list(map(test_significativity, zip(log_s, log_SN)))
 
+        #for pulse in significative_pulses:
+        #    while not pulse:
+
+        sig_pulse = all_pulses[0]
+        summed_pulses = 1
+        for i in range(1, len(significative_pulses)):
+            #sig_pulse = all_pulses[i]
+            if not significative_pulses[i+1]:
+                summed_pulses +=1
+                sig_pulse += all_pulses[i+1]
+                log_SN = np.log10(np.sum(sig_pulse)/noise)
+                pulse_time += pulses_param_list[i]["t_delay"]
+                avg_pulse_time = pulse_time / summed_pulses
+                deltaT_min = min(pulses_param_list[i-1]["t_delay"]-avg_pulse_time,pulses_param_list[i]["t_delay"]-avg_pulse_time )
+                fwhm = 0###EVALUATE FWHM FOR COMPLICATE PULSE
+                logS = deltaT_min/fwhm
+                #pulse_time = media dei tempi di ogni impulso che lo compone 
+
+
         # for el, pulse in enumerate(pulses_param_list):
         #     # Reads parameters of the pulse and generates it
         #     norm    = pulse['norm']
