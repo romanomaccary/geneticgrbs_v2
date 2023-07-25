@@ -1946,9 +1946,6 @@ def generate_GRBs(N_grb,                                            # number of 
             fwhm = t_max - t_min
 
             return fwhm
-
-
-            
         
         #from MEPSA paper eq. 3
         # log s0.9 = -8.28 log SN + 8.42 if logSN < 0.95
@@ -1971,7 +1968,6 @@ def generate_GRBs(N_grb,                                            # number of 
             return significative
 
 
-
         pulses_param_list = lc._lc_params
         ampl              = lc._ampl
         eff_area          = lc._eff_area
@@ -1983,14 +1979,14 @@ def generate_GRBs(N_grb,                                            # number of 
 
         delay_factor   = 2 
         minimum_pulse_delay = delay_factor * bin_time
-        last_t_delay   = 0
-        last_fwhm      = 0
-        bluring_thresh = 3 
+        #last_t_delay   = 0
+        #last_fwhm      = 0
+        #bluring_thresh = 3 
 
-        minimum_peak_rate_list   = []
-        peak_rate_list           = []
-        current_delay_list       = []
-        minimum_pulse_delay_list = []
+        #minimum_peak_rate_list   = []
+        #peak_rate_list           = []
+        #current_delay_list       = []
+        #minimum_pulse_delay_list = []
 
         # EVALUATE SEPARABILITY ######################################
         fwhms = np.array(list(map(evaluate_fwhm_norris, pulses_param_list)))
@@ -2017,6 +2013,7 @@ def generate_GRBs(N_grb,                                            # number of 
         log_SN = np.log10(signal/noise)
         ###############################################################
 
+        ## REGROUP THE PULSES #########################################
         pulses_significativity = np.array(list(map(test_significativity, zip(log_s, log_SN))))
 
         pulses_regroup = []
@@ -2029,52 +2026,37 @@ def generate_GRBs(N_grb,                                            # number of 
                     pulses_regroup.append(subgroup[:len(subgroup)-1])
                 pulses_regroup.append([subgroup[-1]])
                 subgroup = []
-    #else:
-    #    grup.append(i)
 
         if subgroup != []:
             pulses_regroup.append(subgroup)
+
+        regroup_pulses = [np.sum(all_pulses[group]) for group in pulses_regroup]
+        regroup_times = [np.mean(impulses_time[group])  for group in pulses_regroup]
         
+        ## TEST SIGNIFICATIVY OF THE REGROUP PULSES #################
+
+        #Ripeto del codice. Da correggere questa cosa
+        fwhms_reg = np.array(list(map(evaluate_fwhm_general, regroup_pulses)))
+
+        deltaT_min_regr = [min(abs(regroup_times[i] - regroup_times[i-1]), abs(regroup_times[i] - regroup_times[i+1])) for i in range(1,len(regroup_times)-1)  ]
+        deltaT_min_regr.insert(0, abs(regroup_times[1]-regroup_times[0]))
+        deltaT_min_regr.append(abs(regroup_times[-1] - regroup_times[-2]))
+
+        log_s_regr = np.log10(deltaT_min_regr/fwhms_reg)
+
+        signal_regr = np.sum(regroup_pulses, axis = 1)
+        #Va bene usare lo stesso noise di prima? Bisogna pensarci
+        log_SN_regr = np.log10(signal_regr/noise)
+
+        re_pulses_significativity = np.array(list(map(test_significativity, zip(log_s_regr, log_SN_regr))))
+
+        ## DO NOT COUNT PULSES WITH LESS THAN 2 BIN SEPARATION
+        sig_impulse_times = regroup_times[re_pulses_significativity]
+        time_diffs = np.diff(sig_impulse_times)
+        n_of_sig_pulses = len(re_pulses_significativity[time_diffs > minimum_pulse_delay])
         
-        #for i in range(len(pulses_significativity)):
-        #    if pulses_significativity[i]:
-        #        group_of_non_sig_pulses.append(subgroup)
-        #        subgroup = []
-        #    else:
-        #        subgroup.append(i)
-
-        #group_of_non_sig_pulses = [subgroup for subgroup in group_of_non_sig_pulses if subgroup != []]
-
-        #n_of_sig_pulses = len(significative_pulses[significative_pulses == True])
-
-        #sig_pulse = all_pulses[0]
-        #summed_pulses = 1        
-
-        #for i in range(1, len(significative_pulses)):
-        #    #sig_pulse = all_pulses[i]
-        #    if not significative_pulses[i+1]:
-        #        summed_pulses +=1
-        #        sig_pulse += all_pulses[i+1]
-        #        log_SN = np.log10(np.sum(sig_pulse)/noise)
-        #        pulse_time += pulses_param_list[i]["t_delay"]
-        #        avg_pulse_time = pulse_time / summed_pulses
-        #        deltaT_min = min(pulses_param_list[i-1]["t_delay"]-avg_pulse_time,pulses_param_list[i]["t_delay"]-avg_pulse_time )
-        #        fwhm = evaluate_fwhm_general(sig_pulse,times)
-        #        logS = deltaT_min/fwhm
-        #        significative = test_significativity([logS, log_SN])
-        #        if significative:
-        #            n_of_sig_pulses += 1
-        #            sig_pulse = all_pulses[i+1] ##questo è sicuramente sbagliato, lo lascio qui come promemoria
-
-        #            #In qualche modo dovrò risalvare tutti questi nuovi impulsi e creare una nuova matrice di inpulsi 
-
-
-
-
-        lc._minimum_peak_rate_list   = minimum_peak_rate_list
-        lc._peak_rate_list           = peak_rate_list
-        lc._current_delay_list       = current_delay_list
-        lc._minimum_pulse_delay_list = minimum_pulse_delay_list
+        #n_of_sig_pulses = len(re_pulses_significativity[re_pulses_significativity == True])
+        n_of_total_pulses = len(pulses_param_list)
 
         if verbose:
             print('-------------------------------------')
@@ -2082,7 +2064,8 @@ def generate_GRBs(N_grb,                                            # number of 
             print('Number of significative pulses: ', n_of_sig_pulses)
             print('-------------------------------------')
 
-        return n_of_sig_pulses, n_of_total_pulses, significative_pulses
+        #Come ritorno la lista degli inpulsi significativi? 
+        return n_of_sig_pulses, n_of_total_pulses#, significative_pulses
 
 ###################################################################################
 
