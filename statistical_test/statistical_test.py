@@ -1922,7 +1922,7 @@ def generate_GRBs(N_grb,                                            # number of 
             pulse_curve = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
             return pulse_curve
         
-        def evaluate_fwhm(pulse):
+        def evaluate_fwhm_norris(pulse):
             t_delay = pulse['t_delay']
             tau     = pulse['tau']
             tau_r   = pulse['tau_r']
@@ -1932,6 +1932,23 @@ def generate_GRBs(N_grb,                                            # number of 
             peak_fwhm = t_2 - t_1
 
             return peak_fwhm
+        
+        def evaluate_fwhm_general(counts, times, threshold = 0.05, filter = False, filter_window = 11):
+            
+            if filter:
+                counts = savgol_filter(x=counts, 
+                                       window_length=filter_window,
+                                       polyorder=2)
+            norm_counts = counts / np.max(counts)
+            t_min = times[norm_counts >= 0.5*(1.-threshold)][0]
+            t_max = np.flip(times)[np.flip(norm_counts) >= 0.5*(1.-threshold)][0]
+            
+            fwhm = t_max - t_min
+
+            return fwhm
+
+
+            
         
         #from MEPSA paper eq. 3
         # log s0.9 = -8.28 log SN + 8.42 if logSN < 0.95
@@ -1950,12 +1967,15 @@ def generate_GRBs(N_grb,                                            # number of 
                     significative = True
                 else:
                     significative = False
+            
+            return significative
 
 
 
         pulses_param_list = lc._lc_params
         ampl              = lc._ampl
         eff_area          = lc._eff_area
+        times = lc._times
 
         n_of_sig_pulses      = 0
         significative_pulses = []
@@ -1973,7 +1993,7 @@ def generate_GRBs(N_grb,                                            # number of 
         minimum_pulse_delay_list = []
 
         # EVALUATE SEPARABILITY ######################################
-        fwhms = np.array(list(map(evaluate_fwhm, pulses_param_list)))
+        fwhms = np.array(list(map(evaluate_fwhm_norris, pulses_param_list)))
 
         ##### TO BE SUBSTITUED WITH A BETTER WAY WITH NUMPY ###########
         impulses_time = [pulse['t_delay'] for pulse in pulses_param_list]
@@ -1997,76 +2017,59 @@ def generate_GRBs(N_grb,                                            # number of 
         log_SN = np.log10(signal/noise)
         ###############################################################
 
-        significative_pulses = list(map(test_significativity, zip(log_s, log_SN)))
+        pulses_significativity = np.array(list(map(test_significativity, zip(log_s, log_SN))))
 
-        #for pulse in significative_pulses:
-        #    while not pulse:
+        pulses_regroup = []
+        subgroup = []
+        
+        for i in range(len(pulses_significativity)):
+            subgroup.append(i)
+            if pulses_significativity[i]:
+                if len(subgroup) > 1:
+                    pulses_regroup.append(subgroup[:len(subgroup)-1])
+                pulses_regroup.append([subgroup[-1]])
+                subgroup = []
+    #else:
+    #    grup.append(i)
 
-        sig_pulse = all_pulses[0]
-        summed_pulses = 1
-        for i in range(1, len(significative_pulses)):
-            #sig_pulse = all_pulses[i]
-            if not significative_pulses[i+1]:
-                summed_pulses +=1
-                sig_pulse += all_pulses[i+1]
-                log_SN = np.log10(np.sum(sig_pulse)/noise)
-                pulse_time += pulses_param_list[i]["t_delay"]
-                avg_pulse_time = pulse_time / summed_pulses
-                deltaT_min = min(pulses_param_list[i-1]["t_delay"]-avg_pulse_time,pulses_param_list[i]["t_delay"]-avg_pulse_time )
-                fwhm = 0###EVALUATE FWHM FOR COMPLICATE PULSE
-                logS = deltaT_min/fwhm
-                #pulse_time = media dei tempi di ogni impulso che lo compone 
+        if subgroup != []:
+            pulses_regroup.append(subgroup)
+        
+        
+        #for i in range(len(pulses_significativity)):
+        #    if pulses_significativity[i]:
+        #        group_of_non_sig_pulses.append(subgroup)
+        #        subgroup = []
+        #    else:
+        #        subgroup.append(i)
+
+        #group_of_non_sig_pulses = [subgroup for subgroup in group_of_non_sig_pulses if subgroup != []]
+
+        #n_of_sig_pulses = len(significative_pulses[significative_pulses == True])
+
+        #sig_pulse = all_pulses[0]
+        #summed_pulses = 1        
+
+        #for i in range(1, len(significative_pulses)):
+        #    #sig_pulse = all_pulses[i]
+        #    if not significative_pulses[i+1]:
+        #        summed_pulses +=1
+        #        sig_pulse += all_pulses[i+1]
+        #        log_SN = np.log10(np.sum(sig_pulse)/noise)
+        #        pulse_time += pulses_param_list[i]["t_delay"]
+        #        avg_pulse_time = pulse_time / summed_pulses
+        #        deltaT_min = min(pulses_param_list[i-1]["t_delay"]-avg_pulse_time,pulses_param_list[i]["t_delay"]-avg_pulse_time )
+        #        fwhm = evaluate_fwhm_general(sig_pulse,times)
+        #        logS = deltaT_min/fwhm
+        #        significative = test_significativity([logS, log_SN])
+        #        if significative:
+        #            n_of_sig_pulses += 1
+        #            sig_pulse = all_pulses[i+1] ##questo è sicuramente sbagliato, lo lascio qui come promemoria
+
+        #            #In qualche modo dovrò risalvare tutti questi nuovi impulsi e creare una nuova matrice di inpulsi 
 
 
-        # for el, pulse in enumerate(pulses_param_list):
-        #     # Reads parameters of the pulse and generates it
-        #     norm    = pulse['norm']
-        #     t_delay = pulse['t_delay']
-        #     tau     = pulse['tau']
-        #     tau_r   = pulse['tau_r']
 
-        #     pulse_curve = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
-
-        #     #Evaluate delay with previous pulse
-        #     current_delay = t_delay - last_t_delay
-
-        #     # Find peak rate
-        #     peak_rate = np.max(pulse_curve)
-
-        #     # Evaluate the FWHM of the pulse (analytical evaluation)
-        #     t_1 = t_delay - tau_r * np.sqrt(np.log(2))
-        #     t_2 = t_delay + tau   * np.log(2)
-        #     peak_fwhm = t_2 - t_1
-
-        #     if verbose:
-        #         print('----')
-        #         print('Delay time: ',      t_delay,   's')
-        #         print('Pulse peak rate: ', peak_rate, 'counts/64 ms')
-        #         print('Pulse FWHM: ',      peak_fwhm, 's' )
-
-        #     # Evaluate the minimum peak rate for the pulse to be significative (CG formula) and check if the peak rate of the pulse is above the minimum  
-        #     minimum_peak_rate = 25 * peak_fwhm**(-0.6)
-        #     if peak_rate >= minimum_peak_rate:
-        #         if el==0:
-        #             # for the very first pulse, the t_delay should be infinite,
-        #             # so the constraint 'current_delay > minimum_pulse_delay' is
-        #             # always satisfied!
-        #             significative_pulses.append(pulse)
-        #             n_of_sig_pulses += 1
-        #             last_t_delay     = t_delay
-        #             last_fwhm        = peak_fwhm
-        #         elif current_delay > minimum_pulse_delay:
-        #             #bluring_level = current_delay / np.sqrt(peak_fwhm**2 + last_fwhm**2)
-        #             #if bluring_level >= bluring_thresh:
-        #             significative_pulses.append(pulse)
-        #             n_of_sig_pulses += 1
-        #             last_t_delay     = t_delay
-        #             last_fwhm        = peak_fwhm
-
-        #     minimum_peak_rate_list.append(minimum_peak_rate)
-        #     peak_rate_list.append(peak_rate)
-        #     current_delay_list.append(current_delay)
-        #     minimum_pulse_delay_list.append(minimum_pulse_delay)
 
         lc._minimum_peak_rate_list   = minimum_peak_rate_list
         lc._peak_rate_list           = peak_rate_list
