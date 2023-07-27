@@ -172,7 +172,7 @@ tau_max = 41.172294302312366
 # tau_min = 0.0009609765738533678
 # tau_max = 31.1900145774892
 
-# The 7 values obtained from v12 optimization are
+# The 7 values obtained from v13 optimization are
 # (one loss (duration distribution), Poisson)
 # mu      = 1.423219221170363
 # mu0     = 1.8486292768207997
@@ -181,6 +181,16 @@ tau_max = 41.172294302312366
 # delta2  = 0.20456507843804805
 # tau_min = 0.007777873403883386
 # tau_max = 47.147406633040376
+
+# The 7 values obtained from v14 optimization are
+# (4 loss, Poisson, correct weight, keep_elitism=0)
+# mu      = 1.3400110297200563
+# mu0     = 1.890238938249485
+# alpha   = 3.1950527492978287
+# delta1  = -0.4600048148857563
+# delta2  = 0.12234358572102152
+# tau_min = 5.563858305836977e-05
+# tau_max = 40.49163583715167
 
 
 #------------------------------------------------------------------------------#
