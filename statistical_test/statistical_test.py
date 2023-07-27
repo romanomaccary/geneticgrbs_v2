@@ -1946,6 +1946,19 @@ def generate_GRBs(N_grb,                                            # number of 
             fwhm = t_max - t_min
 
             return fwhm
+
+        def evaluate_deltaTmin(impulses_time):
+            deltaT_min = [min(abs(impulses_time[i] - impulses_time[i-1]), abs(impulses_time[i] - impulses_time[i+1])) for i in range(1,len(impulses_time)-1)  ]
+            deltaT_min.insert(0, abs(impulses_time[1]-impulses_time[0]))
+            deltaT_min.append(abs(impulses_time[-1] - impulses_time[-2]))
+            return deltaT_min
+
+        def evaluate_logSN(pulses_list, bg, duration):
+            signal = np.sum(pulses_list, axis = 1)
+            noise = bg * bg
+            log_SN = np.log10(signal/noise)
+
+            return log_SN
         
         #from MEPSA paper eq. 3
         # log s0.9 = -8.28 log SN + 8.42 if logSN < 0.95
@@ -1993,24 +2006,18 @@ def generate_GRBs(N_grb,                                            # number of 
 
         ##### TO BE SUBSTITUED WITH A BETTER WAY WITH NUMPY ###########
         impulses_time = [pulse['t_delay'] for pulse in pulses_param_list]
-        deltaT_min = [min(abs(impulses_time[i] - impulses_time[i-1]), abs(impulses_time[i] - impulses_time[i+1])) for i in range(1,len(impulses_time)-1)  ]
-        deltaT_min.insert(0, abs(impulses_time[1]-impulses_time[0]))
-        deltaT_min.append(abs(impulses_time[-1] - impulses_time[-2]))
+        deltaT_min = evaluate_deltaTmin(impulses_time)
         ###############################################################
 
         #separability s0.9 = deltaT_min /fwhm
-        s = deltaT_min/fwhms
-        log_s = np.log10(s)
+        log_s = np.log10(deltaT_min/fwhms)
         ###############################################################
 
         # EVALUATE S/N ################################################
         all_pulses = list(map(make_pulse, pulses_param_list))
         all_pulses = np.reshape(all_pulses, newshape=(len(pulses_param_list), len(all_pulses)))
         
-        signal = np.sum(all_pulses, axis = 1)
-        noise = lc._bg * (lc._t_max - lc._t_min)
-
-        log_SN = np.log10(signal/noise)
+        log_SN  = evaluate_logSN(all_pulses, lc._bg, lc._t_max - lc._t_min)
         ###############################################################
 
         ## REGROUP THE PULSES #########################################
@@ -2035,18 +2042,16 @@ def generate_GRBs(N_grb,                                            # number of 
         
         ## TEST SIGNIFICATIVY OF THE REGROUP PULSES #################
 
-        #Ripeto del codice. Da correggere questa cosa
+
         fwhms_reg = np.array(list(map(evaluate_fwhm_general, regroup_pulses)))
 
-        deltaT_min_regr = [min(abs(regroup_times[i] - regroup_times[i-1]), abs(regroup_times[i] - regroup_times[i+1])) for i in range(1,len(regroup_times)-1)  ]
-        deltaT_min_regr.insert(0, abs(regroup_times[1]-regroup_times[0]))
-        deltaT_min_regr.append(abs(regroup_times[-1] - regroup_times[-2]))
+        deltaT_min_regr = evaluate_deltaTmin(regroup_times)
 
         log_s_regr = np.log10(deltaT_min_regr/fwhms_reg)
 
         signal_regr = np.sum(regroup_pulses, axis = 1)
         #Va bene usare lo stesso noise di prima? Bisogna pensarci
-        log_SN_regr = np.log10(signal_regr/noise)
+        log_SN_regr = evaluate_logSN(signal_regr, lc._bg, lc._t_max - lc._t_min)
 
         re_pulses_significativity = np.array(list(map(test_significativity, zip(log_s_regr, log_SN_regr))))
 
@@ -2065,7 +2070,7 @@ def generate_GRBs(N_grb,                                            # number of 
             print('-------------------------------------')
 
         #Come ritorno la lista degli inpulsi significativi? 
-        return n_of_sig_pulses, n_of_total_pulses#, significative_pulses
+        return n_of_sig_pulses, n_of_total_pulses, None
 
 ###################################################################################
 
@@ -2111,9 +2116,12 @@ def generate_GRBs(N_grb,                                            # number of 
 
         if test_pulse_distr:
             # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
+            #n_of_sig_pulses, \
+            #n_of_total_pulses, \
+            #sig_pulses = count_significative_pulses(lc, verbose=False)
             n_of_sig_pulses, \
             n_of_total_pulses, \
-            sig_pulses = count_significative_pulses(lc, verbose=False)
+            sig_pulses = count_significative_pulses_ver2(lc, verbose=False)
         else:
             n_of_sig_pulses, \
             n_of_total_pulses, \
