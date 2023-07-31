@@ -2170,10 +2170,6 @@ def generate_GRBs(N_grb,                                            # number of 
             lc._current_delay_list       = None
             lc._minimum_pulse_delay_list = None
 
-        minimum_peak_rate_list   = None
-        peak_rate_list           = None
-        current_delay_list       = None
-        minimum_pulse_delay_list = None
 
         # initialize T20% to None
         t20_in=None
@@ -2191,10 +2187,7 @@ def generate_GRBs(N_grb,                                            # number of 
                   peak_rate_list=lc._peak_rate_list,
                   current_delay_list=lc._current_delay_list,
                   minimum_pulse_delay_list=lc._minimum_pulse_delay_list)
-                  minimum_peak_rate_list=minimum_peak_rate_list,
-                  peak_rate_list=peak_rate_list,
-                  current_delay_list=current_delay_list,
-                  minimum_pulse_delay_list=minimum_pulse_delay_list)
+                  
 
         # we use a temporary list that contains only _one_ lc, then we
         # check if that GRB satisfies the constraints imposed, ad if that is
