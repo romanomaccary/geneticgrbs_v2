@@ -198,7 +198,7 @@ tau_max = 41.172294302312366
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=5000
+N_grb=1
 
 instrument = 'batse'
 #instrument = 'swift'
@@ -238,7 +238,7 @@ else:
 from datetime import datetime
 start = datetime.now()
 
-test_pulse_distr = False
+test_pulse_distr = True
 test  = generate_GRBs(# number of simulated GRBs to produce
                       N_grb=N_grb, 
                       # 7 parameters
@@ -260,7 +260,7 @@ test  = generate_GRBs(# number of simulated GRBs to produce
                       t_f=t_f, 
                       filter=True,
                       # other parameters
-                      export_files=True, 
+                      export_files=False, 
                       export_path=export_path, 
                       n_cut=2000, 
                       with_bg=False,
@@ -275,6 +275,8 @@ if test_pulse_distr:
 if test_pulse_distr:
     n_of_pulses = [ grb.num_of_sig_pulses for grb in test ]
 
+print(max(n_of_pulses))
+print(min(n_of_pulses))
 print('Time elapsed: ', (datetime.now() - start).seconds)
 ################################################################################
 ################################################################################

@@ -12,3 +12,5 @@ lc_pulse_avalanche/statistical_test.py
 lc_pulse_avalanche/n_of_pulses.txt
 statistical_test/x.txt
 statistical_test/y.txt
+lc_pulse_avalanche/simulate_GRBs.py
+lc_pulse_avalanche/simulate_GRBs.py
