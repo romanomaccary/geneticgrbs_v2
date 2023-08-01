@@ -1989,7 +1989,6 @@ def generate_GRBs(N_grb,                                            # number of 
             counts_signal_threshold = 0.2
             error_threshold = 0.05
             counts_norm = counts / np.max(counts)
-            noise_level = noise_level /1000
             #print('################')
             #print(np.where(counts_norm >= counts_signal_threshold*(1.-error_threshold)))
             #import matplotlib.pyplot as plt
@@ -1999,7 +1998,8 @@ def generate_GRBs(N_grb,                                            # number of 
                 i_min = np.where(counts_norm >= counts_signal_threshold*(1.-error_threshold))[0][0]
                 i_max = np.where(counts_norm >= counts_signal_threshold*(1.-error_threshold))[0][-1]
                 signal = np.sum(counts[i_min:i_max+1])
-                noise = noise_level * (i_max - i_min)
+                #Cambiare questo 0.064 con un parametro che rappresenta il bin time
+                noise = noise_level * (i_max - i_min) * 0.064
             except:
                 signal = 0
                 noise = noise_level
