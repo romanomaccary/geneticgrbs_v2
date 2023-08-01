@@ -1941,10 +1941,13 @@ def generate_GRBs(N_grb,                                            # number of 
                                        polyorder=2)
             norm_counts = counts / np.max(counts)
 
-            t_min = times[norm_counts >= 0.5*(1.-threshold)][0]
-            t_max = np.flip(times)[np.flip(norm_counts) >= 0.5*(1.-threshold)][0]
+            try:
+                t_min = times[norm_counts >= 0.5*(1.-threshold)][0]
+                t_max = np.flip(times)[np.flip(norm_counts) >= 0.5*(1.-threshold)][0]
             
-            fwhm = t_max - t_min
+                fwhm = t_max - t_min
+            except:
+                fwhm = np.inf
 
             return fwhm
 
@@ -1971,11 +1974,22 @@ def generate_GRBs(N_grb,                                            # number of 
         #         log_SN = np.array([log_SN])
         #     return log_SN
         
+        #def evaluate_logSN(counts, noise_level):
+        #
+        #    signal = np.max(counts)
+        #    #print("##################")
+        #    #print(signal)
+        #    #print(noise_level)
+        #    noise_level = noise_level/1000
+        #    log_SN = np.log10(signal/noise_level)
+        #
+        #    return log_SN
+        
         def evaluate_logSN(counts, noise_level):
             counts_signal_threshold = 0.2
             error_threshold = 0.05
             counts_norm = counts / np.max(counts)
-
+            noise_level = noise_level /1000
             #print('################')
             #print(np.where(counts_norm >= counts_signal_threshold*(1.-error_threshold)))
             #import matplotlib.pyplot as plt
@@ -2029,107 +2043,112 @@ def generate_GRBs(N_grb,                                            # number of 
         minimum_pulse_delay = delay_factor * bin_time
         noise = lc._bg
 
-        #last_t_delay   = 0
-        #last_fwhm      = 0
-        #bluring_thresh = 3 
-
-        #minimum_peak_rate_list   = []
-        #peak_rate_list           = []
-        #current_delay_list       = []
-        #minimum_pulse_delay_list = []
-
-        # EVALUATE SEPARABILITY ######################################
-        fwhms = np.array(list(map(evaluate_fwhm_norris, pulses_param_list)))
-        
-        ##### TO BE SUBSTITUED WITH A BETTER WAY WITH NUMPY ###########
-        impulses_time = np.array([pulse['t_delay'] for pulse in pulses_param_list])
-        deltaT_min = evaluate_deltaTmin(impulses_time)
-
-        ###############################################################
-
-        #separability s0.9 = deltaT_min /fwhm
-        #Sono log10 o log naturali nel paper di Cristiano? 
-        log_s = np.log10(deltaT_min/fwhms)
-
-        #import matplotlib.pyplot as plt
-        #plt.hist(log_s)
-        ###############################################################
-        
-        # EVALUATE S/N ################################################
-        #print(len(pulses_param_list))
-        #print(len(times))
-        
-        all_pulses = list(map(make_pulse, pulses_param_list, [ampl]*len(pulses_param_list), [eff_area]*len(pulses_param_list)))
-        all_pulses = np.reshape(all_pulses, newshape=(len(pulses_param_list), len(times)))
-        #print(np.shape(all_pulses))
-
-        #for pulse in all_pulses:
-        #    plt.plot(pulse)
-
-        #log_SN  = evaluate_logSN(all_pulses, noise, lc._t_max - lc._t_min)
-        log_SN = np.array(list(map(evaluate_logSN, all_pulses, [noise]*len(all_pulses))))
-        #plt.figure()
-        #plt.hist(log_SN)
-        ###############################################################
-
-        ## REGROUP THE PULSES #########################################
-        #pulses_significativity = np.array(list(map(test_significativity, zip(log_s, log_SN))))
-        pulses_significativity = []
-        for i in range(len(log_s)):
-            pulses_significativity.append(test_significativity([log_s[i], log_SN[i]]))
-        pulses_significativity = np.array(pulses_significativity)
-        
-    
-        pulses_regroup = []
-        subgroup = []
-        
-        for i in range(len(pulses_significativity)):
-            subgroup.append(i)
-            if pulses_significativity[i]:
-                if len(subgroup) > 1:
-                    pulses_regroup.append(subgroup[:len(subgroup)-1])
-                pulses_regroup.append([subgroup[-1]])
-                subgroup = []
-
-        if subgroup != []:
-            pulses_regroup.append(subgroup)
-
-        regroup_pulses = [np.sum(all_pulses[group], axis = 0) for group in pulses_regroup]
-        regroup_pulses =  np.reshape(regroup_pulses, newshape=(len(pulses_regroup), len(times)))
-
-        regroup_times = np.array([np.mean(impulses_time[group])  for group in pulses_regroup])
-        
-        ## TEST SIGNIFICATIVY OF THE REGROUP PULSES #################
-        ################
-        fwhms_reg = np.array(list(map(evaluate_fwhm_general, regroup_pulses, [times]*len(times))))
-        #fwhms_reg =   map(evaluate_fwhm_general,regroup_pulses, [times]*len(times) )
-
-        if len(regroup_times) >= 2:
-            deltaT_min_regr = evaluate_deltaTmin(regroup_times)
-        else:
-            deltaT_min_regr = [np.inf]
-
-        log_s_regr = np.log10(deltaT_min_regr/fwhms_reg)
-
-        ##Va bene usare lo stesso noise di prima? Bisogna pensarci
-        #log_SN_regr = evaluate_logSN(regroup_pulses, noise, lc._t_max - lc._t_min)
-        log_SN_regr = np.array(list(map(evaluate_logSN, regroup_pulses, [noise]*len(regroup_pulses))))
-
-        
-
-        re_pulses_significativity = np.array(list(map(test_significativity, zip(log_s_regr, log_SN_regr))))
-
-        ## DO NOT COUNT PULSES WITH LESS THAN 2 BIN SEPARATION
-        if len(re_pulses_significativity) >=2:
+        if len(pulses_param_list) == 1 :
+            ########Fare un controllo sul S/N e basta
             n_of_sig_pulses = 1
-            sig_impulse_times = regroup_times[re_pulses_significativity]
-            #time_diffs = np.diff(sig_impulse_times)
-            #n_of_sig_pulses = len(re_pulses_significativity[time_diffs > minimum_pulse_delay])
-            for i in range(1, len(sig_impulse_times)):
-                if sig_impulse_times[i] - sig_impulse_times[i-1] >= minimum_pulse_delay:
-                    n_of_sig_pulses+= 1
         else:
-            n_of_sig_pulses = len(re_pulses_significativity)
+            #last_t_delay   = 0
+            #last_fwhm      = 0
+            #bluring_thresh = 3 
+
+            #minimum_peak_rate_list   = []
+            #peak_rate_list           = []
+            #current_delay_list       = []
+            #minimum_pulse_delay_list = []
+
+            # EVALUATE SEPARABILITY ######################################
+            fwhms = np.array(list(map(evaluate_fwhm_norris, pulses_param_list)))
+        
+            ##### TO BE SUBSTITUED WITH A BETTER WAY WITH NUMPY ###########
+            impulses_time = np.array([pulse['t_delay'] for pulse in pulses_param_list])
+            deltaT_min = evaluate_deltaTmin(impulses_time)
+
+            ###############################################################
+
+            #separability s0.9 = deltaT_min /fwhm
+            #Sono log10 o log naturali nel paper di Cristiano? 
+            log_s = np.log10(deltaT_min/fwhms)
+
+            #import matplotlib.pyplot as plt
+            #plt.hist(log_s)
+            ###############################################################
+        
+            # EVALUATE S/N ################################################
+            #print(len(pulses_param_list))
+            #print(len(times))
+        
+            all_pulses = list(map(make_pulse, pulses_param_list, [ampl]*len(pulses_param_list), [eff_area]*len(pulses_param_list)))
+            all_pulses = np.reshape(all_pulses, newshape=(len(pulses_param_list), len(times)))
+            #print(np.shape(all_pulses))
+
+            #for pulse in all_pulses:
+            #    plt.plot(pulse)
+
+            #log_SN  = evaluate_logSN(all_pulses, noise, lc._t_max - lc._t_min)
+            log_SN = np.array(list(map(evaluate_logSN, all_pulses, [noise]*len(all_pulses))))
+            #import matplotlib.pyplot as plt
+            #plt.figure()
+            #plt.hist(log_SN)
+            ###############################################################
+
+            ## REGROUP THE PULSES #########################################
+            #pulses_significativity = np.array(list(map(test_significativity, zip(log_s, log_SN))))
+            pulses_significativity = []
+            for i in range(len(log_s)):
+                pulses_significativity.append(test_significativity([log_s[i], log_SN[i]]))
+            
+            #print("################")
+            pulses_significativity = np.array(pulses_significativity)
+            #print(pulses_significativity)
+    
+            pulses_regroup = []
+            subgroup = []
+        
+            for i in range(len(pulses_significativity)):
+                subgroup.append(i)
+                if pulses_significativity[i]:
+                    if len(subgroup) > 1:
+                        pulses_regroup.append(subgroup[:len(subgroup)-1])
+                    pulses_regroup.append([subgroup[-1]])
+                    subgroup = []
+
+            if subgroup != []:
+                pulses_regroup.append(subgroup)
+
+            regroup_pulses = [np.sum(all_pulses[group], axis = 0) for group in pulses_regroup]
+            regroup_pulses =  np.reshape(regroup_pulses, newshape=(len(pulses_regroup), len(times)))
+
+            regroup_times = np.array([np.mean(impulses_time[group])  for group in pulses_regroup])
+        
+            ## TEST SIGNIFICATIVY OF THE REGROUP PULSES #################
+            ################
+            fwhms_reg = np.array(list(map(evaluate_fwhm_general, regroup_pulses, [times]*len(times))))
+            #fwhms_reg =   map(evaluate_fwhm_general,regroup_pulses, [times]*len(times) )
+
+            if len(regroup_times) >= 2:
+                deltaT_min_regr = evaluate_deltaTmin(regroup_times)
+            else:
+                deltaT_min_regr = [np.inf]
+
+            log_s_regr = np.log10(deltaT_min_regr/fwhms_reg)
+
+            ##Va bene usare lo stesso noise di prima? Bisogna pensarci
+            #log_SN_regr = evaluate_logSN(regroup_pulses, noise, lc._t_max - lc._t_min)
+            log_SN_regr = np.array(list(map(evaluate_logSN, regroup_pulses, [noise]*len(regroup_pulses))))
+
+            re_pulses_significativity = np.array(list(map(test_significativity, zip(log_s_regr, log_SN_regr))))
+
+            ## DO NOT COUNT PULSES WITH LESS THAN 2 BIN SEPARATION
+            if len(re_pulses_significativity) >=2:
+                n_of_sig_pulses = 1
+                sig_impulse_times = regroup_times[re_pulses_significativity]
+                #time_diffs = np.diff(sig_impulse_times)
+                #n_of_sig_pulses = len(re_pulses_significativity[time_diffs > minimum_pulse_delay])
+                for i in range(1, len(sig_impulse_times)):
+                    if sig_impulse_times[i] - sig_impulse_times[i-1] >= minimum_pulse_delay:
+                        n_of_sig_pulses+= 1
+            else:
+                n_of_sig_pulses = len(re_pulses_significativity)
         
         #n_of_sig_pulses = len(re_pulses_significativity[re_pulses_significativity == True])
         n_of_total_pulses = len(pulses_param_list)
