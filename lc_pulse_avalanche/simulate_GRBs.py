@@ -198,7 +198,7 @@ tau_max = 41.172294302312366
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=1
+N_grb=100
 
 instrument = 'batse'
 #instrument = 'swift'
@@ -275,8 +275,6 @@ if test_pulse_distr:
 if test_pulse_distr:
     n_of_pulses = [ grb.num_of_sig_pulses for grb in test ]
 
-print(max(n_of_pulses))
-print(min(n_of_pulses))
 print('Time elapsed: ', (datetime.now() - start).seconds)
 ################################################################################
 ################################################################################
