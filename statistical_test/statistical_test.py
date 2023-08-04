@@ -1904,7 +1904,7 @@ def generate_GRBs(N_grb,                                            # number of 
 
 #################### NEW VERSION WIP #################################
 
-    def count_significative_pulses_ver2(lc, verbose=False):
+    def count_significative_pulses_ver2(lc, verbose=False, sn_min = 15):
         """
         NEW VER - TO WRITE
         Input:
@@ -1959,47 +1959,17 @@ def generate_GRBs(N_grb,                                            # number of 
             else:
                 deltaT_min = np.array([np.inf])
             return deltaT_min
-
-        # def evaluate_logSN_old(pulses_list, bg, duration):
-        #     #DA CORREGGERE: devo sommare solo su un intervallo limitato
-        #     if len(pulses_list) >=2:
-        #         signal = np.sum(pulses_list, axis = 1)
-        #     else:
-        #         signal = np.sum(pulses_list)
-
-        #     noise = bg * duration
-        #     log_SN = np.log10(signal/noise)
-
-        #     if len(pulses_list) == 1:
-        #         log_SN = np.array([log_SN])
-        #     return log_SN
-        
-        #def evaluate_logSN(counts, noise_level):
-        #
-        #    signal = np.max(counts)
-        #    #print("##################")
-        #    #print(signal)
-        #    #print(noise_level)
-        #    noise_level = noise_level/1000
-        #    log_SN = np.log10(signal/noise_level)
-        #
-        #    return log_SN
         
         def evaluate_logSN(counts, noise_level):
             counts_signal_threshold = 0.2
             error_threshold = 0.05
             counts_norm = counts / np.max(counts)
-            #print('################')
-            #print(np.where(counts_norm >= counts_signal_threshold*(1.-error_threshold)))
-            #import matplotlib.pyplot as plt
-            #if len(np.where(counts_norm >= counts_signal_threshold*(1.-error_threshold))[0]) == 0:
-            #    plt.plot(counts)
-            try: ###Sembra che si blocchi quando ci sono degli impulsi completamente piatti. Perchè però ci sono impulsi piatti?
+
+            try: 
                 i_min = np.where(counts_norm >= counts_signal_threshold*(1.-error_threshold))[0][0]
                 i_max = np.where(counts_norm >= counts_signal_threshold*(1.-error_threshold))[0][-1]
                 signal = np.sum(counts[i_min:i_max+1])
-                #Cambiare questo 0.064 con un parametro che rappresenta il bin time
-                noise = noise_level * (i_max - i_min) * 0.064
+                noise = noise_level * (i_max - i_min)
             except:
                 signal = 0
                 noise = noise_level
@@ -2007,7 +1977,6 @@ def generate_GRBs(N_grb,                                            # number of 
             log_SN = np.log10(signal/noise)
 
             return log_SN
-
         
         #from MEPSA paper eq. 3
         # log s0.9 = -8.28 log SN + 8.42 if logSN < 0.95
@@ -2041,69 +2010,42 @@ def generate_GRBs(N_grb,                                            # number of 
 
         delay_factor   = 2 
         minimum_pulse_delay = delay_factor * bin_time
-        noise = lc._bg
+        noise = lc._bg * bin_time #Bkg per bin
+
+        all_pulses = list(map(make_pulse, pulses_param_list, [ampl]*len(pulses_param_list), [eff_area]*len(pulses_param_list)))
+        all_pulses = np.reshape(all_pulses, newshape=(len(pulses_param_list), len(times)))
+        print("Total number of generated pulses: ",  len(all_pulses))
+
+        import matplotlib.pyplot as plt
+        plt.figure()
+        for pulse in all_pulses:
+            plt.plot(pulse)
 
         if len(pulses_param_list) == 1 :
-            ########Fare un controllo sul S/N e basta
-            n_of_sig_pulses = 1
+            pulse_sn = evaluate_logSN(all_pulses, noise)
+            if pulse_sn > sn_min:
+                n_of_sig_pulses = 1
         else:
-            #last_t_delay   = 0
-            #last_fwhm      = 0
-            #bluring_thresh = 3 
-
-            #minimum_peak_rate_list   = []
-            #peak_rate_list           = []
-            #current_delay_list       = []
-            #minimum_pulse_delay_list = []
-
             # EVALUATE SEPARABILITY ######################################
             fwhms = np.array(list(map(evaluate_fwhm_norris, pulses_param_list)))
-        
-            ##### TO BE SUBSTITUED WITH A BETTER WAY WITH NUMPY ###########
             impulses_time = np.array([pulse['t_delay'] for pulse in pulses_param_list])
             deltaT_min = evaluate_deltaTmin(impulses_time)
 
-            ###############################################################
-
             #separability s0.9 = deltaT_min /fwhm
-            #Sono log10 o log naturali nel paper di Cristiano? 
             log_s = np.log10(deltaT_min/fwhms)
 
-            #import matplotlib.pyplot as plt
-            #plt.hist(log_s)
-            ###############################################################
-        
             # EVALUATE S/N ################################################
-            #print(len(pulses_param_list))
-            #print(len(times))
-        
-            all_pulses = list(map(make_pulse, pulses_param_list, [ampl]*len(pulses_param_list), [eff_area]*len(pulses_param_list)))
-            all_pulses = np.reshape(all_pulses, newshape=(len(pulses_param_list), len(times)))
-            #print(np.shape(all_pulses))
-
-            #for pulse in all_pulses:
-            #    plt.plot(pulse)
-
-            #log_SN  = evaluate_logSN(all_pulses, noise, lc._t_max - lc._t_min)
             log_SN = np.array(list(map(evaluate_logSN, all_pulses, [noise]*len(all_pulses))))
-            #import matplotlib.pyplot as plt
-            #plt.figure()
-            #plt.hist(log_SN)
-            ###############################################################
 
             ## REGROUP THE PULSES #########################################
-            #pulses_significativity = np.array(list(map(test_significativity, zip(log_s, log_SN))))
-            pulses_significativity = []
-            for i in range(len(log_s)):
-                pulses_significativity.append(test_significativity([log_s[i], log_SN[i]]))
-            
-            #print("################")
-            pulses_significativity = np.array(pulses_significativity)
-            #print(pulses_significativity)
+            pulses_significativity = np.array(list(map(test_significativity, zip(log_s, log_SN))))
     
+            print("Total number of generated separable pulses: ", len(pulses_significativity[pulses_significativity == True]))
+
+
             pulses_regroup = []
             subgroup = []
-        
+
             for i in range(len(pulses_significativity)):
                 subgroup.append(i)
                 if pulses_significativity[i]:
@@ -2115,15 +2057,21 @@ def generate_GRBs(N_grb,                                            # number of 
             if subgroup != []:
                 pulses_regroup.append(subgroup)
 
+
+            #Regroup the pulses: sum ogether all the non significative pulses and keep the already significative pulses
             regroup_pulses = [np.sum(all_pulses[group], axis = 0) for group in pulses_regroup]
-            regroup_pulses =  np.reshape(regroup_pulses, newshape=(len(pulses_regroup), len(times)))
+            regroup_pulses =  np.reshape(regroup_pulses, newshape=(len(regroup_pulses), len(times)))
 
             regroup_times = np.array([np.mean(impulses_time[group])  for group in pulses_regroup])
+
+            print("Total number of regrouped pulses: ", len(regroup_pulses))
+
+            plt.figure()
+            for pulse in regroup_pulses:
+                plt.plot(pulse)
         
-            ## TEST SIGNIFICATIVY OF THE REGROUP PULSES #################
-            ################
+            ## TEST SIGNIFICATIVITY OF THE REGROUP PULSES #################################
             fwhms_reg = np.array(list(map(evaluate_fwhm_general, regroup_pulses, [times]*len(times))))
-            #fwhms_reg =   map(evaluate_fwhm_general,regroup_pulses, [times]*len(times) )
 
             if len(regroup_times) >= 2:
                 deltaT_min_regr = evaluate_deltaTmin(regroup_times)
@@ -2133,11 +2081,10 @@ def generate_GRBs(N_grb,                                            # number of 
             log_s_regr = np.log10(deltaT_min_regr/fwhms_reg)
 
             ##Va bene usare lo stesso noise di prima? Bisogna pensarci
-            #log_SN_regr = evaluate_logSN(regroup_pulses, noise, lc._t_max - lc._t_min)
             log_SN_regr = np.array(list(map(evaluate_logSN, regroup_pulses, [noise]*len(regroup_pulses))))
 
             re_pulses_significativity = np.array(list(map(test_significativity, zip(log_s_regr, log_SN_regr))))
-
+            print("Total number of significative regrouped pulses: ",  len(re_pulses_significativity[re_pulses_significativity == True]))
             ## DO NOT COUNT PULSES WITH LESS THAN 2 BIN SEPARATION
             if len(re_pulses_significativity) >=2:
                 n_of_sig_pulses = 1
@@ -2150,7 +2097,6 @@ def generate_GRBs(N_grb,                                            # number of 
             else:
                 n_of_sig_pulses = len(re_pulses_significativity)
         
-        #n_of_sig_pulses = len(re_pulses_significativity[re_pulses_significativity == True])
         n_of_total_pulses = len(pulses_param_list)
 
         #TO BE CHANGED
@@ -2165,9 +2111,8 @@ def generate_GRBs(N_grb,                                            # number of 
             print('Number of significative pulses: ', n_of_sig_pulses)
             print('-------------------------------------')
 
-        #print('Sig', n_of_sig_pulses)
-        #print('Total', n_of_total_pulses)
         #Come ritorno la lista degli inpulsi significativi? 
+        print("Final number of significative pulses: ", n_of_sig_pulses)
         return n_of_sig_pulses, n_of_total_pulses, None
 
 ###################################################################################
