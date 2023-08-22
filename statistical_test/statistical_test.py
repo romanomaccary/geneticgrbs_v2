@@ -1998,6 +1998,25 @@ def generate_GRBs(N_grb,                                            # number of 
             
             return significative
 
+        #######################TO BE REMOVED ##################
+        #Dumps the info of the generated LC on a mock LC file so I can use them to debug the mepsa proxy code separately -AF
+        def save_mock_LC(LC):
+            with open("mock_lc.txt",'w') as mock_file:
+                for pulse in lc._lc_params:
+                    mock_file.write("{0}\n".format(pulse['norm']))
+                    mock_file.write("{0}\n".format(pulse['t_delay']))
+                    mock_file.write("{0}\n".format(pulse['tau']))
+                    mock_file.write("{0}\n".format(pulse['tau_r']))
+                mock_file.write("#\n")
+                mock_file.write("{0}\n".format(lc._ampl))
+                mock_file.write("{0}\n".format(lc._eff_area))
+                mock_file.write("{0}\n".format(lc._bg))
+                mock_file.write("#\n")
+                for time in lc._times:
+                    mock_file.write("{0}\n".format(time))
+
+        save_mock_LC(lc)
+        ############################################################
 
         pulses_param_list = lc._lc_params
         ampl              = lc._ampl

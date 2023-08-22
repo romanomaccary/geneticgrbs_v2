@@ -12,15 +12,15 @@ import seaborn as sns
 sns.set_style('darkgrid')
 
 from matplotlib import rc
-rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
-rc('text', usetex=True)
+#rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+#rc('text', usetex=True)
 
 #seed=42
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
-user='LB'
-#user='AF'
+#user='LB'
+user='AF'
 #user='bach'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
@@ -29,8 +29,8 @@ elif user=='LB':
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/statistical_test')
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/lc_pulse_avalanche')
 elif user=='AF':
-    sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/statistical_test')
-    sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
+    sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/statistical_test')
+    sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
@@ -198,7 +198,7 @@ tau_max = 40.49163583715167
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=1000
+N_grb=1
 
 instrument = 'batse'
 #instrument = 'swift'
