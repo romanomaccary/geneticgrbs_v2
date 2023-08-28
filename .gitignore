@@ -19,3 +19,4 @@ lc_pulse_avalanche/simulate_GRBs.py
 lc_pulse_avalanche/simulate_GRBs.py
 lc_pulse_avalanche/__pycache__/avalanche.cpython-311.pyc
 lc_pulse_avalanche/mock_lc.txt
+statistical_test/test_lc_4.txt
