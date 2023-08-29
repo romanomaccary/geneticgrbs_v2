@@ -1977,14 +1977,13 @@ def generate_GRBs(N_grb,                                            # number of 
                 i_min = np.where(counts_norm >= counts_signal_threshold*(1.-error_threshold))[0][0]
                 i_max = np.where(counts_norm >= counts_signal_threshold*(1.-error_threshold))[0][-1] 
                 if i_min == i_max:
-                i_min -= 1
-                i_max += 1
+                    i_min -= 1
+                    i_max += 1
                 signal = np.sum(counts[i_min:i_max+1])
                 noise = np.sqrt(np.sum(errs[i_min:i_max+1]**2) )
                 #noise = noise_level * (i_max - i_min) 
                 #signal = np.max(counts)
                 #noise = noise_level
-                print(signal, noise)
 
             except:
                 signal = 0
@@ -2035,43 +2034,25 @@ def generate_GRBs(N_grb,                                            # number of 
         all_pulses = list(map(make_pulse, pulses_param_list, [ampl]*len(pulses_param_list), [eff_area]*len(pulses_param_list)))
         all_pulses = np.reshape(all_pulses, newshape=(len(pulses_param_list), len(times)))
 
-        print("Total number of generated pulses: ",  len(all_pulses))
-
-
-            
-
         if len(pulses_param_list) == 1 :
             pulse_sn = evaluate_logSN(all_pulses, noise)
             if pulse_sn > sn_min:
                 n_of_sig_pulses = 1
         else:
             # EVALUATE SEPARABILITY ####################################
-            print('Pulse param:')
-            print(pulses_param_list)
             fwhms = np.array(list(map(evaluate_fwhm_norris, pulses_param_list)))
-            print('FWHMs:')
-            print(fwhms)
             impulses_time = np.array([pulse['t_delay'] for pulse in pulses_param_list])
 
-            print('Impulses Time')
-            print(impulses_time)
-
-            print('Delta T min')
             deltaT_min = evaluate_deltaTmin(impulses_time)
-            print(deltaT_min)
             #separability s0.9 = deltaT_min /fwhm
-            print('log10 Separability')
             log_s = np.log10(deltaT_min/fwhms)
-            print(log_s)
+
             # EVALUATE S/N ################################################
             log_SN = np.array(list(map(evaluate_logSN, all_pulses, [noise]*len(all_pulses))))
-            print('log10 SN')
-            print(log_SN)
+
             ## REGROUP THE PULSES #########################################
             pulses_significativity = np.array(list(map(test_significativity, zip(log_s, log_SN))))
-            print('Significativity list')
-            print(pulses_significativity)
-            print("Total number of generated separable pulses: ", len(pulses_significativity[pulses_significativity == True]))
+
             
             ###Regroup logic must be rewritten#####
             pulses_regroup = [] #lsita di tutti i sottogruppi
@@ -2118,10 +2099,6 @@ def generate_GRBs(N_grb,                                            # number of 
                             break
                     pulses_regroup.append(subgroup)
                     subgroup = []
-                    print('###########################')
-            
-            print('Regroup List')
-            print(pulses_regroup)
             
             #Regroup the pulses: sum ogether all the non significative pulses and keep the already significative pulses
             regroup_pulses = [np.sum(all_pulses[group], axis = 0) for group in pulses_regroup]
@@ -2129,21 +2106,6 @@ def generate_GRBs(N_grb,                                            # number of 
 
             regroup_times = np.array([np.mean(impulses_time[group])  for group in pulses_regroup])
 
-            print(max(all_pulses[0]))
-            print(max(all_pulses[1]))
-            print(max(all_pulses[2]))
-            print(max(all_pulses[3]))
-            print(max(all_pulses[4]))
-            print('############')
-            print(max(regroup_pulses[0]))
-            print(max(all_pulses[0]+all_pulses[1]+all_pulses[2]+all_pulses[3]+all_pulses[4]))
-            #print(regroup_times)
-            print("Total number of regrouped pulses: ", len(regroup_pulses))
-
-            plt.figure()
-            for pulse in regroup_pulses:
-                plt.plot(times, pulse, alpha = 0.5)
-                plt.xlim([-10,200])
     
             ## DO NOT COUNT PULSES WITH LESS THAN 2 BIN SEPARATION
             if len(regroup_pulses) >=2:
