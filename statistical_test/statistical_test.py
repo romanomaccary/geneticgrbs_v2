@@ -2028,8 +2028,6 @@ def generate_GRBs(N_grb,                                            # number of 
         noise = np.round(lc._bg * bin_time) #Bkg per bin
 
         pulses_param_list = sorted(pulses_param_list, key=lambda pulse: pulse['t_delay'])
-        for pulse in pulses_param_list:
-            print(pulse)
 
         all_pulses = list(map(make_pulse, pulses_param_list, [ampl]*len(pulses_param_list), [eff_area]*len(pulses_param_list)))
         all_pulses = np.reshape(all_pulses, newshape=(len(pulses_param_list), len(times)))
@@ -2118,22 +2116,21 @@ def generate_GRBs(N_grb,                                            # number of 
             else:
                 n_of_sig_pulses = len(regroup_pulses)
         
-        # n_of_total_pulses = len(pulses_param_list)
+        n_of_total_pulses = len(pulses_param_list)
 
-        # #TO BE CHANGED
-        # lc._minimum_peak_rate_list   = None
-        # lc._peak_rate_list           = None
-        # lc._current_delay_list       = None
-        # lc._minimum_pulse_delay_list = None
+        #TO BE CHANGED
+        lc._minimum_peak_rate_list   = None
+        lc._peak_rate_list           = None
+        lc._current_delay_list       = None
+        lc._minimum_pulse_delay_list = None
 
-        # if verbose:
-        #     print('-------------------------------------')
-        #     print('Number of generated pulses: ', len(pulses_param_list))
-        #     print('Number of significative pulses: ', n_of_sig_pulses)
-        #     print('-------------------------------------')
+        if verbose:
+            print('-------------------------------------')
+            print('Number of generated pulses: ', len(pulses_param_list))
+            print('Number of significative pulses: ', n_of_sig_pulses)
+            print('-------------------------------------')
 
         # #Come ritorno la lista degli inpulsi significativi? 
-        # print("Final number of significative pulses: ", n_of_sig_pulses)
         return n_of_sig_pulses, n_of_total_pulses, None
 
 ###################################################################################
@@ -2172,8 +2169,7 @@ def generate_GRBs(N_grb,                                            # number of 
                 n_cut=n_cut,
                 with_bg=with_bg)
         lc.generate_avalanche(seed=None)
-        for pulse in lc._lc_params:
-            print('gen lc', pulse['norm'])
+
         if lc.check==0:
             # check that we have generated a lc with non-zero values; otherwise,
             # skip it and continue in the generation process
