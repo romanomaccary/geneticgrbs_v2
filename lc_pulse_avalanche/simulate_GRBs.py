@@ -1,7 +1,7 @@
 ################################################################################
 # IMPORT LIBRARIES
 ################################################################################
-
+#20967
 import os
 import sys
 import yaml, h5py
@@ -37,8 +37,8 @@ else:
 from statistical_test import *
 from avalanche import LC 
 
-export_path='../simulations/'
-
+#export_path='../simulations/'
+export_path='C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/simulations/'
 ################################################################################
 # SET PARAMETERS
 ################################################################################
@@ -198,7 +198,7 @@ tau_max = 40.49163583715167
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=2000
+N_grb=10
 
 instrument = 'batse'
 #instrument = 'swift'
@@ -238,7 +238,7 @@ else:
 from datetime import datetime
 start = datetime.now()
 
-test_pulse_distr = True
+test_pulse_distr = False
 test  = generate_GRBs(# number of simulated GRBs to produce
                       N_grb=N_grb, 
                       # 7 parameters

@@ -2069,7 +2069,7 @@ def generate_GRBs(N_grb,                                            # number of 
                 else:
                     subgroup.append(i)
 
-                    while not sign and i+j < len(pulses_significativity):
+                    while not sign and i+j < len(pulses_significativity)-1:
                         j+= 1
                         subgroup.append(i+j)
                         new_pulse = np.copy(all_pulses[i,:])
@@ -2083,11 +2083,15 @@ def generate_GRBs(N_grb,                                            # number of 
                         sum_of_norm = np.sum([pulse['norm'] for pulse in pulses_param_list])
                         mean_time = new_time/sum_of_norm
 
-                        if i+j-1 == 0:
+                        if i+j-1 == 0 and len(pulses_param_list)>2:
                             delta_t_new = abs(mean_time - pulses_param_list[i+j+1]['t_delay'])
-                        elif (i == 0 and i+j == len(pulses_significativity) - 1) or (i+j == len(pulses_significativity) - 1):
+                        elif i+j-1 == 0 and len(pulses_param_list)==2:
+                            delta_t_new = np.inf
+                        elif (i+j+1 == (len(pulses_param_list)) or (i == 0 and i+j == (len(pulses_param_list) - 1))):
                             delta_t_new = abs(mean_time - pulses_param_list[i-1]['t_delay'])
                         else:
+                            #print(i+j == (len(pulses_param_list)))
+                            #print(len(pulses_param_list),i,j)
                             delta_t_new = min(abs(mean_time - pulses_param_list[i-1]['t_delay']), abs(mean_time - pulses_param_list[i+j+1]['t_delay']))
                         log_s_new = np.log10(delta_t_new/fwhm_new)
                         log_SN = evaluate_logSN(new_pulse, noise)
