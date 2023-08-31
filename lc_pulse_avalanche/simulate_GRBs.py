@@ -198,7 +198,7 @@ tau_max = 40.49163583715167
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=10
+N_grb=1000
 
 instrument = 'batse'
 #instrument = 'swift'
@@ -238,7 +238,7 @@ else:
 from datetime import datetime
 start = datetime.now()
 
-test_pulse_distr = False
+test_pulse_distr = True
 test  = generate_GRBs(# number of simulated GRBs to produce
                       N_grb=N_grb, 
                       # 7 parameters
@@ -260,7 +260,7 @@ test  = generate_GRBs(# number of simulated GRBs to produce
                       t_f=t_f, 
                       filter=True,
                       # other parameters
-                      export_files=False, 
+                      export_files=True, 
                       export_path=export_path, 
                       n_cut=2000, 
                       with_bg=False,
