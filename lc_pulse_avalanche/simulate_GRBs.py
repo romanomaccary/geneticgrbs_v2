@@ -19,8 +19,8 @@ from matplotlib import rc
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
-#user='LB'
-user='AF'
+user='LB'
+#user='AF'
 #user='bach'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
@@ -28,17 +28,18 @@ if user=='bach':
 elif user=='LB':
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/statistical_test')
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/lc_pulse_avalanche')
+    export_path='../simulations/'
 elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/statistical_test')
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
+    export_path='C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/simulations/'
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
 from statistical_test import *
 from avalanche import LC 
 
-#export_path='../simulations/'
-export_path='C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/simulations/'
+
 ################################################################################
 # SET PARAMETERS
 ################################################################################
@@ -198,7 +199,7 @@ tau_max = 40.49163583715167
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=1000
+N_grb=2000
 
 instrument = 'batse'
 #instrument = 'swift'
@@ -238,7 +239,7 @@ else:
 from datetime import datetime
 start = datetime.now()
 
-test_pulse_distr = True
+test_pulse_distr = False#True
 test  = generate_GRBs(# number of simulated GRBs to produce
                       N_grb=N_grb, 
                       # 7 parameters
