@@ -185,13 +185,23 @@ from avalanche import LC
 
 # The 7 values obtained from v14 optimization are
 # (4 loss, Poisson, correct weight, keep_elitism=0)
-mu      = 1.3400110297200563
-mu0     = 1.890238938249485
-alpha   = 3.1950527492978287
-delta1  = -0.4600048148857563
-delta2  = 0.12234358572102152
-tau_min = 5.563858305836977e-05
-tau_max = 40.49163583715167
+# mu      = 1.3400110297200563
+# mu0     = 1.890238938249485
+# alpha   = 3.1950527492978287
+# delta1  = -0.4600048148857563
+# delta2  = 0.12234358572102152
+# tau_min = 5.563858305836977e-05
+# tau_max = 40.49163583715167
+
+# The 7 values obtained from v15 optimization are
+# (4 loss, Poisson, correct weight, keep_elitism=0, long run)
+mu      = 1.4081142187106597
+mu0     = 1.6184509962933409
+alpha   = 2.77910446583413
+delta1  = -0.621068787091892
+delta2  = 0.17772316530635301
+tau_min = 0.0027027975256713383
+tau_max = 53.92090393324469
 
 
 #------------------------------------------------------------------------------#
