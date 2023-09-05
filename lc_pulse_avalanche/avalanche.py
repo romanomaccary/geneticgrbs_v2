@@ -61,7 +61,7 @@ class LC(object):
     :tau_max: upper boundary of log-normal probability distribution of tau_0
     :t_min: GRB LC start time
     :t_max: GRB LC stop time
-    :res: GRB LC time resolution (s)
+    :res: GRB LC time resolution (s) (a.k.a., bin time)
     :eff_area: effective area of instrument (cm2)
     :bg_level: background level (cnt/cm2/s)
     :min_photon_rate: left  boundary of -3/2 log N - log S distribution (ph/cm2/s)
@@ -340,13 +340,18 @@ class LC(object):
         self._peak_value = self._max_raw_pcr * self._ampl
 
         # lc from avalanche scaled + Poissonian bg added
-        if self._with_bg: # with background
-            self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+        # Here, contrary to what happens in the function `restore_lc()` and thus
+        # in the function `plot` of the object LC, the variable `_plot_lc`` contains
+        # the COUNTS, and not the count RATES!
+        if self._with_bg:
+            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
+            self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
             self._err_lc  = np.sqrt(self._plot_lc)
-        else:             # without background
-            self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+        else:
+            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
+            self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
             self._err_lc  = np.sqrt(self._plot_lc)
-            self._plot_lc = self._plot_lc - self._bg
+            self._plot_lc = self._plot_lc - (self._bg*self._res)                    # total count rates (signal) with Poisson
 
         self._get_lc_properties()
 
@@ -492,7 +497,8 @@ class LC(object):
     #--------------------------------------------------------------------------#
     
     def _restore_lc(self):
-        """Restores GRB LC from avalanche parameters"""
+        """Restores GRB LC from avalanche parameters.
+        Here we are plotting the count RATES, not the counts!"""
         
         self._raw_lc = np.zeros(len(self._times))
         
@@ -504,12 +510,14 @@ class LC(object):
             self._raw_lc += self.norris_pulse(norm, t_delay, tau, tau_r)
 
         if self._with_bg:
-            self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
-            #self._plot_lc = self._raw_lc * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
+            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
+            self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
+            self._plot_lc = self._plot_lc / self._res                               # total count rates (signal+bkg) with Poisson
         else:
-            self._plot_lc = self._raw_lc * self._ampl * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
-            #self._plot_lc = self._raw_lc * self._eff_area + np.random.default_rng().poisson((self._bg), self._n)
-            self._plot_lc = self._plot_lc - self._bg
+            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
+            self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
+            self._plot_lc = self._plot_lc / self._res                               # total count rates (signal+bkg) with Poisson
+            self._plot_lc = self._plot_lc - self._bg                                # total count rates (signal) with Poisson
 
         self._get_lc_properties()
         

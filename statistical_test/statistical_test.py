@@ -88,7 +88,7 @@ class GRB:
 # - sn_threshold : used to select only lc with high S2N    
 
 
-# BATSE
+# BATSE - COUNTS
 name_batse          = 'batse'
 res_batse           = 0.064
 eff_area_batse      = 3600
@@ -104,7 +104,7 @@ instr_batse         = {
     "sn_threshold" : sn_threshold_batse
 }
 
-# Swift
+# Swift - COUNT RATES!!!
 # - Effective area:
 #   https://swift.gsfc.nasa.gov/proposals/tech_appd/swiftta_v17/node27.html)
 #   Approximately 1400 cm^2.
@@ -127,7 +127,7 @@ instr_swift         = {
     "sn_threshold" : sn_threshold_swift
 }
 
-# BeppoSAX
+# BeppoSAX - COUNTS
 # - Catalog and Instrument:
 #   https://ui.adsabs.harvard.edu/abs/2009ApJS..180..192F/abstract)
 # - Geometric Area:
@@ -1781,7 +1781,7 @@ def generate_GRBs(N_grb,                                            # number of 
         outfile  = path+instrument+'/'+'lc'+str(idx)+'.txt'
         savefile = open(outfile, 'w', encoding='utf-8')
         times    = grb.times
-        lc       = grb.counts
+        lc       = grb.counts # this are count RATES, not counts!
         err_lc   = grb.errs
         T90      = grb.t90
         n_pulses = grb.num_of_sig_pulses
@@ -2013,11 +2013,12 @@ def generate_GRBs(N_grb,                                            # number of 
             
             return significative
 
+        ########################################################################
 
         pulses_param_list = lc._lc_params
         ampl              = lc._ampl
         eff_area          = lc._eff_area
-        times = lc._times
+        times             = lc._times
 
         n_of_sig_pulses      = 0
         significative_pulses = []
@@ -2192,7 +2193,6 @@ def generate_GRBs(N_grb,                                            # number of 
             n_of_sig_pulses, \
             n_of_total_pulses, \
             sig_pulses                   = None, None, None
-            ############## ?????????? Questi qui mi danno un errore. Cosa sono ?????????????????????
             lc._minimum_peak_rate_list   = None
             lc._peak_rate_list           = None
             lc._current_delay_list       = None
@@ -2205,8 +2205,8 @@ def generate_GRBs(N_grb,                                            # number of 
         # convert the lc generated from the avalance into a GRB object
         grb = GRB(grb_name='lc_candidate.txt',
                   times=lc._times, 
-                  counts=lc._plot_lc, 
-                  errs=lc._err_lc, 
+                  counts=lc._plot_lc, # these are COUNTS (not count rates!). See avalanche.py
+                  errs=lc._err_lc,    # errors on the COUNTS
                   t90=lc._t90, 
                   t20=t20_in,
                   num_of_sig_pulses=n_of_sig_pulses,
@@ -2216,7 +2216,6 @@ def generate_GRBs(N_grb,                                            # number of 
                   current_delay_list=lc._current_delay_list,
                   minimum_pulse_delay_list=lc._minimum_pulse_delay_list)
                   
-
         # we use a temporary list that contains only _one_ lc, then we
         # check if that GRB satisfies the constraints imposed, ad if that is
         # the case, we append it to the final list of GRBs
