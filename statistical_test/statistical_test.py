@@ -1190,11 +1190,12 @@ def make_plot(instrument, test_times,
         pass
         #ax[0,0].set_xlim(0,test_times[-1]**(1/3))
     # set labels
-    ax[0,0].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',                       size=18)
+    ax[0,0].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$', size=18)
     if log:
-        ax[0,0].set_ylabel(r'$\log F_{rms},\quad \log \langle F/F_p\rangle$', size=18)
+        ax[0,0].set_ylabel(r'$F_{rms},\quad \langle F/F_p\rangle$', size=18)
+        #ax[0,0].set_ylabel(r'$\log F_{rms},\quad \log \langle F/F_p\rangle$', size=18)
     else:
-        ax[0,0].set_ylabel(r'$F_{rms},\quad \langle F/F_p\rangle$',           size=18)
+        ax[0,0].set_ylabel(r'$F_{rms},\quad \langle F/F_p\rangle$', size=18)
     #
     ax[0,0].text(3,   10**(-0.7), r'$F_{rms}$',              fontsize=20)
     ax[0,0].text(2.2, 10**(-1.7), r'$\langle F/F_p\rangle$', fontsize=20)
@@ -1238,11 +1239,12 @@ def make_plot(instrument, test_times,
         pass
         #ax[0,1].set_xlim(0,test_times[-1]**(1/3))
     # set labels
-    ax[0,1].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$',         size=18)
+    ax[0,1].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$', size=18)
     if log:
-        ax[0,1].set_ylabel(r'$\log \langle (F/F_p)^3 \rangle$', size=18)
+        ax[0,1].set_ylabel(r'$\langle (F/F_p)^3 \rangle$', size=18)
+        #ax[0,1].set_ylabel(r'$\log \langle (F/F_p)^3 \rangle$', size=18)
     else:
-        ax[0,1].set_ylabel(r'$\langle (F/F_p)^3 \rangle$',      size=18)
+        ax[0,1].set_ylabel(r'$\langle (F/F_p)^3 \rangle$', size=18)
     #
     ax[0,1].grid(True, which="major", lw=1.0, ls="-")
     ax[0,1].grid(True, which="minor", lw=0.3, ls="-")
@@ -1280,9 +1282,10 @@ def make_plot(instrument, test_times,
     # set labels
     ax[1,0].set_xlabel(r'$(\mathrm{timelag}\ [s])^{1/3}$', size=18)
     if log:
-        ax[1,0].set_ylabel(r'$\log \langle ACF \rangle$',  size=18)
+        ax[1,0].set_ylabel(r'$\langle ACF \rangle$', size=18)
+        #ax[1,0].set_ylabel(r'$\log \langle ACF \rangle$', size=18)
     else:
-        ax[1,0].set_ylabel(r'$\langle ACF \rangle$',       size=18)
+        ax[1,0].set_ylabel(r'$\langle ACF \rangle$', size=18)
     #
     ax[1,0].grid(True, which="major", lw=1.0, ls="-")
     ax[1,0].grid(True, which="minor", lw=0.3, ls="-")

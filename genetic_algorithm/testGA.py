@@ -139,11 +139,11 @@ initial_population    = None  # if 'None', the initial population is randomly ch
 mutation_type         = "random"
 crossover_type        = "single_point"
 num_generations       = 20                     # Number of generations.
-sol_per_pop           = 1000                    # Number of solutions in the population (i.e., number of different sets per generation).
+sol_per_pop           = 1000                   # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
-mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
+mutation_probability  = 0.03                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 N_grb                 = 2000                   # number of simulated GRBs to produce per set of parameters
 test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
@@ -154,13 +154,13 @@ parallel_processing  = ["process", 50]
 #parallel_processing = None
 
 # We impose constraints on the range of values that the 7 parameter can assume
-range_mu      = {"low": 0.80,            "high": 2}
-range_mu0     = {"low": 0.80,            "high": 2} 
+range_mu      = {"low": 0.80,            "high": 1.7}
+range_mu0     = {"low": 0.80,            "high": 1.9} 
 range_alpha   = {"low": 1,               "high": 15} 
 range_delta1  = {"low": -1.5,            "high": -0.25-1.e-6} 
 range_delta2  = {"low": 0,               "high": 0.25}
 range_tau_min = {"low": np.log10(1.e-6), "high": np.log10(bin_time-1.e-6)} # sample uniformly in log space
-range_tau_max = {"low": bin_time+20,     "high": 60} 
+range_tau_max = {"low": bin_time+10,     "high": 55} 
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
 # mu0=1

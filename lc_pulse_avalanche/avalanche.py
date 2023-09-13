@@ -341,13 +341,13 @@ class LC(object):
 
         # lc from avalanche scaled + Poissonian bg added
         # Here, contrary to what happens in the function `restore_lc()` and thus
-        # in the function `plot` of the object LC, the variable `_plot_lc`` contains
-        # the COUNTS, and not the count RATES!
+        # in the method `plot_lc` of the object LC, the variable `_plot_lc`` 
+        # contains the COUNTS (and not the count RATES!)
         if self._with_bg:
             self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
             self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
             self._err_lc  = np.sqrt(self._plot_lc)
-        else:
+        else: # background-subtracted
             self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
             self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
             self._err_lc  = np.sqrt(self._plot_lc)
