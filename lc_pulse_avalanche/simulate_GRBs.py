@@ -214,14 +214,44 @@ from avalanche import LC
 # tau_max = 20.154342298134676
 
 # The 7 values obtained from v17 optimization are
-# (1 loss (ACF), only 5 epochs, Poisson, keep_elitism=0, corrected noise+bkg)
-mu      = 0.8813384397086275
-mu0     = 1.1694147630314133
-alpha   = 6.978449701941005
-delta1  = -1.42008244756357
-delta2  = 0.05597302855361258
-tau_min = 0.006233072521668988
-tau_max = 31.825617004821087
+# (1 loss (ACF), only 5 epochs, Poisson, keep_elitism=0, corrected noise+bkg, 2000sol/pop)
+# mu      = 0.8813384397086275
+# mu0     = 1.1694147630314133
+# alpha   = 6.978449701941005
+# delta1  = -1.42008244756357
+# delta2  = 0.05597302855361258
+# tau_min = 0.006233072521668988
+# tau_max = 31.825617004821087
+
+# The 7 values obtained from v18 optimization are
+# (1 loss (<F/F_p>), only 5 epochs, Poisson, keep_elitism=0, corrected noise+bkg, 2000sol/pop)
+# mu      = 1.0615698644125227
+# mu0     = 1.881290733838656s
+# alpha   = 4.438031556734086
+# delta1  = -0.735786216779466
+# delta2  = 0.14969222298849683
+# tau_min = 2.0214344096142374e-05
+# tau_max = 12.924266336471554
+
+# The 7 values obtained from v19 optimization are
+# (1 loss (<(F/F_p)**3>), only 5 epochs, Poisson, keep_elitism=0, corrected noise+bkg, 2000sol/pop)
+# mu      = 1.395734421965432
+# mu0     = 1.5675268339692208
+# alpha   = 2.0611645049040073
+# delta1  = -0.7651818839706319
+# delta2  = 0.14212243115759166
+# tau_min = 6.570153404289466e-05
+# tau_max = 18.695600016465686
+
+# The 7 values obtained from v20 optimization are
+# (1 loss (duration-distr), only 5 epochs, Poisson, keep_elitism=0, corrected noise+bkg, 2000sol/pop)
+mu      = 0.9747038698791641
+mu0     = 1.4428453243271493
+alpha   = 6.404184757187495
+delta1  = -1.314982098429236
+delta2  = 0.23869731701958827
+tau_min = 0.0016902949925141984
+tau_max = 10.544462322977166
 
 
 #------------------------------------------------------------------------------#
@@ -229,7 +259,7 @@ tau_max = 31.825617004821087
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=2000
+N_grb=5000
 
 instrument = 'batse'
 #instrument = 'swift'
