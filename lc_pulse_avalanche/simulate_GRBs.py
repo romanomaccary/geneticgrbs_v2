@@ -245,14 +245,23 @@ from avalanche import LC
 
 # The 7 values obtained from v20 optimization are
 # (1 loss (duration-distr), only 5 epochs, Poisson, keep_elitism=0, corrected noise+bkg, 2000sol/pop)
-mu      = 0.9747038698791641
-mu0     = 1.4428453243271493
-alpha   = 6.404184757187495
-delta1  = -1.314982098429236
-delta2  = 0.23869731701958827
-tau_min = 0.0016902949925141984
-tau_max = 10.544462322977166
+# mu      = 0.9747038698791641
+# mu0     = 1.4428453243271493
+# alpha   = 6.404184757187495
+# delta1  = -1.314982098429236
+# delta2  = 0.23869731701958827
+# tau_min = 0.0016902949925141984
+# tau_max = 10.544462322977166
 
+# The 7 values obtained from v21 optimization are
+# (3 loss (all but <(F/F_p)**3>), only 5 epochs, Poisson, keep_elitism=0, corrected noise+bkg, 2000sol/pop)
+mu      = 1.0247085207638207
+mu0     = 1.3703937771297046
+alpha   = 2.992874185558952
+delta1  = -0.5913798763882866
+delta2  = 0.2050623764263088
+tau_min = 5.870199320373939e-05
+tau_max = 11.676444516246468
 
 #------------------------------------------------------------------------------#
 
