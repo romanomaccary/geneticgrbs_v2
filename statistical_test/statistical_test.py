@@ -50,6 +50,9 @@ class GRB:
                  grb_name,
                  times,
                  counts,
+                 model,
+                 modelbkg,
+                 bg,
                  errs,
                  t90,
                  t20=-1,
@@ -64,6 +67,9 @@ class GRB:
         self.times  = times
         self.counts = counts
         self.errs   = errs
+        self.model  = model
+        self.modelbkg = modelbkg
+        self.bg     = bg
         self.t90    = t90
         self.t20    = t20
         self.minimum_peak_rate_list   = minimum_peak_rate_list
@@ -1784,12 +1790,15 @@ def generate_GRBs(N_grb,                                            # number of 
         outfile  = path+instrument+'/'+'lc'+str(idx)+'.txt'
         savefile = open(outfile, 'w', encoding='utf-8')
         times    = grb.times
-        lc       = grb.counts # this are count RATES, not counts!
+        lc       = grb.counts # this are COUNT, not count rates!
         err_lc   = grb.errs
+        model    = grb.model
+        modelbkg = grb.modelbkg
+        bg       = grb.bg
         T90      = grb.t90
         n_pulses = grb.num_of_sig_pulses
         for i in range(len(times)):
-            savefile.write('{0} {1} {2} {3} {4}\n'.format(times[i], lc[i], err_lc[i], T90, n_pulses))
+            savefile.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(times[i], lc[i], err_lc[i], model[i], modelbkg[i], bg, T90, n_pulses))
         savefile.close()
 
     def export_lc(LC, idx, instrument, path='../simulations/'):
@@ -1905,7 +1914,7 @@ def generate_GRBs(N_grb,                                            # number of 
 
         return n_of_sig_pulses, n_of_total_pulses, significative_pulses
 
-#################### NEW VERSION WIP #################################
+    #################### NEW VERSION WIP #################################
 
     def count_significative_pulses_ver2(lc, verbose=False, sn_min = 15):
 
@@ -2208,8 +2217,11 @@ def generate_GRBs(N_grb,                                            # number of 
         # convert the lc generated from the avalance into a GRB object
         grb = GRB(grb_name='lc_candidate.txt',
                   times=lc._times, 
-                  counts=lc._plot_lc, # these are COUNTS (not count rates!). See avalanche.py
-                  errs=lc._err_lc,    # errors on the COUNTS
+                  counts=lc._plot_lc,    # these are COUNTS (not count rates!). See avalanche.py
+                  model=lc._model,       # model COUNTS
+                  modelbkg=lc._modelbkg, # model COUNTS + constant bgk
+                  bg=lc._bg*lc._res,     # COUNTS of bkg
+                  errs=lc._err_lc,       # errors on the COUNTS
                   t90=lc._t90, 
                   t20=t20_in,
                   num_of_sig_pulses=n_of_sig_pulses,

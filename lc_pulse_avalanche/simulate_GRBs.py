@@ -205,13 +205,13 @@ from avalanche import LC
 
 # The 7 values obtained from v16 optimization are
 # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg)
-# mu      = 1.4678732974780715
-# mu0     = 1.0225493407693491
-# alpha   = 3.4225313614068393
-# delta1  = -1.39120506763176
-# delta2  = 0.24613420719741125
-# tau_min = 1.635473454362247e-06
-# tau_max = 20.154342298134676
+mu      = 1.4678732974780715
+mu0     = 1.0225493407693491
+alpha   = 3.4225313614068393
+delta1  = -1.39120506763176
+delta2  = 0.24613420719741125
+tau_min = 1.635473454362247e-06
+tau_max = 20.154342298134676
 
 # The 7 values obtained from v17 optimization are
 # (1 loss (ACF), only 5 epochs, Poisson, keep_elitism=0, corrected noise+bkg, 2000sol/pop)
@@ -255,20 +255,20 @@ from avalanche import LC
 
 # The 7 values obtained from v21 optimization are
 # (3 loss (all but <(F/F_p)**3>), only 5 epochs, Poisson, keep_elitism=0, corrected noise+bkg, 2000sol/pop)
-mu      = 1.0247085207638207
-mu0     = 1.3703937771297046
-alpha   = 2.992874185558952
-delta1  = -0.5913798763882866
-delta2  = 0.2050623764263088
-tau_min = 5.870199320373939e-05
-tau_max = 11.676444516246468
+# mu      = 1.0247085207638207
+# mu0     = 1.3703937771297046
+# alpha   = 2.992874185558952
+# delta1  = -0.5913798763882866
+# delta2  = 0.2050623764263088
+# tau_min = 5.870199320373939e-05
+# tau_max = 11.676444516246468
 
 #------------------------------------------------------------------------------#
 
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=5000
+N_grb=500 # 5000
 
 instrument = 'batse'
 #instrument = 'swift'

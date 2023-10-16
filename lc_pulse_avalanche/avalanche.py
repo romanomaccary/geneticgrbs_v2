@@ -344,14 +344,18 @@ class LC(object):
         # in the method `plot_lc` of the object LC, the variable `_plot_lc`` 
         # contains the COUNTS (and not the count RATES!)
         if self._with_bg:
-            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
-            self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
+            self._model   = (self._raw_lc * self._ampl * self._eff_area) * self._res         # model counts
+            self._modelbkg= self._model + self._bg * self._res                               # model counts + constant bgk
+            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg          # total count rates (signal+bkg)
+            self._plot_lc = np.random.poisson( self._res * self._plot_lc ).astype('float')   # total count (signal+bkg) with Poisson
             self._err_lc  = np.sqrt(self._plot_lc)
         else: # background-subtracted
-            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
-            self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
+            self._model   = (self._raw_lc * self._ampl * self._eff_area) * self._res         # model counts 
+            self._modelbkg= self._model + self._bg * self._res                               # model counts + constant bgk
+            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg          # total count rates (signal+bkg)
+            self._plot_lc = np.random.poisson( self._res * self._plot_lc ).astype('float')   # total count (signal+bkg) with Poisson
             self._err_lc  = np.sqrt(self._plot_lc)
-            self._plot_lc = self._plot_lc - (self._bg*self._res)                    # total count rates (signal) with Poisson
+            self._plot_lc = self._plot_lc - (self._bg*self._res)                             # total count (signal) with Poisson
 
         self._get_lc_properties()
 
