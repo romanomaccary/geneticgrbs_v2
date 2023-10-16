@@ -228,6 +228,7 @@ elif instrument=='swift':
                                       t90_frac=t90_frac, 
                                       sn_threshold=sn_threshold, 
                                       t_f=t_f)
+    n_of_pulses_real=None
 ### Load the BeppoSAX GRBs
 elif instrument=='sax': 
     # load all (HR) data
@@ -239,6 +240,7 @@ elif instrument=='sax':
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold, 
                                       t_f=t_f)
+    n_of_pulses_real=None
 else:
     raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
