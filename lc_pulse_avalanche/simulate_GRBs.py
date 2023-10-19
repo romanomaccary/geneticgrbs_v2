@@ -19,8 +19,8 @@ from matplotlib import rc
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
-user='LB'
-#user='AF'
+#user='LB'
+user='AF'
 #user='bach'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
@@ -29,10 +29,13 @@ elif user=='LB':
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/statistical_test')
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/lc_pulse_avalanche')
     export_path='../simulations/'
+    ### AF: Ho spostato queste due istruzioni qui sotto perchè ho un problema con i font nel pc che non ho ancora risolto
+    rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+    rc('text', usetex=True)
 elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/statistical_test')
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
-    export_path='C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/simulations/'
+    export_path='C:/Users/lisaf/Desktop/swift_sim/'
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
@@ -205,13 +208,13 @@ from avalanche import LC
 
 # The 7 values obtained from v16 optimization are
 # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg)
-mu      = 1.4678732974780715
-mu0     = 1.0225493407693491
-alpha   = 3.4225313614068393
-delta1  = -1.39120506763176
-delta2  = 0.24613420719741125
-tau_min = 1.635473454362247e-06
-tau_max = 20.154342298134676
+#mu      = 1.4678732974780715
+#mu0     = 1.0225493407693491
+#alpha   = 3.4225313614068393
+#delta1  = -1.39120506763176
+#delta2  = 0.24613420719741125
+#tau_min = 1.635473454362247e-06
+#tau_max = 20.154342298134676
 
 # The 7 values obtained from v17 optimization are
 # (1 loss (ACF), only 5 epochs, Poisson, keep_elitism=0, corrected noise+bkg, 2000sol/pop)
@@ -263,15 +266,25 @@ tau_max = 20.154342298134676
 # tau_min = 5.870199320373939e-05
 # tau_max = 11.676444516246468
 
+# The 7 values obtained from Swift v1 optimization are
+# (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg)
+mu      = 1.0650454588484382
+mu0     = 1.5516431424585888
+alpha   = 3.8889811365200426
+delta1  = -1.39182619673643
+delta2  = 0.10639085827033429
+tau_min = 0.015446264618348984
+tau_max = 41.55450235716483
+
 #------------------------------------------------------------------------------#
 
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=500 # 5000
+N_grb=5000 # 5000
 
-instrument = 'batse'
-#instrument = 'swift'
+#instrument = 'batse'
+instrument = 'swift'
 #instrument = 'sax'
 #instrument = 'sax_lr'
 

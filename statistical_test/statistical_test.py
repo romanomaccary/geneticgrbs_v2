@@ -19,8 +19,7 @@ import seaborn as sns
 sns.set_style('darkgrid')
 
 from matplotlib import rc
-rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
-rc('text', usetex=True)
+
 
 SEED=None
 #SEED=42
@@ -34,6 +33,9 @@ if user=='bach':
     sys.path.append('/home/')
 elif user=='LB':
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/lc_pulse_avalanche')
+    ### AF: Ho spostato queste due istruzioni qui sotto perchè ho un problema con i font nel pc che non ho ancora risolto
+    rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+    rc('text', usetex=True)
 elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
 else:
