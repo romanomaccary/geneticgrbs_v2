@@ -26,8 +26,8 @@ SEED=None
 #np.random.seed(SEED)
 
 
-user='LB'
-#user='AF'
+#user='LB'
+user='AF'
 #user='bach
 if user=='bach':
     sys.path.append('/home/')
@@ -52,12 +52,12 @@ class GRB:
                  grb_name,
                  times,
                  counts,
-                 model,
-                 modelbkg,
-                 bg,
                  errs,
                  t90,
                  t20=-1,
+                 model = [],
+                 modelbkg = [],
+                 bg = [],
                  num_of_sig_pulses=-1,
                  grb_data_file_path='./',
                  minimum_peak_rate_list=[],
@@ -651,9 +651,9 @@ def load_lc_sim(path):
         grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string
         # read files
         try: 
-            times, counts, errs, t90, n_pulses = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
+            times, counts, errs, t90, n_pulses = np.genfromtxt(path+grb_file, unpack=True, usecols=(0,1,2,3,4)) # works with "export_grb()"
         except:
-            times, counts, errs, t90 = np.genfromtxt(path+grb_file, unpack=True) # works with "export_LC()"
+            times, counts, errs, t90 = np.genfromtxt(path+grb_file, unpack=True,usecols=(0,1,2,3)) # works with "export_LC()"
             n_pulses = np.array([-1])
         #with open(path+grb_file, 'r', encoding='utf-8', errors='ignore') as f:
         #    times  = []
