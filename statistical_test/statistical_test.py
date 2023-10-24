@@ -651,9 +651,11 @@ def load_lc_sim(path):
         grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string
         # read files
         try: 
-            times, counts, errs, t90, n_pulses = np.genfromtxt(path+grb_file, unpack=True, usecols=(0,1,2,3,4)) # works with "export_grb()"
+            times, counts, errs, 
+            model, modelbkg, bg,
+            t90, n_pulses = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
         except:
-            times, counts, errs, t90 = np.genfromtxt(path+grb_file, unpack=True,usecols=(0,1,2,3)) # works with "export_LC()"
+            times, counts, errs, t90 = np.genfromtxt(path+grb_file, unpack=True) # works with "export_LC()"
             n_pulses = np.array([-1])
         #with open(path+grb_file, 'r', encoding='utf-8', errors='ignore') as f:
         #    times  = []
@@ -666,18 +668,90 @@ def load_lc_sim(path):
         #        counts.append(float(values[1]))
         #        errs.append(float(values[2]))
         #        t90.append(float(values[3]))
-        times  = np.float32(times)
-        counts = np.float32(counts)
-        errs   = np.float32(errs)
-        t90    = np.float32(t90)
-        grb    = GRB(grb_name=grb_name, 
+        times    = np.float32(times)
+        counts   = np.float32(counts)
+        errs     = np.float32(errs)
+        t90      = np.float32(t90)
+        model    = np.float32(model)
+        modelbkg = np.float32(modelbkg)
+        bg       = np.float32(bg)
+
+        grb      = GRB(grb_name=grb_name, 
                      times=times, 
                      counts=counts, 
                      errs=errs, 
                      t90=t90[0], 
+                     model = model,
+                     modelbkg = modelbkg,
+                     bg = bg[0],
                      grb_data_file_path=path+grb_file, 
                      num_of_sig_pulses=n_pulses[0])
         grb_list_sim.append(grb)
+
+    print("Total number of simulated GRBs: ", len(grb_sim_names))
+    return grb_list_sim
+
+################################################################################
+
+def load_lc_sim_swift(path, real_swift_grb_list):
+    """
+    aaaaaaaaaa 
+    Input:
+    - path: path to the folder that contains a file for each simulated GRB;
+    Output: 
+    - grb_list_sim: list of GRB objects;
+    """
+    grb_sim_names = os.listdir(path)
+    grb_list_sim  = []
+    for grb_file in grb_sim_names:
+    #for grb_file in tqdm(grb_sim_names):
+        left_idx  = grb_file.find('lc') + len('lc')
+        right_idx = grb_file.find('.txt')
+        grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string
+        # read files
+        try: 
+            times, counts, errs, 
+            model, modelbkg, bg,
+            t90, n_pulses = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
+        except:
+            times, counts, errs, t90 = np.genfromtxt(path+grb_file, unpack=True) # works with "export_LC()"
+            n_pulses = np.array([-1])
+
+
+        times    = np.float32(times)
+        counts   = np.float32(counts)
+        errs     = np.float32(errs)
+        t90      = np.float32(t90)
+        model    = np.float32(model)
+        modelbkg = np.float32(modelbkg)
+        bg       = np.float32(bg)
+
+        # Applico qua gli errori al modello esatto.
+        #Scelgo casualmente uno dei GRB reali
+        grb_index = np.random.randint(0,len(real_swift_grb_list))
+        #Prendo gli errori del grb reale selezionato e faccio un vettore pescandoli a caso
+        #(con reinserimento) da usare come std per la variabile gaussiana che rapresenta i bin
+        errors_to_apply = real_swift_grb_list[grb_index].errs
+        max_err_index = len(errors_to_apply)
+        std_bkg = np.array([errors_to_apply[np.random.randint(0,max_err_index)] for val in counts])
+        #creo i conteggi con errore
+        counts = np.random.normal(loc = model, scale = std_bkg)
+        errs = std_bkg ##VERIFICARE QUESTA COSA QUI   
+        ###
+
+        grb      = GRB(grb_name=grb_name, 
+                     times=times, 
+                     counts=counts, 
+                     errs=errs, 
+                     t90=t90[0], 
+                     model = model,
+                     modelbkg = modelbkg,
+                     bg = bg[0],
+                     grb_data_file_path=path+grb_file, 
+                     num_of_sig_pulses=n_pulses[0])
+        grb_list_sim.append(grb)
+
+
 
     print("Total number of simulated GRBs: ", len(grb_sim_names))
     return grb_list_sim
