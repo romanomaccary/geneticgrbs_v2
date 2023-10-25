@@ -651,9 +651,7 @@ def load_lc_sim(path):
         grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string
         # read files
         try: 
-            times, counts, errs, 
-            model, modelbkg, bg,
-            t90, n_pulses = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
+            times, counts, errs, model, modelbkg, bg, t90, n_pulses = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
         except:
             times, counts, errs, t90 = np.genfromtxt(path+grb_file, unpack=True) # works with "export_LC()"
             n_pulses = np.array([-1])
@@ -710,9 +708,7 @@ def load_lc_sim_swift(path, real_swift_grb_list):
         grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string
         # read files
         try: 
-            times, counts, errs, 
-            model, modelbkg, bg,
-            t90, n_pulses = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
+            times, counts, errs, model, modelbkg, bg, t90, n_pulses = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
         except:
             times, counts, errs, t90 = np.genfromtxt(path+grb_file, unpack=True) # works with "export_LC()"
             n_pulses = np.array([-1])
