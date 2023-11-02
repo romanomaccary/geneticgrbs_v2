@@ -989,9 +989,10 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150,
 
     # Evaluate ACF
     for grb in grb_list[:N_lim]:
-        counts = np.array(grb.counts)
-        errs   = np.array(grb.errs)
+        
         if mode=='scipy':
+            counts = np.array(grb.model)
+            #errs   = np.array(grb.errs)
             acf   = signal.correlate(in1=counts, in2=counts, method='auto')
             acf   = acf / np.max(acf)  # np.max(acf) is equal to np.sum(counts**2)
             lags  = signal.correlation_lags(in1_len=len(counts), in2_len=len(counts))
@@ -1002,7 +1003,10 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150,
             acf = acf[idx_i:idx_f] # select only the autocorrelation up to a shift of t_max = 150 s
         elif mode=='link93':
             # errs=0
+            counts = np.array(grb.counts)
+            errs   = np.array(grb.errs)
             acf = [np.sum((np.roll(counts, u) * counts)[u:]) / np.sum(counts**2 - errs**2) for u in range(steps)]
+            acf = np.array(acf)
         acf_sum += acf
         if compute_rms:
             acf_sum_square += acf**2
