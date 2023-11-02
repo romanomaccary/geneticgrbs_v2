@@ -20,6 +20,7 @@ sns.set_style('darkgrid')
 
 from matplotlib import rc
 
+################################################################################
 
 SEED=None
 #SEED=42
@@ -65,24 +66,30 @@ class GRB:
                  current_delay_list=[],
                  minimum_pulse_delay_list=[]):
 
-        self.name   = grb_name
-        self.times  = times
-        self.counts = counts
-        self.errs   = errs
-        self.model  = model
-        self.modelbkg = modelbkg
-        self.bg     = bg
-        self.t90    = t90
-        self.t20    = t20
+        self.name                     = grb_name
+        self.times                    = times
+        self.counts                   = counts
+        self.errs                     = errs
+        self.model                    = model
+        self.modelbkg                 = modelbkg
+        self.bg                       = bg
+        self.t90                      = t90
+        self.t20                      = t20
         self.minimum_peak_rate_list   = minimum_peak_rate_list
         self.peak_rate_list           = peak_rate_list
         self.current_delay_list       = current_delay_list
         self.minimum_pulse_delay_list = minimum_pulse_delay_list
-        self.data_file_path    = grb_data_file_path
-        self.num_of_sig_pulses = num_of_sig_pulses
+        self.data_file_path           = grb_data_file_path
+        self.num_of_sig_pulses        = num_of_sig_pulses
 
     def copy(self):
-        copy_grb = GRB(self.name, self.times, self.counts, self.errs, self.t90, self.data_file_path, self.t20, self.num_of_sig_pulses, self.minimum_peak_rate_list, self.peak_rate_list, self.current_delay_list, self.minimum_pulse_delay_list)
+        copy_grb = GRB(grb_name=self.name, times=self.times, counts=self.counts, 
+                       errs=self.errs, t90=self.t90, grb_data_file_path=self.data_file_path, 
+                       t20=self.t20, num_of_sig_pulses=self.num_of_sig_pulses, 
+                       minimum_peak_rate_list=self.minimum_peak_rate_list, 
+                       peak_rate_list=self.peak_rate_list, 
+                       current_delay_list=self.current_delay_list, 
+                       minimum_pulse_delay_list=self.minimum_pulse_delay_list)
         return copy_grb
 
 ################################################################################
@@ -94,7 +101,6 @@ class GRB:
 # - bg_level     : background level [cnt/cm2/s]
 # - t90_threshold: used to select only _long_ GRBs [s]
 # - sn_threshold : used to select only lc with high S2N    
-
 
 # BATSE - COUNTS
 name_batse          = 'batse'
@@ -253,8 +259,8 @@ def evaluateDuration20(times, counts, t90=None, t90_frac=15, bin_time=None, filt
     threshold_level = 0.20
     c_max           = np.max(counts)
     c_threshold     = c_max * threshold_level
-    #selected_times = times[counts >= c_threshold]
     selected_times  = times[ np.where(counts>=c_threshold)[0] ]
+    #selected_times = times[counts >= c_threshold]
     tstart          = selected_times[ 0]
     tstop           = selected_times[-1]
     duration        = tstop - tstart # T20%
@@ -347,7 +353,8 @@ def load_lc_batse(path):
         counts = np.float32(counts)
         errs   = np.float32(errs)
         t90    = np.float32(t90)
-        grb    = GRB(grb_name, times, counts, errs, t90, path+grb_name+'_all_bs.out')
+        grb    = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs,
+                     t90=t90, grb_data_file_path=path+grb_name+'_all_bs.out')
         grb_list_batse.append(grb)
 
     print("Total number of _long_ GRBs in BATSE catalogue: ", len(all_grb_list_batse))
@@ -396,7 +403,8 @@ def load_lc_swift(path):
         counts = np.float32(counts)
         errs   = np.float32(errs)
         t90    = np.float32(t90)
-        grb    = GRB(grb_name, times, counts, errs, t90, path+grb_name+'/'+'all_3col.out')
+        grb    = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs, 
+                     t90=t90, grb_data_file_path=path+grb_name+'/'+'all_3col.out')
         grb_list_swift.append(grb)
 
     print("Total number of GRBs in Swift catalogue: ", len(all_grb_list_swift))
@@ -553,7 +561,8 @@ def load_lc_sax_hr(path):
         if (t90>106): # discard GBRs which are not fully covered by the HR data
             grb_not_full.append(grb_name)
             continue
-        grb = GRB(grb_name, times, counts, errs, t90, path+grb_name+'/'+hr_grb)
+        grb = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs, 
+                  t90=t90, grb_data_file_path=path+grb_name+'/'+hr_grb)
         grb_list_sax.append(grb)
 
     print("Total number of GRBs in BeppoSAX catalogue: ", len(all_grb_list_sax))
@@ -619,7 +628,8 @@ def load_lc_sax_lr(path):
         errs   = np.float32(errs)
         t90    = np.float32(t90)
 
-        grb = GRB(grb_name, times, counts, errs, t90, grb_path_name)
+        grb = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs, 
+                  t90=t90, grb_data_file_path=grb_path_name)
         grb_list_sax.append(grb)
 
     print("Total number of GRBs in BeppoSAX catalogue: ", len(all_grb_list_sax))
@@ -673,17 +683,16 @@ def load_lc_sim(path):
         model    = np.float32(model)
         modelbkg = np.float32(modelbkg)
         bg       = np.float32(bg)
-
         grb      = GRB(grb_name=grb_name, 
-                     times=times, 
-                     counts=counts, 
-                     errs=errs, 
-                     t90=t90[0], 
-                     model = model,
-                     modelbkg = modelbkg,
-                     bg = bg[0],
-                     grb_data_file_path=path+grb_file, 
-                     num_of_sig_pulses=n_pulses[0])
+                       times=times, 
+                       counts=counts, 
+                       errs=errs, 
+                       t90=t90[0], 
+                       model = model,
+                       modelbkg = modelbkg,
+                       bg = bg[0],
+                       grb_data_file_path=path+grb_file, 
+                       num_of_sig_pulses=n_pulses[0])
         grb_list_sim.append(grb)
 
     print("Total number of simulated GRBs: ", len(grb_sim_names))
@@ -713,7 +722,6 @@ def load_lc_sim_swift(path, real_swift_grb_list):
             times, counts, errs, t90 = np.genfromtxt(path+grb_file, unpack=True) # works with "export_LC()"
             n_pulses = np.array([-1])
 
-
         times    = np.float32(times)
         counts   = np.float32(counts)
         errs     = np.float32(errs)
@@ -728,26 +736,23 @@ def load_lc_sim_swift(path, real_swift_grb_list):
         #Prendo gli errori del grb reale selezionato e faccio un vettore pescandoli a caso
         #(con reinserimento) da usare come std per la variabile gaussiana che rapresenta i bin
         errors_to_apply = real_swift_grb_list[grb_index].errs
-        max_err_index = len(errors_to_apply)
-        std_bkg = np.array([errors_to_apply[np.random.randint(0,max_err_index)] for val in counts])
+        max_err_index   = len(errors_to_apply)
+        std_bkg         = np.array([errors_to_apply[np.random.randint(0,max_err_index)] for val in counts])
         #creo i conteggi con errore
         counts = np.random.normal(loc = model, scale = std_bkg)
-        errs = std_bkg ##VERIFICARE QUESTA COSA QUI   
+        errs   = std_bkg ##VERIFICARE QUESTA COSA QUI   
         ###
-
-        grb      = GRB(grb_name=grb_name, 
-                     times=times, 
-                     counts=counts, 
-                     errs=errs, 
-                     t90=t90[0], 
-                     model = model,
-                     modelbkg = modelbkg,
-                     bg = bg[0],
-                     grb_data_file_path=path+grb_file, 
-                     num_of_sig_pulses=n_pulses[0])
+        grb  = GRB(grb_name=grb_name, 
+                   times=times, 
+                   counts=counts, 
+                   errs=errs, 
+                   t90=t90[0], 
+                   model = model,
+                   modelbkg = modelbkg,
+                   bg = bg[0],
+                   grb_data_file_path=path+grb_file, 
+                   num_of_sig_pulses=n_pulses[0])
         grb_list_sim.append(grb)
-
-
 
     print("Total number of simulated GRBs: ", len(grb_sim_names))
     return grb_list_sim
@@ -959,11 +964,15 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064,
 ################################################################################
 
 def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150, 
-                            bin_time=0.064, mode='scipy',
-                            compute_rms=False):
+                            bin_time=0.064, mode='scipy', compute_rms=False):
     """
     Compute the autocorrelation (ACF) of the GRBs. The ACF is computed up to
     a shift of the light curve of t_max = 150 seconds. 
+    The correct way to compute the ACF is by using:
+    - for the REAL data, the Link93 formula (using BOTH counts and errs, i.e.,
+    col 2 (grb.counts) and 3 (grb.errs) of data files, respectively). 
+    - for the SIMULATED data, the scipy.signal.correlate function on the clean 
+    model curve (i.e., grb.model, with no bkg and no poisson added). 
     Inputs:
     - grb_list: list of GRB objects;
     - N_lim: max number of GRBs with which we compute the average ACF;
@@ -980,6 +989,7 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150,
     Outputs:
     - steps: time lags of the autocorrelation;
     - acf: autocorrelation;
+    - acf_rms: autocorrelation rms.
     """
 
     steps   = int((t_max-t_min)/bin_time) # number of steps for ACF
@@ -992,7 +1002,7 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150,
         
         if mode=='scipy':
             counts = np.array(grb.model)
-            #errs   = np.array(grb.errs)
+            # errs = np.array(grb.errs)
             acf   = signal.correlate(in1=counts, in2=counts, method='auto')
             acf   = acf / np.max(acf)  # np.max(acf) is equal to np.sum(counts**2)
             lags  = signal.correlation_lags(in1_len=len(counts), in2_len=len(counts))
@@ -1002,9 +1012,9 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150,
             assert np.isclose(lags[idx_f]*bin_time, t_max, atol=1e-1), "ERROR: The right limit of the autocorrelation is not computed correctly..."         
             acf = acf[idx_i:idx_f] # select only the autocorrelation up to a shift of t_max = 150 s
         elif mode=='link93':
-            # errs=0
             counts = np.array(grb.counts)
             errs   = np.array(grb.errs)
+            # errs = 0
             acf = [np.sum((np.roll(counts, u) * counts)[u:]) / np.sum(counts**2 - errs**2) for u in range(steps)]
             acf = np.array(acf)
         acf_sum += acf

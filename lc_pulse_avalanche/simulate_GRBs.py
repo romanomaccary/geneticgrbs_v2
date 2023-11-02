@@ -19,8 +19,8 @@ from matplotlib import rc
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
-#user='LB'
-user='AF'
+user='LB'
+#user='AF'
 #user='bach'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
@@ -258,23 +258,23 @@ from avalanche import LC
 
 # The 7 values obtained from v21 optimization are
 # (3 loss (all but <(F/F_p)**3>), only 5 epochs, Poisson, keep_elitism=0, corrected noise+bkg, 2000sol/pop)
-# mu      = 1.0247085207638207
-# mu0     = 1.3703937771297046
-# alpha   = 2.992874185558952
-# delta1  = -0.5913798763882866
-# delta2  = 0.2050623764263088
-# tau_min = 5.870199320373939e-05
-# tau_max = 11.676444516246468
+mu      = 1.0247085207638207
+mu0     = 1.3703937771297046
+alpha   = 2.992874185558952
+delta1  = -0.5913798763882866
+delta2  = 0.2050623764263088
+tau_min = 5.870199320373939e-05
+tau_max = 11.676444516246468
 
 # The 7 values obtained from Swift v1 optimization are
 # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg)
-mu      = 1.0650454588484382
-mu0     = 1.5516431424585888
-alpha   = 3.8889811365200426
-delta1  = -1.39182619673643
-delta2  = 0.10639085827033429
-tau_min = 0.015446264618348984
-tau_max = 41.55450235716483
+# mu      = 1.0650454588484382
+# mu0     = 1.5516431424585888
+# alpha   = 3.8889811365200426
+# delta1  = -1.39182619673643
+# delta2  = 0.10639085827033429
+# tau_min = 0.015446264618348984
+# tau_max = 41.55450235716483
 
 #------------------------------------------------------------------------------#
 
@@ -283,8 +283,8 @@ t_f=150 # [s]
 
 N_grb=5000 # 5000
 
-#instrument = 'batse'
-instrument = 'swift'
+instrument = 'batse'
+#instrument = 'swift'
 #instrument = 'sax'
 #instrument = 'sax_lr'
 

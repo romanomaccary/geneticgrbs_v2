@@ -78,8 +78,8 @@ from avalanche import LC
 ################################################################################
 
 ### Choose the instrument
-instrument = 'batse'
-#instrument = 'swift'
+#instrument = 'batse'
+instrument = 'swift'
 #instrument = 'sax'
 
 #------------------------------------------------------------------------------#
@@ -125,7 +125,7 @@ else:
 # crossover_probability = 0.5   # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
 # initial_population    = None  # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 # mutation_type         = "random"
-# crossover_type        = "scattered"
+# crossover_type        = "single_point"
 # num_generations       = 20                     # Number of generations.
 # sol_per_pop           = 500                    # Number of solutions in the population (i.e., number of different sets per generation).
 # num_parents_mating    = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
@@ -137,18 +137,18 @@ parent_selection_type = "tournament"
 crossover_probability = 1     # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
 initial_population    = None  # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
-crossover_type        = "single_point"
-num_generations       = 20                     # Number of generations.
-sol_per_pop           = 1000                   # Number of solutions in the population (i.e., number of different sets per generation).
+crossover_type        = "scattered"
+num_generations       = 15                     # Number of generations.
+sol_per_pop           = 2000                   # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
-mutation_probability  = 0.03                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
+mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 N_grb                 = 2000                   # number of simulated GRBs to produce per set of parameters
 test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
 
-# options for parallelization:
+# Options for parallelization:
 parallel_processing  = ["process", 50]      
 #parallel_processing = ["thread", 50]       
 #parallel_processing = None
@@ -180,7 +180,7 @@ range_constraints = [range_mu,
 
 num_genes = len(range_constraints) # 7
 
-save_model = 0 
+save_model = 1
 
 print('\n\n')
 print('################################################################################')
@@ -212,7 +212,7 @@ if instrument=='batse':
         name = grb_list_real[i].name
         mepsa_out_file_list_temp.append(name)
     reb_factor          = np.inf
-    peak_sn_level       = 5
+    peak_sn_level       = 10
     mepsa_out_file_list = [ batse_path+'PEAKS_ALL/peaks_'+el+'_all_bs_2.txt' for el in mepsa_out_file_list_temp ]
     n_of_pulses_real    = readMEPSAres(mepsa_out_file_list=mepsa_out_file_list, # mepsa results on BATSE data
                                        maximum_reb_factor=reb_factor, 
@@ -263,12 +263,17 @@ averaged_fluxes_rms_real = compute_average_quantities(grb_list=grb_list_real,
                                                       bin_time=bin_time,
                                                       filter=True)
 ### TEST 3: Autocorrelation
+# For the REAL LCs we use the Link+93 formula to compute the autocorrelation,
+# whereas for the simulated LCs instead we use the scipy.signal.correlate
+# function on the model curve, i.e., the one before adding the Poisson noise.
 N_lim = np.min( [N_grb, len(grb_list_real)] )
 steps_real, acf_real = compute_autocorrelation(grb_list=grb_list_real,
                                                N_lim=N_lim,
                                                t_max=t_f,
                                                bin_time=bin_time,
-                                               mode='scipy')
+                                               mode='link93',
+                                               compute_rms=False)
+
 ### TEST 4: Duration
 duration_real = [ evaluateDuration20(times=grb.times,
                                      counts=grb.counts,
@@ -317,6 +322,7 @@ def fitness_func(solution, solution_idx=None):
         n_of_pulses_sim = [ grb.num_of_sig_pulses for grb in grb_list_sim ]
     else:
         n_of_pulses_sim = None
+
     #--------------------------------------------------------------------------#
     # Compute average quantities of simulated data needed for the loss function
     #--------------------------------------------------------------------------#
@@ -328,11 +334,15 @@ def fitness_func(solution, solution_idx=None):
                                                          bin_time=bin_time,
                                                          filter=True)
     ### TEST 3: Autocorrelation
-    steps_sim, acf_sim      = compute_autocorrelation(grb_list=grb_list_sim,
-                                                      N_lim=N_lim,
-                                                      t_max=t_f,
-                                                      bin_time=bin_time,
-                                                      mode='scipy')
+    # For the REAL LCs we use the Link+93 formula to compute the autocorrelation,
+    # whereas for the simulated LCs instead we use the scipy.signal.correlate
+    # function on the model curve, i.e., the one before adding the Poisson noise.
+    steps_sim, acf_sim = compute_autocorrelation(grb_list=grb_list_sim,
+                                                 N_lim=N_lim,
+                                                 t_max=t_f,
+                                                 bin_time=bin_time,
+                                                 mode='scipy',
+                                                 compute_rms=False)
     ### TEST 4: Duration
     #duration_sim = [ evaluateDuration20(times=grb.times, 
     #                                    counts=grb.counts,
@@ -341,16 +351,17 @@ def fitness_func(solution, solution_idx=None):
     #                                    bin_time=bin_time)[0] for grb in grb_list_sim ]
     duration_sim       = np.array( [ grb.t20 for grb in grb_list_sim ] )
     duration_distr_sim = compute_kde_log_duration(duration_list=duration_sim)
+
     #--------------------------------------------------------------------------#
     # Compute loss
     #--------------------------------------------------------------------------#
     l2_loss = compute_loss(averaged_fluxes=averaged_fluxes_real,
                            averaged_fluxes_sim=averaged_fluxes_sim,
-                           averaged_fluxes_cube=averaged_fluxes_cube_real, 
+                           averaged_fluxes_cube=averaged_fluxes_cube_real,
                            averaged_fluxes_cube_sim=averaged_fluxes_cube_sim,
-                           acf=acf_real, 
+                           acf=acf_real,
                            acf_sim=acf_sim,
-                           duration=duration_distr_real, 
+                           duration=duration_distr_real,
                            duration_sim=duration_distr_sim,
                            n_of_pulses=n_of_pulses_real,
                            n_of_pulses_sim=n_of_pulses_sim,
