@@ -164,3 +164,7 @@ pyMEPSA/a.exe
 pyMEPSA/mepsa.o
 pyMEPSA/mepsa.so
 *.pyc
+statistical_test/test_mepsa.txt
+statistical_test/test_lc_4.txt
+statistical_test/avalanche.py
+lc_pulse_avalanche/mock_lc.txt
