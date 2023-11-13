@@ -185,6 +185,26 @@ instr_sax_lr         = {
     "sn_threshold" : sn_threshold_sax_lr
 }
 
+# FERMI/GBM - COUNTS (WIP)
+# - Effective area: Average of all detectors, as reported by 
+#   https://sites.astro.caltech.edu/~srk/XC/Notes/GBM.pdf
+# - Background: TO BE ADDED
+# NB: solo gli ioduri di sodio
+name_fermi          = 'fermi'
+res_fermi           = 0
+eff_area_fermi      = 100 
+bg_level_fermi      = 0 #TO BE ADDED
+t90_threshold_fermi = 2
+sn_threshold_fermi  = 5
+instr_batse         = {
+    "name"         : name_fermi,
+    "res"          : res_fermi,
+    "eff_area"     : eff_area_fermi,
+    "bg_level"     : bg_level_fermi,
+    "t90_threshold": t90_threshold_fermi,
+    "sn_threshold" : sn_threshold_fermi
+}
+
 
 ################################################################################
 
