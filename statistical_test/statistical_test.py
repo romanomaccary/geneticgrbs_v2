@@ -27,8 +27,8 @@ SEED=None
 #np.random.seed(SEED)
 
 
-#user='LB'
-user='AF'
+user='LB'
+#user='AF'
 #user='bach
 if user=='bach':
     sys.path.append('/home/')
