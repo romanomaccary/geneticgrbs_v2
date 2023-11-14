@@ -27,8 +27,8 @@ SEED=None
 #np.random.seed(SEED)
 
 
-user='LB'
-#user='AF'
+#user='LB'
+user='AF'
 #user='bach
 if user=='bach':
     sys.path.append('/home/')
@@ -186,17 +186,17 @@ instr_sax_lr         = {
 }
 
 # FERMI/GBM - COUNTS (WIP)
-# - Effective area: Average of all detectors, as reported by 
+# - Effective area: Average on all detectors, as reported by 
 #   https://sites.astro.caltech.edu/~srk/XC/Notes/GBM.pdf
 # - Background: TO BE ADDED
 # NB: solo gli ioduri di sodio
 name_fermi          = 'fermi'
-res_fermi           = 0
+res_fermi           = 0.064
 eff_area_fermi      = 100 
 bg_level_fermi      = 0 #TO BE ADDED
 t90_threshold_fermi = 2
 sn_threshold_fermi  = 5
-instr_batse         = {
+instr_fermi         = {
     "name"         : name_fermi,
     "res"          : res_fermi,
     "eff_area"     : eff_area_fermi,
@@ -657,6 +657,11 @@ def load_lc_sax_lr(path):
     print("GRBs in the catalogue which are present in the data folder, but with no T90: ", len(grb_no_t90))
     print("Loaded GRBs: ", len(grb_list_sax))
     return grb_list_sax
+
+################################################################################
+
+def load_lc_fermi(path):
+    pass
 
 ################################################################################
 
