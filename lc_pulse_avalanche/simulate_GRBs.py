@@ -280,13 +280,23 @@ from avalanche import LC
 
 # The 7 values obtained from Swift v24 optimization are
 # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF)
-mu      = 1.2821767278364844
-mu0     = 1.5371224933120717
-alpha   = 3.3222629941943387
-delta1  = -0.9767114418094832
-delta2  = 0.1608353510843784
-tau_min = 5.225403089711409e-05
-tau_max = 45.998967578827624
+# mu      = 1.2821767278364844
+# mu0     = 1.5371224933120717
+# alpha   = 3.3222629941943387
+# delta1  = -0.9767114418094832
+# delta2  = 0.1608353510843784
+# tau_min = 5.225403089711409e-05
+# tau_max = 45.998967578827624
+
+# The 7 values obtained from BATSE v25 optimization are
+# (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF)
+mu      = 1.2879173930592351
+mu0     = 0.8919030666746223
+alpha   = 3.752197999884041
+delta1  = -0.96938196988164
+delta2  = 0.2451901980912974
+tau_min = 6.5224264304019425e-06
+tau_max = 14.816904711205176
 
 #------------------------------------------------------------------------------#
 
@@ -295,8 +305,8 @@ t_f=150 # [s]
 
 N_grb=5000
 
-#instrument = 'batse'
-instrument = 'swift'
+instrument = 'batse'
+#instrument = 'swift'
 #instrument = 'sax'
 #instrument = 'sax_lr'
 
