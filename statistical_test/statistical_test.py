@@ -661,7 +661,38 @@ def load_lc_sax_lr(path):
 ################################################################################
 
 def load_lc_fermi(path):
-    pass
+    grb_dir_list = os.listdir(path+'/DATA')
+    fermi_grb_list = []
+    t90_info, grb_trig_name = np.genfromtxt(path+'fermi_grb_infos.txt', usecols = (5,8), comments='#', delimiter='|', unpack = True, dtype='str')
+    t90_info = t90_info.astype('float64')
+    grb_with_no_bs = 0
+
+    for grb_dir in grb_dir_list:
+        data_files   = os.listdir(path+'/DATA/'+grb_dir+'/LC')
+
+        try:
+            lc_file_name = data_files[['_bs' in fpath for fpath in data_files].index(True)]
+        except ValueError:
+            grb_with_no_bs += 1
+            continue
+
+        lc_file_path = path+'/DATA/'+grb_dir+'/LC/'+lc_file_name
+
+        times, counts, errs = np.loadtxt(lc_file_path, unpack = True)
+        grb_name           = grb_dir
+        grb_data_file_path = lc_file_path
+
+        t90                = t90_info[np.where(grb_trig_name == grb_name)[0][0]]
+        grb    = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs,
+                     t90=t90, grb_data_file_path=grb_data_file_path)
+        fermi_grb_list.append(grb)
+
+    print('Total number of GRB: ', len(grb_dir_list))
+    print('GRB with no bs file: ', grb_with_no_bs)
+    print('Number of accepted GRB: ', len(fermi_grb_list))
+
+
+    return fermi_grb_list
 
 ################################################################################
 
