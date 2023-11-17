@@ -204,6 +204,12 @@ instr_fermi         = {
     "t90_threshold": t90_threshold_fermi,
     "sn_threshold" : sn_threshold_fermi
 }
+fermi_prob_dict     = {1:0.02056555, 
+                       2:0.23907455, 
+                       3:0.40616967, 
+                       4:0.18508997, 
+                       5:0.13367609, 
+                       6:0.01542416}
 
 
 ################################################################################
@@ -1136,6 +1142,29 @@ def KS_2pop_test(distr_1, distr_2):
     res_ks = ks_2samp(distr_1,distr_2)
     #print('KS (p-value): ', res_ks.pvalue)
     return res_ks.pvalue 
+
+    
+def reject_sampling_fermi(prob_dict):
+    """ 
+    Generate the number of detector used for a FERMI LC
+    sampling from a distribution
+    Input:
+    -prob_dict: dictionary containing the number of detector vs 
+     the probability of using that number of detectors
+    Output:
+    -num_dect: the number of detectors
+    """
+    num_dect = 0
+
+    bad_val = True
+
+    while bad_val:
+        num_dect = np.random.randint(min(prob_dict.keys()),max(prob_dict.keys())+1)
+        yprob = np.random.rand()
+        if yprob <= prob_dict[num_dect]:
+            bad_val = False
+
+    return num_dect
     
 ################################################################################
 

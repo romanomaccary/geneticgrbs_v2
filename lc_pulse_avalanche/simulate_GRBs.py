@@ -19,8 +19,8 @@ from matplotlib import rc
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
-user='LB'
-#user='AF'
+#user='LB'
+user='AF'
 #user='bach'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
@@ -305,10 +305,11 @@ t_f=150 # [s]
 
 N_grb=5000
 
-instrument = 'batse'
+#instrument = 'batse'
 #instrument = 'swift'
 #instrument = 'sax'
 #instrument = 'sax_lr'
+instrument = 'fermi'
 
 if instrument=='batse':
     res           = instr_batse['res']
@@ -334,6 +335,13 @@ elif instrument=='sax_lr':
     bg_level      = instr_sax_lr['bg_level']
     t90_threshold = instr_sax_lr['t90_threshold']
     sn_threshold  = instr_sax_lr['sn_threshold']
+elif instrument=='fermi':
+    res           = instr_fermi['res']
+    eff_area      = instr_fermi['eff_area']
+    eff_area      = eff_area * reject_sampling_fermi(fermi_prob_dict)
+    bg_level      = instr_fermi['bg_level']
+    t90_threshold = instr_fermi['t90_threshold']
+    sn_threshold  = instr_fermi['sn_threshold']
 else:
     raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax", "sax_lr".')
 
