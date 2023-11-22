@@ -27,8 +27,8 @@ SEED=None
 #np.random.seed(SEED)
 
 
-user='LB'
-#user='AF'
+#user='LB'
+user='AF'
 #user='bach
 if user=='bach':
     sys.path.append('/home/')
@@ -193,7 +193,7 @@ instr_sax_lr         = {
 name_fermi          = 'fermi'
 res_fermi           = 0.064
 eff_area_fermi      = 100 
-bg_level_fermi      = 0 #TO BE ADDED
+bg_level_fermi      = (400/eff_area_fermi) #TO BE CHECKED
 t90_threshold_fermi = 2
 sn_threshold_fermi  = 5
 instr_fermi         = {
@@ -1319,6 +1319,9 @@ def make_plot(instrument, test_times,
     elif instrument=='sax':
         label_instr='BeppoSAX'
         n_grb_real=121
+    elif instrument=='fermi':
+        label_instr='Fermi'
+        n_grb_real=245
     else:
         raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
@@ -2341,6 +2344,12 @@ def generate_GRBs(N_grb,                                            # number of 
     pulse_time_distances = []
 
     while (cnt<N_grb):
+
+        if instrument == 'fermi':
+            eff_area_lc = eff_area * reject_sampling_fermi(fermi_prob_dict)
+        else:
+            eff_area_lc = eff_area
+
         lc = LC(### 7 parameters
                 mu=mu,
                 mu0=mu0,
@@ -2351,7 +2360,7 @@ def generate_GRBs(N_grb,                                            # number of 
                 tau_max=tau_max,
                 ### instrument parameters:
                 res=bin_time,
-                eff_area=eff_area,
+                eff_area=eff_area_lc,
                 bg_level=bg_level,
                 ### other parameters:
                 n_cut=n_cut,

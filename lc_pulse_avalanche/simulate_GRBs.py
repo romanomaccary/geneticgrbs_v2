@@ -35,7 +35,7 @@ elif user=='LB':
 elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/statistical_test')
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
-    export_path='C:/Users/lisaf/Desktop/swift_sim/'
+    export_path='C:/Users/lisaf/Desktop/fermi_sim/'
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
@@ -48,13 +48,13 @@ from avalanche import LC
 ################################################################################
 
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are
-# mu      = 1.2 
-# mu0     = 1
-# alpha   = 4
-# delta1  = -0.5
-# delta2  = 0
-# tau_min = 0.02
-# tau_max = 26
+mu      = 1.2 
+mu0     = 1
+alpha   = 4
+delta1  = -0.5
+delta2  = 0
+tau_min = 0.02
+tau_max = 26
 
 # The 7 values obtained from v1 optimization are
 # (3 loss)
@@ -290,20 +290,20 @@ from avalanche import LC
 
 # The 7 values obtained from BATSE v25 optimization are
 # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF)
-mu      = 1.2879173930592351
-mu0     = 0.8919030666746223
-alpha   = 3.752197999884041
-delta1  = -0.96938196988164
-delta2  = 0.2451901980912974
-tau_min = 6.5224264304019425e-06
-tau_max = 14.816904711205176
+# mu      = 1.2879173930592351
+# mu0     = 0.8919030666746223
+# alpha   = 3.752197999884041
+# delta1  = -0.96938196988164
+# delta2  = 0.2451901980912974
+# tau_min = 6.5224264304019425e-06
+# tau_max = 14.816904711205176
 
 #------------------------------------------------------------------------------#
 
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=5000
+N_grb=1000
 
 #instrument = 'batse'
 #instrument = 'swift'
@@ -338,7 +338,6 @@ elif instrument=='sax_lr':
 elif instrument=='fermi':
     res           = instr_fermi['res']
     eff_area      = instr_fermi['eff_area']
-    eff_area      = eff_area * reject_sampling_fermi(fermi_prob_dict)
     bg_level      = instr_fermi['bg_level']
     t90_threshold = instr_fermi['t90_threshold']
     sn_threshold  = instr_fermi['sn_threshold']
