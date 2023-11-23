@@ -329,6 +329,7 @@ elif instrument=='sax':
     bg_level      = instr_sax['bg_level']
     t90_threshold = instr_sax['t90_threshold']
     sn_threshold  = instr_sax['sn_threshold']
+    t_f           = 50 #s
 elif instrument=='sax_lr':
     res           = instr_sax_lr['res']
     eff_area      = instr_sax_lr['eff_area']
@@ -341,6 +342,7 @@ elif instrument=='fermi':
     bg_level      = instr_fermi['bg_level']
     t90_threshold = instr_fermi['t90_threshold']
     sn_threshold  = instr_fermi['sn_threshold']
+    t_f           = 50 #s
 else:
     raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax", "sax_lr".')
 
