@@ -19,8 +19,8 @@ from matplotlib import rc
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
-#user='LB'
-user='AF'
+user='LB'
+#user='AF'
 #user='bach'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
@@ -303,13 +303,13 @@ tau_max = 26
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=1000
+N_grb=5000
 
-#instrument = 'batse'
+instrument = 'batse'
 #instrument = 'swift'
 #instrument = 'sax'
 #instrument = 'sax_lr'
-instrument = 'fermi'
+#instrument = 'fermi'
 
 if instrument=='batse':
     res           = instr_batse['res']
