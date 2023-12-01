@@ -103,10 +103,30 @@ class GRB:
 # - sn_threshold : used to select only lc with high S2N    
 
 # BATSE - COUNTS
-name_batse          = 'batse'
+name_batse          = 'batse_old'
 res_batse           = 0.064
 eff_area_batse      = 3600
 bg_level_batse      = 10.67
+t90_threshold_batse = 2
+sn_threshold_batse  = 70
+instr_batse         = {
+    "name"         : name_batse,
+    "res"          : res_batse,
+    "eff_area"     : eff_area_batse,
+    "bg_level"     : bg_level_batse,
+    "t90_threshold": t90_threshold_batse,
+    "sn_threshold" : sn_threshold_batse
+}
+
+# BATSE - COUNTS
+# -Effective area reference: 
+#  https://heasarc.gsfc.nasa.gov/docs/cgro/nra/appendix_g.html#V.%20BATSE%20GUEST%20INVESTIGATOR%20PROGRAM
+#  2025 cm^2
+# -Background: 
+name_batse          = 'batse'
+res_batse           = 0.064
+eff_area_batse      = 2025
+bg_level_batse      = 10.67#3 cnt/s/cm^2?????
 t90_threshold_batse = 2
 sn_threshold_batse  = 70
 instr_batse         = {
