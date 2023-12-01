@@ -401,6 +401,8 @@ def on_generation(ga_instance):
     print("    - tau_min = {solution}".format(solution=10**(solution[5])))
     print("    - tau_max = {solution}".format(solution=solution[6]))
 
+    # scrivere codice per salvare i risultati intermedi in un file; aprire il 
+    # file in append mode!
 
 ################################################################################
 # INSTANTIATE THE 'GENETIC ALGORITHM' CLASS
@@ -544,7 +546,7 @@ if __name__ == '__main__':
     file.write('################################################################################')
     file.write('\n')
     file.write('\n')
-    file.write("* Parameters of the best solution:")
+    file.write("* Parameters of the BEST solution:")
     file.write('\n')
     file.write("    - mu      = {solution}".format(solution=solution[0]))
     file.write('\n')
@@ -634,13 +636,13 @@ if __name__ == '__main__':
 
     # all solutions in the ALL epochs:
     all_gen_sol     = np.array(ga_GRB.solutions[:])
-    all_gen_mu      = np.array(all_gen_sol[:,0]) # array with all the mu      of the ALL generations 
-    all_gen_mu0     = np.array(all_gen_sol[:,1]) # array with all the mu0     of the ALL generations
-    all_gen_alpha   = np.array(all_gen_sol[:,2]) # array with all the alpha   of the ALL generations
-    all_gen_delta1  = np.array(all_gen_sol[:,3]) # array with all the delta1  of the ALL generations
-    all_gen_delta2  = np.array(all_gen_sol[:,4]) # array with all the delta1  of the ALL generations
-    all_gen_tau_min = np.array(all_gen_sol[:,5]) # array with all the tau_min of the ALL generations
-    all_gen_tau_max = np.array(all_gen_sol[:,6]) # array with all the tau_max of the ALL generations
+    all_gen_mu      = np.array(all_gen_sol[:,0])       # array with all the mu      of the ALL generations 
+    all_gen_mu0     = np.array(all_gen_sol[:,1])       # array with all the mu0     of the ALL generations
+    all_gen_alpha   = np.array(all_gen_sol[:,2])       # array with all the alpha   of the ALL generations
+    all_gen_delta1  = np.array(all_gen_sol[:,3])       # array with all the delta1  of the ALL generations
+    all_gen_delta2  = np.array(all_gen_sol[:,4])       # array with all the delta1  of the ALL generations
+    all_gen_tau_min = 10**(np.array(all_gen_sol[:,5])) # array with all the tau_min of the ALL generations
+    all_gen_tau_max = np.array(all_gen_sol[:,6])       # array with all the tau_max of the ALL generations
 
     data_all_gen = {
         'mu':      all_gen_mu,
