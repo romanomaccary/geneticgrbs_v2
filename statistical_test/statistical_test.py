@@ -1332,6 +1332,7 @@ def make_plot(instrument, test_times,
 
     if instrument=='batse':
         label_instr='BATSE'
+        label_sim='Sim (GA)'
         n_grb_real=578
     elif instrument=='swift':
         label_instr='Swift'
@@ -1362,7 +1363,7 @@ def make_plot(instrument, test_times,
 
     # plots
     ax[0,0].plot(test_times**(1/3),     averaged_fluxes,                color='b', lw=1.5, alpha=1.00, label = label_instr)
-    ax[0,0].plot(test_times**(1/3),     averaged_fluxes_sim,            color='r', lw=1.5, alpha=0.75, label = r'Sim (GA)')
+    ax[0,0].plot(test_times**(1/3),     averaged_fluxes_sim,            color='r', lw=1.5, alpha=0.75, label = label_sim)
     ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms[1:],        color='b', lw=1.5, alpha=1.00)
     ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms_sim[1:],    color='r', lw=1.5, alpha=0.75)
     # error bars
@@ -1412,7 +1413,7 @@ def make_plot(instrument, test_times,
 
     # plots
     ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube,     color='b', lw=1.5, label=label_instr)
-    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube_sim, color='r', lw=1.5, label='Sim (GA)',   alpha=0.75)
+    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube_sim, color='r', lw=1.5, label=label_sim,   alpha=0.75)
     # error bars
     if err_bars:
         errs     = averaged_fluxes_cube_rms     / np.sqrt(n_grb_real)
@@ -1458,7 +1459,7 @@ def make_plot(instrument, test_times,
 
     # plots
     ax[1,0].plot((steps    *bin_time)**(1/3), acf,     color='b', lw=1.5, label=label_instr)
-    ax[1,0].plot((steps_sim*bin_time)**(1/3), acf_sim, color='r', lw=1.5, label='Sim (GA)', alpha=0.75)
+    ax[1,0].plot((steps_sim*bin_time)**(1/3), acf_sim, color='r', lw=1.5, label=label_sim, alpha=0.75)
     # error bars
     if err_bars:
         errs     = acf_rms     / np.sqrt(n_grb_real)
@@ -1587,7 +1588,7 @@ def make_plot(instrument, test_times,
         kde_sim      = y_plot_sim.sum(0)
         # plot
         ax[1,1].plot(x_grid, kde_real, c='b', lw=1.5, label=label_instr, zorder=5)
-        ax[1,1].plot(x_grid, kde_sim,  c='r', lw=1.5, label='Sim (GA)',  zorder=6)
+        ax[1,1].plot(x_grid, kde_sim,  c='r', lw=1.5, label=label_sim,   zorder=6)
         # errors
         if err_bars:
             n_resample=500
