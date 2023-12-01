@@ -374,6 +374,25 @@ def fitness_func(solution, solution_idx=None):
 # DEFINE AUXILIARY FUNCTION
 ################################################################################
 
+def write_best_par_per_epoch(solution, filename='best_par_per_epoch.txt'):
+    """
+    Function to write the best parameters of each generation in a file. We open
+    the file in append mode, so that we can write the results of each generation.
+    Parameters:
+    - solution: array containing the best solution (7 param.) of a generation.
+    - filename: The name of the file to open in append mode. Default is 'output.txt'.
+    """
+    with open(filename, 'a') as file:
+        file.write("mu      = {solution}".format(solution=solution[0])+'\n')
+        file.write("mu0     = {solution}".format(solution=solution[1])+'\n')
+        file.write("alpha   = {solution}".format(solution=solution[2])+'\n')
+        file.write("delta1  = {solution}".format(solution=solution[3])+'\n')
+        file.write("delta2  = {solution}".format(solution=solution[4])+'\n')
+        file.write("tau_min = {solution}".format(solution=10**(solution[5]))+'\n')
+        file.write("tau_max = {solution}".format(solution=solution[6])+'\n')
+        file.write('\n')
+
+
 last_fitness, last_loss, current_fitness, current_loss = 0, 0, 0, 0
 def on_generation(ga_instance):
     """
@@ -392,6 +411,7 @@ def on_generation(ga_instance):
     last_fitness = current_fitness
     last_loss    = current_loss
     solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
+    # Print the best solution of the current generation on TERMINAL
     print("Parameters of the best solution in the current generation:")
     print("    - mu      = {solution}".format(solution=solution[0]))
     print("    - mu0     = {solution}".format(solution=solution[1]))
@@ -400,9 +420,9 @@ def on_generation(ga_instance):
     print("    - delta2  = {solution}".format(solution=solution[4]))
     print("    - tau_min = {solution}".format(solution=10**(solution[5])))
     print("    - tau_max = {solution}".format(solution=solution[6]))
+    # Print the best solution of the current generation on FILE
+    write_best_par_per_epoch(solution)
 
-    # scrivere codice per salvare i risultati intermedi in un file; aprire il 
-    # file in append mode!
 
 ################################################################################
 # INSTANTIATE THE 'GENETIC ALGORITHM' CLASS
