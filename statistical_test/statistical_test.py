@@ -126,7 +126,7 @@ instr_batse         = {
 name_batse          = 'batse'
 res_batse           = 0.064
 eff_area_batse      = 2025
-bg_level_batse      = 10.67#3 cnt/s/cm^2?????
+bg_level_batse      = 3.5 # TODO
 t90_threshold_batse = 2
 sn_threshold_batse  = 70
 instr_batse         = {
@@ -1996,6 +1996,20 @@ def generate_GRBs(N_grb,                                            # number of 
             savefile.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(times[i], lc[i], err_lc[i], model[i], modelbkg[i], bg, T90, n_pulses))
         savefile.close()
 
+    def export_lc_params(LC, idx, instrument, path='../simulations/'):
+        """
+        Export the simulated light curves in a file with these columns: 
+            times, counts, err_counts, T90.
+        Input:
+        - LC: object that contains the light curve;
+        - idx: number of the light curve;
+        - instrument: string with the name of the instrument;
+        - path: path where to store the results of the simulations;
+        """
+        outfile  = path+instrument+'/'+'lc'+str(idx)+'_lc_params.txt'
+        tau_list = [pulse['tau'] for pulse in LC._lc_params]
+        np.savetxt(outfile, tau_list, fmt='%f')
+
     def export_lc(LC, idx, instrument, path='../simulations/'):
         """
         Export the simulated light curves in a file with these columns: 
@@ -2411,7 +2425,6 @@ def generate_GRBs(N_grb,                                            # number of 
             lc._current_delay_list       = None
             lc._minimum_pulse_delay_list = None
 
-
         # initialize T20% to None
         t20_in=None
 
@@ -2444,6 +2457,14 @@ def generate_GRBs(N_grb,                                            # number of 
             del(lc)
             continue
         grb_list_sim_temp = [ grb ]
+
+        # export_lc_params(LC=lc, 
+        #             idx='___'+str(cnt), 
+        #             instrument=instrument, 
+        #             path=export_path)
+        # cnt+=1
+        # del(lc)
+        
         grb_list_sim_temp = apply_constraints(grb_list=grb_list_sim_temp, 
                                               bin_time=bin_time, 
                                               t90_threshold=t90_threshold, 
@@ -2455,15 +2476,20 @@ def generate_GRBs(N_grb,                                            # number of 
         # save the GRB into the final list _only_ if it passed the
         # constraints selection
         if (len(grb_list_sim_temp)==1):
+            #print('Total number of pulses: ', len(lc._lc_params))
             if export_files:
                 export_grb(grb=grb, 
                            idx=cnt, 
                            instrument=instrument,
                            path=export_path)
-                #export_lc(LC=lc, 
-                #          idx=cnt, 
-                #          instrument=instrument,
-                #          path=export_path)
+                # export_lc_params(LC=lc, 
+                #                  idx=cnt, 
+                #                  instrument=instrument, 
+                #                  path=export_path)
+                # export_lc(LC=lc, 
+                #           idx=cnt, 
+                #           instrument=instrument,
+                #           path=export_path)
                 grb.name = 'lc'+str(cnt)+'.txt'
                 #grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
 
