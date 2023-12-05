@@ -17,20 +17,6 @@ The 7 free parameters to be optimized are:
     - delta2
     - tau_min
     - tau_max
-
-Parameters BATSE:
-    - res      = 0.064 [s]
-    - eff_area = 3600 [cm2]
-    - bg_level = 10.67 [cnt/cm2/s]
-Parameters Swift:
-    - res      = 0.064 [s]
-    - eff_area = 1400 [cm2]  # https://swift.gsfc.nasa.gov/proposals/tech_appd/swiftta_v17/node27.html
-    - bg_level = 10000/eff_area = 10000/1400 [cnt/cm2/s]  # https://swift.gsfc.nasa.gov/proposals/tech_appd/swiftta_v17/node32.html
-Parameters BeppoSAX:
-    - res      = 1 [s]
-    - res (HR) = 0.0078125 [s]
-    - eff_area = ??? [cm2]
-    - bg_level = ??? [cnt/cm2/s]
 """
 
 SEED=None
@@ -50,8 +36,8 @@ class LC(object):
     :mu: average value of the Poisson distribution that samples the 
          number of child pulses, which is mu_b; average number of baby pulses
     :mu0: average value of the Poisson distribution that samples the 
-          number of primary pulses, which is mu_s;
-          average number of spontaneous (initial) pulses per GRB
+          number of primary pulses, which is mu_s; average number of spontaneous
+          (initial) pulses per GRB
     :alpha: delay parameter
     :delta1: lower boundary of log-normal probability distribution of tau
              (time constant of baby pulse)
@@ -63,14 +49,16 @@ class LC(object):
     :t_max: GRB LC stop time
     :res: GRB LC time resolution (s) (a.k.a., bin time)
     :eff_area: effective area of instrument (cm2)
-    :bg_level: background level (cnt/cm2/s)
+    :bg_level: background level rate per unit area of detector (cnt/cm2/s)
     :min_photon_rate: left  boundary of -3/2 log N - log S distribution (ph/cm2/s)
     :max_photon_rate: right boundary of -3/2 log N - log S distribution (ph/cm2/s)
     :sigma: signal above background level
     :n_cut: maximum number of pulses in avalanche (useful to speed up the 
             simulations but in odds with the "classic" approach)
-    :with_bg: boolean flag for keeping or removing the background level at the end of the generation
-    :use_poisson: boolean flag for using the Poisson or the (rounded) exponential for sampling the number of initial pulses and childs
+    :with_bg: boolean flag for keeping or removing the background level at the 
+              end of the generation
+    :use_poisson: boolean flag for using the Poisson or the (rounded) 
+                  exponential for sampling the number of initial pulses and childs
     """
     
     def __init__(self, mu=1.2, mu0=1, alpha=4, delta1=-0.5, delta2=0, 
@@ -212,8 +200,8 @@ class LC(object):
                 print("--------------------------------------------------------------------------")
 
             # The avalanche stops when the time constant tau of the pulse goes 
-            # below the time resolution (_res), or when the number of total 
-            # pulses becomes greater than a given number of our choice (_n_cut)
+            # below the time resolution (self._res), or when the number of total 
+            # pulses becomes greater than a given number of our choice (self._n_cut)
             if tau > self._res:
                 # continue avalanche (otherwise, stop this chain)
                 if self._n_cut is None:
@@ -264,7 +252,7 @@ class LC(object):
             print("Number of spontaneous (primary) pulses:", mu_s)
             print("--------------------------------------------------------------------------")
         
-        # for each _parent_ pulse, generate his child pulses
+        # for each of the mu_s _parent_ pulse, generate his child pulses
         for i in range(mu_s):
             # the time constant of spontaneous pulses (decay time tau0) is given by: 
             #     p6(log tau0) = 1/(log tau_max - log tau_min)
@@ -288,7 +276,7 @@ class LC(object):
                 print("Time constant (the decay time) of spontaneous pulse: {0:0.3f}".format(tau0))
                 print("Rise time of spontaneous pulse: {:0.3f}".format(tau_r))
                 print("--------------------------------------------------------------------------")
-                
+            
             # generate the pulse, and sum it into the array 'self._sp_pulse'
             self._sp_pulse += self.norris_pulse(norm, t_delay, tau0, tau_r)
             
@@ -320,6 +308,7 @@ class LC(object):
 
         # lc directly from the avalanche;
         # sum the lc of the parents (_sp_pulse) and the lc of the childs (_rates)
+        # self._raw_lc has units: cnt/s/cm2
         self._raw_lc = self._sp_pulse + self._rates
 
         self._max_raw_pcr = self._raw_lc.max()

@@ -87,6 +87,16 @@ instrument = 'swift'
 if instrument=='batse':
     t_i           = 0     # [s]
     t_f           = 150   # [s]
+    eff_area      = 2025  # effective area of instrument [cm2]
+    bg_level      = 3.5   # background level [cnt/cm2/s]
+    t90_threshold = 2     # [s] --> used to select only _long_ GRBs
+    t90_frac      = 15
+    sn_threshold  = 70    # signal-to-noise ratio
+    bin_time      = 0.064 # [s] temporal bins for BATSE (its time resolution)
+    test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
+elif instrument=='batse_old': # galileo
+    t_i           = 0     # [s]
+    t_f           = 150   # [s]
     eff_area      = 3600  # effective area of instrument [cm2]
     bg_level      = 10.67 # background level [cnt/cm2/s]
     t90_threshold = 2     # [s] --> used to select only _long_ GRBs
@@ -155,12 +165,12 @@ parallel_processing  = ["process", 50]
 
 # We impose constraints on the range of values that the 7 parameter can assume
 range_mu      = {"low": 0.80,            "high": 1.7}
-range_mu0     = {"low": 0.80,            "high": 1.9} 
-range_alpha   = {"low": 1,               "high": 15} 
+range_mu0     = {"low": 0.80,            "high": 1.7} 
+range_alpha   = {"low": 1,               "high": 10} 
 range_delta1  = {"low": -1.5,            "high": -0.25-1.e-6} 
 range_delta2  = {"low": 0,               "high": 0.25}
-range_tau_min = {"low": np.log10(1.e-6), "high": np.log10(bin_time-1.e-6)} # sample uniformly in log space
-range_tau_max = {"low": bin_time+10,     "high": 55} 
+range_tau_min = {"low": np.log10(1.e-3), "high": np.log10(bin_time-1.e-6)} # sample tau_min uniformly in log space
+range_tau_max = {"low": bin_time,        "high": 55} 
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
 # mu0=1
@@ -180,7 +190,7 @@ range_constraints = [range_mu,
 
 num_genes = len(range_constraints) # 7
 
-save_model = 1
+save_model = True
 
 print('\n\n')
 print('################################################################################')
@@ -264,7 +274,7 @@ averaged_fluxes_rms_real = compute_average_quantities(grb_list=grb_list_real,
                                                       filter=True)
 ### TEST 3: Autocorrelation
 # For the REAL LCs we use the Link+93 formula to compute the autocorrelation,
-# whereas for the simulated LCs instead we use the scipy.signal.correlate
+# whereas for the simulated LCs instead we use the scipy.signal.correlate()
 # function on the model curve, i.e., the one before adding the Poisson noise.
 N_lim = np.min( [N_grb, len(grb_list_real)] )
 steps_real, acf_real = compute_autocorrelation(grb_list=grb_list_real,
@@ -300,7 +310,7 @@ def fitness_func(solution, solution_idx=None):
                                  alpha=solution[2],
                                  delta1=solution[3],
                                  delta2=solution[4],
-                                 tau_min=10**solution[5],  # sample uniformly in log space
+                                 tau_min=10**solution[5],  # sampled uniformly in log space
                                  tau_max=solution[6],
                                  # instrument parameters:
                                  instrument=instrument,
@@ -376,10 +386,11 @@ def fitness_func(solution, solution_idx=None):
 
 def write_best_par_per_epoch(solution, filename='best_par_per_epoch.txt'):
     """
-    Function to write the best parameters of each generation in a file. We open
-    the file in append mode, so that we can write the results of each generation.
+    Function to write the best parameters of each generation in a file. The file
+    is opened in append mode, so that we can append the results of each generation
+    at the end of the file at each epoch.
     Parameters:
-    - solution: array containing the best solution (7 param.) of a generation.
+    - solution: array containing the best solution (7 params) of a generation.
     - filename: The name of the file to open in append mode. Default is 'output.txt'.
     """
     with open(filename, 'a') as file:
@@ -396,7 +407,7 @@ def write_best_par_per_epoch(solution, filename='best_par_per_epoch.txt'):
 last_fitness, last_loss, current_fitness, current_loss = 0, 0, 0, 0
 def on_generation(ga_instance):
     """
-    This function is executed after _each_ generation. It prints useful 
+    This function is executed after each generation. It prints useful 
     information of the current epoch, in particular, the details of the best
     solution in the current generation.
     """
@@ -467,9 +478,11 @@ if __name__ == '__main__':
 
     init_run_time = time.perf_counter()
     #print('Starting the GA...\n')
+
     # Run the GA to optimize the parameters of the function.
     ga_GRB.run()
     #ga_GRB.plot_fitness()
+    
     end_run_time = time.perf_counter()
 
     print('\n')
@@ -685,4 +698,3 @@ if __name__ == '__main__':
     print('END')
     print('################################################################################')
     print('\n\n')
-
