@@ -86,9 +86,14 @@ class LC(object):
         self._t_min = t_min # ms
         self._t_max = (self._n - 1) * self._res + self._t_min # ms
         self._times, self._step = np.linspace(self._t_min, self._t_max, self._n, retstep=True)
+        # Arrays of COUNT RATES
         self._rates = np.zeros(len(self._times))
         self._sp_pulse = np.zeros(len(self._times))
         self._total_rates = np.zeros(len(self._times))
+        # Arrays of COUNTS
+        self._child_counts  = np.zeros(len(self._times))
+        self._parent_counts = np.zeros(len(self._times))
+        # Other parameters
         self._lc_params = list()
         self._sigma = sigma
         self._n_cut = n_cut
@@ -110,7 +115,7 @@ class LC(object):
         :tau: pulse width (decay time), scalar
         tau_r: rise time, scalar
 
-        :returns: an array of count rates
+        :returns: an array of COUNT RATES
         """
 
         self._n_pulses += 1
@@ -169,12 +174,13 @@ class LC(object):
             print("Number of child pulses:", mu_b)
             print("--------------------------------------------------------------------------")
         
+        # Loop over the child pulses
         for i in range(mu_b):
            
             # the time const of the child pulse (tau) is given by:
-            #     p4(tau/tau1) = 1/(delta2 - delta1)
+            #     p4(log10(tau/tau1)) = 1/(delta2 - delta1)
             # tau1: time const of the parent pulse
-            tau = tau1 * exp(uniform(low=self._delta1, high=self._delta2))
+            tau = tau1 * 10**(uniform(low=self._delta1, high=self._delta2))
             
             # rise time
             tau_r = 0.5 * tau
@@ -188,10 +194,28 @@ class LC(object):
             #     p1(A) = 1, in [0, 1]
             norm = uniform(low=0.0, high=1.0)
             
-            self._rates += self.norris_pulse(norm, delta_t, tau, tau_r) 
-            
-            self._lc_params.append(dict(norm=norm, t_delay=delta_t, tau=tau, tau_r=tau_r))
-            
+            self._rates += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
+            # LB: this is not correct! Indeed, when tau is smaller than the bin_time,
+            # then we cannot obtain the counts just by multiplying the count rate
+            # times the bin time. In this case, we should integrate the count rate
+            # over the length of the pulse (basically, we cannot integrate with
+            # rectangles anymore if the integration range is smaller than Delta_t).
+            # Instead if the pulse lasts for a time longer than the bin_time, then
+            # the total counts can be approximated with count rate times bin_time.
+            # Therefore, below we store the arrays of counts (self._parent_counts
+            # and self._child_counts), not count rates anymore, and we treat the
+            # two cases separately (instead of integrating we multiply times tau).
+
+            if tau>self._res:
+                self._child_counts += self.norris_pulse(norm, delta_t, tau, tau_r) * self._res
+            else:
+                self._child_counts += self.norris_pulse(norm, delta_t, tau, tau_r) * tau
+
+            self._lc_params.append(dict(norm=norm, 
+                                        t_delay=delta_t, 
+                                        tau=tau, 
+                                        tau_r=tau_r))
+
             if self._verbose:
                 print("Pulse amplitude: {:0.3f}".format(norm))
                 print("Pulse shift: {:0.3f}".format(delta_t))
@@ -200,9 +224,10 @@ class LC(object):
                 print("--------------------------------------------------------------------------")
 
             # The avalanche stops when the time constant tau of the pulse goes 
-            # below the time resolution (self._res), or when the number of total 
-            # pulses becomes greater than a given number of our choice (self._n_cut)
-            if tau > self._res:
+            # below the 1/100 of the time resolution (self._res), or when the  
+            # number of total pulses becomes greater than a given number of our 
+            # choice (self._n_cut).
+            if (tau > (1.e-2*self._res)):
                 # continue avalanche (otherwise, stop this chain)
                 if self._n_cut is None:
                     self._rec_gen_pulse(tau, delta_t)
@@ -211,9 +236,9 @@ class LC(object):
                         self._rec_gen_pulse(tau, delta_t)
 
         return self._rates
-        
+    
     #--------------------------------------------------------------------------#
-        
+    
     def generate_avalanche(self, seed=SEED, return_array=False):
         """
         Generates pulse avalanche
@@ -255,8 +280,8 @@ class LC(object):
         # for each of the mu_s _parent_ pulse, generate his child pulses
         for i in range(mu_s):
             # the time constant of spontaneous pulses (decay time tau0) is given by: 
-            #     p6(log tau0) = 1/(log tau_max - log tau_min)
-            tau0 = exp(uniform(low=log(self._tau_max), high=log(self._tau_min)))
+            #     p6(log10 tau0) = 1/(log10 tau_max - log10 tau_min)
+            tau0 = 10**(uniform(low=np.log10(self._tau_max), high=np.log10(self._tau_min)))
 
             # rise time
             tau_r = 0.5 * tau0
@@ -277,10 +302,24 @@ class LC(object):
                 print("Rise time of spontaneous pulse: {:0.3f}".format(tau_r))
                 print("--------------------------------------------------------------------------")
             
-            # generate the pulse, and sum it into the array 'self._sp_pulse'
-            self._sp_pulse += self.norris_pulse(norm, t_delay, tau0, tau_r)
+            # Generate the pulse (count rates), and sum it into the array 'self._sp_pulse'
+            self._sp_pulse += self.norris_pulse(norm, t_delay, tau0, tau_r)  # WRONG
+            # LB: this is not correct! Indeed, when tau is smaller than the bin_time,
+            # then we cannot obtain the counts just by multiplying the count rate
+            # times the bin time. In this case, we should integrate the count rate
+            # over the length of the pulse (basically, we cannot integrate with
+            # rectangles anymore if the integration range is smaller than Delta_t).
+            # Instead if the pulse lasts for a time longer than the bin_time, then
+            # the total counts can be approximated with count rate times bin_time.
+            # Therefore, below we store the arrays of counts (self._parent_counts
+            # and self._child_counts), not count rates anymore, and we treat the
+            # two cases separately (instead of integrating we multiply times tau).
+            if tau0>self._res:
+                self._parent_counts += self.norris_pulse(norm, t_delay, tau0, tau_r) * self._res
+            else:
+                self._parent_counts += self.norris_pulse(norm, t_delay, tau0, tau_r) * tau0
             
-            # save a dictionary with the 4 parameters of the pulse:
+            # Save a dictionary with the 4 parameters of the pulse:
             #     A (norm)
             #     t_p (t_delay) 
             #     tau_0 (tau) 
@@ -309,7 +348,8 @@ class LC(object):
         # lc directly from the avalanche;
         # sum the lc of the parents (_sp_pulse) and the lc of the childs (_rates)
         # self._raw_lc has units: cnt/s/cm2
-        self._raw_lc = self._sp_pulse + self._rates
+        self._raw_lc        = self._sp_pulse + self._rates # WRONG
+        self._raw_lc_counts = self._parent_counts + self._child_counts
 
         self._max_raw_pcr = self._raw_lc.max()
         if (self._max_raw_pcr<1.e-12):
@@ -332,19 +372,14 @@ class LC(object):
         # Here, contrary to what happens in the function `restore_lc()` and thus
         # in the method `plot_lc` of the object LC, the variable `_plot_lc`` 
         # contains the COUNTS (and not the count RATES!)
-        if self._with_bg:
-            self._model   = (self._raw_lc * self._ampl * self._eff_area) * self._res         # model counts
-            self._modelbkg= self._model + self._bg * self._res                               # model counts + constant bgk
-            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg          # total count rates (signal+bkg)
-            self._plot_lc = np.random.poisson( self._res * self._plot_lc ).astype('float')   # total count (signal+bkg) with Poisson
-            self._err_lc  = np.sqrt(self._plot_lc)
+        self._model    = self._raw_lc_counts * self._ampl * self._eff_area     # model COUNTS 
+        self._modelbkg = self._model + (self._bg * self._res)                  # model COUNTS + constant bgk counts
+        self._plot_lc  = np.random.poisson( self._modelbkg ).astype('float')   # total COUNT (signal+bkg) with Poisson
+        self._err_lc   = np.sqrt(self._plot_lc)
+        if self._with_bg: 
+            pass
         else: # background-subtracted
-            self._model   = (self._raw_lc * self._ampl * self._eff_area) * self._res         # model counts 
-            self._modelbkg= self._model + self._bg * self._res                               # model counts + constant bgk
-            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg          # total count rates (signal+bkg)
-            self._plot_lc = np.random.poisson( self._res * self._plot_lc ).astype('float')   # total count (signal+bkg) with Poisson
-            self._err_lc  = np.sqrt(self._plot_lc)
-            self._plot_lc = self._plot_lc - (self._bg*self._res)                             # total count (signal) with Poisson
+            self._plot_lc  = self._plot_lc - (self._bg*self._res)              # remove the constant bkg level
 
         self._get_lc_properties()
 
@@ -411,15 +446,15 @@ class LC(object):
     
     def _get_lc_properties(self):
         """
-        Calculates T90 and T100 durations along with their start and stop times, total number of counts per T100, 
-        mean, max, and background count rates
+        Calculates T90 and T100 durations along with their start and stop times, 
+        total number of counts per T100, mean, max, and background count rates.
         """
         
         self._aux_index = np.where(self._raw_lc>self._raw_lc.max()*1e-4)
         #self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
-        self._max_snr   = ((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5).max()
+        self._max_snr   = ((self._plot_lc/self._res - self._bg) * self._res / (self._bg * self._res)**0.5).max()
         self._aux_times = self._times[self._aux_index[0][0]:self._aux_index[0][-1]] # +1 in the index
-        self._aux_lc    = self._plot_lc[self._aux_index[0][0]:self._aux_index[0][-1]]
+        self._aux_lc    = self._plot_lc[self._aux_index[0][0]:self._aux_index[0][-1]] / self._res
 
         self._t_start = self._times[self._aux_index[0][0]]
         #self._t_stop = self._times[self._aux_index[0][-1]+1]

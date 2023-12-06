@@ -78,8 +78,8 @@ from avalanche import LC
 ################################################################################
 
 ### Choose the instrument
-#instrument = 'batse'
-instrument = 'swift'
+instrument = 'batse'
+#instrument = 'swift'
 #instrument = 'sax'
 
 #------------------------------------------------------------------------------#
@@ -169,7 +169,7 @@ range_mu0     = {"low": 0.80,            "high": 1.7}
 range_alpha   = {"low": 1,               "high": 10} 
 range_delta1  = {"low": -1.5,            "high": -0.25-1.e-6} 
 range_delta2  = {"low": 0,               "high": 0.25}
-range_tau_min = {"low": np.log10(1.e-3), "high": np.log10(bin_time-1.e-6)} # sample tau_min uniformly in log space
+range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)} # sample tau_min uniformly in log space
 range_tau_max = {"low": bin_time,        "high": 55} 
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
