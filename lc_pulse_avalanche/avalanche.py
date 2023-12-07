@@ -24,6 +24,39 @@ SEED=None
 #np.random.seed(SEED)
 
 #==============================================================================#
+#==============================================================================#
+
+# see `statistical_tests.ipybn`
+def generate_rand_from_pdf(pdf, x_grid, N=1):
+    """
+    Generates `N` random numbers from a given probability distribution function `pdf`.
+    """
+    cdf             = np.cumsum(pdf)
+    cdf             = cdf / cdf[-1]
+    values          = np.random.rand(N)
+    value_bins      = np.searchsorted(cdf, values)
+    random_from_cdf = x_grid[value_bins]
+    return random_from_cdf
+
+# Load the pdf of peak count rates of each instrument, with which we
+# will sample A (we'll not sample A anymore from U[0,1])
+
+peak_count_rates_batse = './kde_pdf_BATSE_peak_count_rates.txt'
+#peak_count_rates_swift = './kde_pdf_Swift_peak_count_rates.txt'
+#
+pdf_peak_count_rates_batse = np.loadtxt(peak_count_rates_batse)
+#pdf_peak_count_rates_swift = np.loadtxt(peak_count_rates_swift)
+#
+low_exp  = 2
+high_exp = 6
+x_grid_batse = np.linspace(10**low_exp, 10**high_exp, 2000000)
+#x_grid_swift = np.linspace(10**low_exp, 10**high_exp, 2000000)
+peak_count_rate_batse_sample = generate_rand_from_pdf(pdf_peak_count_rates_batse, x_grid_batse, N=1000000) 
+#peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift, x_grid_swift, N=1000000) 
+
+
+
+#==============================================================================#
 # Define the class LC describing the light curve.                              #
 #==============================================================================#
 
@@ -65,7 +98,7 @@ class LC(object):
                  tau_min=0.2, tau_max=26, t_min=-10, t_max=1000, res=0.256, 
                  eff_area=3600, bg_level=10.67, with_bg=True, use_poisson=True,
                  min_photon_rate=1.3, max_photon_rate=1300, sigma=5, 
-                 n_cut=None, verbose=False):
+                 n_cut=None, instrument='batse', verbose=False):
         
         self._mu = mu # mu~1 --> critical runaway regime
         self._mu0 = mu0 
@@ -77,7 +110,7 @@ class LC(object):
         self._tau_min = tau_min
         self._tau_max = tau_max
         self._eff_area = eff_area 
-        self._bg = bg_level * self._eff_area # cnts/s
+        self._bg = bg_level * self._eff_area # cnt/s
         self._min_photon_rate = min_photon_rate  
         self._max_photon_rate = max_photon_rate 
         self._verbose = verbose
@@ -100,10 +133,15 @@ class LC(object):
         self._n_pulses = 0
         self._with_bg = with_bg
         self._use_poisson = use_poisson
+
+        if instrument == 'batse':
+            self.peak_count_rate_sample = peak_count_rate_batse_sample
+        #elif instrument == 'swift':
+        #    self.peak_count_rate_sample = peak_count_rate_swift_sample
         
         if self._verbose:
             print("Time resolution: ", self._step)
-                
+
     #--------------------------------------------------------------------------#
      
     def norris_pulse(self, norm, tp, tau, tau_r):
@@ -193,8 +231,12 @@ class LC(object):
             # the amplitude (A) of each pulse is given by:
             #     p1(A) = 1, in [0, 1]
             norm = uniform(low=0.0, high=1.0)
+            # The amplitude (A) of each pulse is now sampled from the pdf of peak 
+            # count RATES of each instrument
+            norm_A = np.random.choice(self.peak_count_rate_sample, size=1)
             
-            self._rates += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
+            self._rates    += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
+            self._n_pulses -= 1 # since we're calling `norris_pulse` twice the times, we're counting the same pulse twice
             # LB: this is not correct! Indeed, when tau is smaller than the bin_time,
             # then we cannot obtain the counts just by multiplying the count rate
             # times the bin time. In this case, we should integrate the count rate
@@ -207,17 +249,20 @@ class LC(object):
             # two cases separately (instead of integrating we multiply times tau).
 
             if tau>self._res:
-                self._child_counts += self.norris_pulse(norm, delta_t, tau, tau_r) * self._res
+                counts_pulse        = self.norris_pulse(norm_A, delta_t, tau, tau_r) * self._res
+                self._child_counts += counts_pulse
             else:
-                self._child_counts += self.norris_pulse(norm, delta_t, tau, tau_r) * tau
+                counts_pulse        = self.norris_pulse(norm_A, delta_t, tau, tau_r) * tau
+                self._child_counts += counts_pulse
 
-            self._lc_params.append(dict(norm=norm, 
-                                        t_delay=delta_t, 
-                                        tau=tau, 
-                                        tau_r=tau_r))
+            self._lc_params.append(dict(norm=norm_A,
+                                        t_delay=delta_t,
+                                        tau=tau,
+                                        tau_r=tau_r,
+                                        counts_pulse=np.sum(counts_pulse)))
 
             if self._verbose:
-                print("Pulse amplitude: {:0.3f}".format(norm))
+                print("Pulse amplitude: {:0.3f}".format(norm_A))
                 print("Pulse shift: {:0.3f}".format(delta_t))
                 print("Time constant (the decay time): {0:0.3f}".format(tau))
                 print("Rise time: {:0.3f}".format(tau_r))
@@ -294,9 +339,12 @@ class LC(object):
             # the amplitude (A) of each pulse is given by:
             #     p1(A) = 1, in [0, 1]
             norm = uniform(low=0.0, high=1) 
-                     
+            # The amplitude (A) of each pulse is now sampled from the pdf of peak 
+            # count RATES of each instrument
+            norm_A = np.random.choice(self.peak_count_rate_sample, size=1)
+            
             if self._verbose:
-                print("Spontaneous pulse amplitude: {:0.3f}".format(norm))
+                print("Spontaneous pulse amplitude: {:0.3f}".format(norm_A))
                 print("Spontaneous pulse shift: {:0.3f}".format(t_delay))
                 print("Time constant (the decay time) of spontaneous pulse: {0:0.3f}".format(tau0))
                 print("Rise time of spontaneous pulse: {:0.3f}".format(tau_r))
@@ -304,6 +352,7 @@ class LC(object):
             
             # Generate the pulse (count rates), and sum it into the array 'self._sp_pulse'
             self._sp_pulse += self.norris_pulse(norm, t_delay, tau0, tau_r)  # WRONG
+            self._n_pulses -= 1 # since we're calling `norris_pulse` twice the times, we're counting the same pulse twice
             # LB: this is not correct! Indeed, when tau is smaller than the bin_time,
             # then we cannot obtain the counts just by multiplying the count rate
             # times the bin time. In this case, we should integrate the count rate
@@ -315,20 +364,23 @@ class LC(object):
             # and self._child_counts), not count rates anymore, and we treat the
             # two cases separately (instead of integrating we multiply times tau).
             if tau0>self._res:
-                self._parent_counts += self.norris_pulse(norm, t_delay, tau0, tau_r) * self._res
+                counts_pulse         = self.norris_pulse(norm_A, t_delay, tau0, tau_r) * self._res
+                self._parent_counts += counts_pulse
             else:
-                self._parent_counts += self.norris_pulse(norm, t_delay, tau0, tau_r) * tau0
+                counts_pulse         = self.norris_pulse(norm_A, t_delay, tau0, tau_r) * tau0
+                self._parent_counts += counts_pulse
             
             # Save a dictionary with the 4 parameters of the pulse:
-            #     A (norm)
+            #     A (norm_A)
             #     t_p (t_delay) 
             #     tau_0 (tau) 
             #     tau_r (tau_r) 
             # in Stern & Svensson, ApJ, 469: L109 (1996), pag 2
-            self._lc_params.append(dict(norm=norm, 
-                                        t_delay=t_delay, 
-                                        tau=tau0, 
-                                        tau_r=tau_r))
+            self._lc_params.append(dict(norm=norm_A,
+                                        t_delay=t_delay,
+                                        tau=tau0,
+                                        tau_r=tau_r,
+                                        counts_pulse=np.sum(counts_pulse)))
             
             # generate the avalanche of child pulses.
             # it takes as input the tau of the parent pulse (tau0) and the time
@@ -348,18 +400,20 @@ class LC(object):
         # lc directly from the avalanche;
         # sum the lc of the parents (_sp_pulse) and the lc of the childs (_rates)
         # self._raw_lc has units: cnt/s/cm2
-        self._raw_lc        = self._sp_pulse + self._rates # WRONG
+        self._raw_lc        = self._sp_pulse      + self._rates # WRONG
         self._raw_lc_counts = self._parent_counts + self._child_counts
 
         self._max_raw_pcr = self._raw_lc.max()
-        if (self._max_raw_pcr<1.e-12):
-            # check that we have generated a lc with non-zero values; otherwise,
-            # exit and set the flag 'self.check=0', which indicates that this
-            # lc has to be skipped
-            self.check=0
-            return 0
-        else:
-            self.check=1
+        # if (self._max_raw_pcr<1.e-12):
+        #     # check that we have generated a lc with non-zero values; otherwise,
+        #     # exit and set the flag 'self.check=0', which indicates that this
+        #     # lc has to be skipped
+        #     self.check=0
+        #     return 0
+        # else:
+        #     self.check=1
+        self.check = 1
+
         population = np.geomspace(self._min_photon_rate , self._max_photon_rate, 1000)
         weights    = list(map(lambda x: x**(-3/2), population))
         weights    = weights / np.sum(weights)
@@ -372,24 +426,25 @@ class LC(object):
         # Here, contrary to what happens in the function `restore_lc()` and thus
         # in the method `plot_lc` of the object LC, the variable `_plot_lc`` 
         # contains the COUNTS (and not the count RATES!)
-        self._model    = self._raw_lc_counts * self._ampl * self._eff_area     # model COUNTS 
+        self._model    = self._raw_lc_counts                                   # model COUNTS 
         self._modelbkg = self._model + (self._bg * self._res)                  # model COUNTS + constant bgk counts
         self._plot_lc  = np.random.poisson( self._modelbkg ).astype('float')   # total COUNT (signal+bkg) with Poisson
         self._err_lc   = np.sqrt(self._plot_lc)
         if self._with_bg: 
             pass
         else: # background-subtracted
-            self._plot_lc  = self._plot_lc - (self._bg*self._res)              # remove the constant bkg level
+            self._plot_lc  = self._plot_lc - (self._bg * self._res)            # remove the constant bkg level
 
         self._get_lc_properties()
 
-        for p in self._lc_params:
-            p['norm'] *= self._ampl
+        #for p in self._lc_params:
+        #    p['norm'] *= 0
 
-        norms    = np.empty((0,))
-        t_delays = np.empty((0,))
-        taus     = np.empty((0,))
-        tau_rs   = np.empty((0,))
+        norms         = np.empty((0,))
+        t_delays      = np.empty((0,))
+        taus          = np.empty((0,))
+        tau_rs        = np.empty((0,))
+        counts_pulses = np.empty((0,))
 
         if return_array:
             for p in self._lc_params:
@@ -397,6 +452,7 @@ class LC(object):
                 t_delays = np.append(t_delays, p['t_delay'])
                 taus     = np.append(taus,     p['tau'])
                 tau_rs   = np.append(tau_rs,   p['tau_r'])
+                # counts_pulses = np.append(counts_pulses, p['counts_pulse'])   
 
             return norms, t_delays, taus, tau_rs, self._peak_value
 
@@ -436,7 +492,7 @@ class LC(object):
                 plt.axvline(x=self._t_stop,  color='blue')
                 plt.axvline(x=self._t90_i,   color='red')
                 plt.axvline(x=self._t90_f,   color='red')
-          
+        
         if save:
             plt.savefig(name)
         
@@ -450,7 +506,51 @@ class LC(object):
         total number of counts per T100, mean, max, and background count rates.
         """
         
-        self._aux_index = np.where(self._raw_lc>self._raw_lc.max()*1e-4)
+#        self._aux_index = np.where(self._raw_lc>self._raw_lc.max()*1e-4)
+#        #self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
+#        self._max_snr   = ((self._plot_lc/self._res - self._bg) * self._res / (self._bg * self._res)**0.5).max()
+#        self._aux_times = self._times[self._aux_index[0][0]:self._aux_index[0][-1]] # +1 in the index
+#        self._aux_lc    = self._plot_lc[self._aux_index[0][0]:self._aux_index[0][-1]] / self._res
+#
+#        self._t_start = self._times[self._aux_index[0][0]]
+#        #self._t_stop = self._times[self._aux_index[0][-1]+1]
+#        self._t_stop  = self._times[self._aux_index[0][-1]]
+#            
+#        self._t100 = self._t_stop - self._t_start
+#        
+#        self._total_cnts = np.sum(self._aux_lc - self._bg*np.ones(len(self._aux_lc))) * self._res
+#                
+#        try:
+#            sum_cnt = 0
+#            i = 0
+#            while sum_cnt < 0.05 * self._total_cnts:
+#                sum_cnt += (self._aux_lc[i] - self._bg) * self._res
+#                i += 1
+#                
+#            self._t90_i = self._aux_times[i]
+#                                     
+#            sum_cnt = 0
+#            j = -1
+#            while sum_cnt < 0.05 * self._total_cnts:
+#                sum_cnt += (self._aux_lc[j] - self._bg) * self._res
+#                j += -1
+#
+#            self._t90_f = self._aux_times[j]      
+#
+#            self._t90 = self._t90_f - self._t90_i            
+#            self._t90_cnts = np.sum(self._aux_lc[i:j+1] - self._bg) * self._res
+#            
+#            assert self._t90_i < self._t90_f
+#            
+#        except:
+#            self._t90      = self._t100
+#            self._t90_i    = self._t_start
+#            self._t90_f    = self._t_stop
+#            self._t90_cnts = self._total_cnts
+           
+    #--------------------------------------------------------------------------#
+
+        self._aux_index = np.where(self._plot_lc>self._plot_lc.max()*1e-4)
         #self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
         self._max_snr   = ((self._plot_lc/self._res - self._bg) * self._res / (self._bg * self._res)**0.5).max()
         self._aux_times = self._times[self._aux_index[0][0]:self._aux_index[0][-1]] # +1 in the index
@@ -493,6 +593,7 @@ class LC(object):
             self._t90_cnts = self._total_cnts
            
     #--------------------------------------------------------------------------#
+
 
     @property
     def T90(self):
@@ -627,3 +728,4 @@ class Restored_LC(LC):
 
 #==============================================================================#
 #==============================================================================#
+

@@ -144,13 +144,13 @@ else:
 # mutation_probability  = 0.03                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 parent_selection_type = "tournament" 
-crossover_probability = 1     # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
-initial_population    = None  # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
+crossover_probability = 1                      # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
+initial_population    = None                   # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
 crossover_type        = "scattered"
 num_generations       = 15                     # Number of generations.
 sol_per_pop           = 2000                   # Number of solutions in the population (i.e., number of different sets per generation).
-num_parents_mating    = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
+num_parents_mating    = int(0.15*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
@@ -159,7 +159,7 @@ N_grb                 = 2000                   # number of simulated GRBs to pro
 test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
 
 # Options for parallelization:
-parallel_processing  = ["process", 50]      
+parallel_processing  = ["process", 50]         # USE THIS ONE!  
 #parallel_processing = ["thread", 50]       
 #parallel_processing = None
 
@@ -167,10 +167,10 @@ parallel_processing  = ["process", 50]
 range_mu      = {"low": 0.80,            "high": 1.7}
 range_mu0     = {"low": 0.80,            "high": 1.7} 
 range_alpha   = {"low": 1,               "high": 10} 
-range_delta1  = {"low": -1.5,            "high": -0.25-1.e-6} 
-range_delta2  = {"low": 0,               "high": 0.25}
+range_delta1  = {"low": -1.5,            "high": -0.30-1.e-6} 
+range_delta2  = {"low": 0,               "high": 0.30}
 range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)} # sample tau_min uniformly in log space
-range_tau_max = {"low": bin_time,        "high": 55} 
+range_tau_max = {"low": bin_time,        "high": 50}
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
 # mu0=1

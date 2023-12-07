@@ -64,7 +64,8 @@ class GRB:
                  minimum_peak_rate_list=[],
                  peak_rate_list=[],
                  current_delay_list=[],
-                 minimum_pulse_delay_list=[]):
+                 minimum_pulse_delay_list=[],
+                 n_pls=-1):
 
         self.name                     = grb_name
         self.times                    = times
@@ -79,17 +80,19 @@ class GRB:
         self.peak_rate_list           = peak_rate_list
         self.current_delay_list       = current_delay_list
         self.minimum_pulse_delay_list = minimum_pulse_delay_list
-        self.data_file_path           = grb_data_file_path
+        self.grb_data_file_path       = grb_data_file_path
         self.num_of_sig_pulses        = num_of_sig_pulses
+        self.n_pls                    = n_pls
 
     def copy(self):
         copy_grb = GRB(grb_name=self.name, times=self.times, counts=self.counts, 
-                       errs=self.errs, t90=self.t90, grb_data_file_path=self.data_file_path, 
+                       errs=self.errs, t90=self.t90, grb_data_file_path=self.grb_data_file_path, 
                        t20=self.t20, num_of_sig_pulses=self.num_of_sig_pulses, 
                        minimum_peak_rate_list=self.minimum_peak_rate_list, 
                        peak_rate_list=self.peak_rate_list, 
                        current_delay_list=self.current_delay_list, 
-                       minimum_pulse_delay_list=self.minimum_pulse_delay_list)
+                       minimum_pulse_delay_list=self.minimum_pulse_delay_list,
+                       n_pls=self.n_pls)
         return copy_grb
 
 ################################################################################
@@ -111,7 +114,7 @@ class GRB:
 name_batse          = 'batse'
 res_batse           = 0.064
 eff_area_batse      = 2025
-bg_level_batse      = 3.5 # TODO
+bg_level_batse      = 2.8 # see `statistical_test.ipynb` for the computation
 t90_threshold_batse = 2
 sn_threshold_batse  = 70
 instr_batse         = {
@@ -657,11 +660,11 @@ def load_lc_sax_lr(path):
             #times, counts, errs = np.loadtxt(path+grb_name+'/'+hr_grb, unpack=True) 
             try: 
                 times, counts, errs = np.loadtxt(path+grb_name+'/'+grb_name+'_grbm0_bs_nospk.out', unpack=True)  
-                grb_path_name = path+grb_name+'_grbm0_bs_nospk.out'
+                grb_path_name       = path+grb_name+'_grbm0_bs_nospk.out'
             except FileNotFoundError:
                 times, counts, errs = np.loadtxt(path+grb_name+'/'+grb_name +'_grbm0_bs.out', unpack=True)  
-                grb_path_name = path+grb_name+'_grbm0_bs.out'
-            grb_cat_name        = grb_cat_name.replace("GRB", "")
+                grb_path_name       = path+grb_name+'_grbm0_bs.out'
+            grb_cat_name = grb_cat_name.replace("GRB", "")
         except:
             grb_not_found.append(grb_name)
             continue
@@ -696,7 +699,7 @@ def load_lc_fermi(path):
     grb_with_no_bs = 0
 
     for grb_dir in grb_dir_list:
-        data_files   = os.listdir(path+'/DATA/'+grb_dir+'/LC')
+        data_files = os.listdir(path+'/DATA/'+grb_dir+'/LC')
 
         try:
             lc_file_name = data_files[['_bs' in fpath for fpath in data_files].index(True)]
@@ -707,12 +710,12 @@ def load_lc_fermi(path):
         lc_file_path = path+'/DATA/'+grb_dir+'/LC/'+lc_file_name
 
         times, counts, errs = np.loadtxt(lc_file_path, unpack = True)
-        grb_name           = grb_dir
-        grb_data_file_path = lc_file_path
+        grb_name            = grb_dir
+        grb_data_file_path  = lc_file_path
 
-        t90                = t90_info[np.where(grb_trig_name == grb_name)[0][0]]
-        grb    = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs,
-                     t90=t90, grb_data_file_path=grb_data_file_path)
+        t90 = t90_info[np.where(grb_trig_name == grb_name)[0][0]]
+        grb = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs,
+                  t90=t90, grb_data_file_path=grb_data_file_path)
         fermi_grb_list.append(grb)
 
     print('Total number of GRB: ', len(grb_dir_list))
@@ -724,7 +727,7 @@ def load_lc_fermi(path):
 
 ################################################################################
 
-def load_lc_sim(path):
+def load_lc_sim(path, real_swift_grb_list=None):
     """
     Load the simulated light curves, which were previously generated and saved
     as files, named 'lcXXX.txt', one file for each simulated GRB ("XXX" is the 
@@ -745,21 +748,11 @@ def load_lc_sim(path):
         grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string
         # read files
         try: 
-            times, counts, errs, model, modelbkg, bg, t90, n_pulses = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
+            times, counts, errs, model, modelbkg, bg, t90, n_sig_pulses, n_pls = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
         except:
             times, counts, errs, t90 = np.genfromtxt(path+grb_file, unpack=True) # works with "export_LC()"
-            n_pulses = np.array([-1])
-        #with open(path+grb_file, 'r', encoding='utf-8', errors='ignore') as f:
-        #    times  = []
-        #    counts = []
-        #    errs   = []
-        #    t90    = []
-        #    for line in f:
-        #        values = line.split()
-        #        times.append(float(values[0]))
-        #        counts.append(float(values[1]))
-        #        errs.append(float(values[2]))
-        #        t90.append(float(values[3]))
+            n_sig_pulses = np.array([-1])
+
         times    = np.float32(times)
         counts   = np.float32(counts)
         errs     = np.float32(errs)
@@ -767,75 +760,31 @@ def load_lc_sim(path):
         model    = np.float32(model)
         modelbkg = np.float32(modelbkg)
         bg       = np.float32(bg)
+
+        if real_swift_grb_list!=None:
+            # Applico qua gli errori al modello esatto.
+            # Scelgo casualmente uno dei GRB reali
+            grb_index = np.random.randint(0,len(real_swift_grb_list))
+            #Prendo gli errori del grb reale selezionato e faccio un vettore pescandoli a caso
+            #(con reinserimento) da usare come std per la variabile gaussiana che rappresenta i bin
+            errors_to_apply = real_swift_grb_list[grb_index].errs
+            max_err_index   = len(errors_to_apply)
+            std_bkg         = np.array([errors_to_apply[np.random.randint(0,max_err_index)] for val in counts])
+            #creo i conteggi con errore
+            counts = np.random.normal(loc = model, scale = std_bkg)
+            errs   = std_bkg     
+
         grb      = GRB(grb_name=grb_name, 
                        times=times, 
                        counts=counts, 
                        errs=errs, 
                        t90=t90[0], 
-                       model = model,
-                       modelbkg = modelbkg,
-                       bg = bg[0],
+                       model=model,
+                       modelbkg=modelbkg,
+                       bg=bg[0],
                        grb_data_file_path=path+grb_file, 
-                       num_of_sig_pulses=n_pulses[0])
-        grb_list_sim.append(grb)
-
-    print("Total number of simulated GRBs: ", len(grb_sim_names))
-    return grb_list_sim
-
-################################################################################
-
-def load_lc_sim_swift(path, real_swift_grb_list):
-    """
-    aaaaaaaaaa 
-    Input:
-    - path: path to the folder that contains a file for each simulated GRB;
-    Output: 
-    - grb_list_sim: list of GRB objects;
-    """
-    grb_sim_names = os.listdir(path)
-    grb_list_sim  = []
-    for grb_file in grb_sim_names:
-    #for grb_file in tqdm(grb_sim_names):
-        left_idx  = grb_file.find('lc') + len('lc')
-        right_idx = grb_file.find('.txt')
-        grb_name  = grb_file[left_idx:right_idx] # extract the ID of the GRB as string
-        # read files
-        try: 
-            times, counts, errs, model, modelbkg, bg, t90, n_pulses = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
-        except:
-            times, counts, errs, t90 = np.genfromtxt(path+grb_file, unpack=True) # works with "export_LC()"
-            n_pulses = np.array([-1])
-
-        times    = np.float32(times)
-        counts   = np.float32(counts)
-        errs     = np.float32(errs)
-        t90      = np.float32(t90)
-        model    = np.float32(model)
-        modelbkg = np.float32(modelbkg)
-        bg       = np.float32(bg)
-
-        # Applico qua gli errori al modello esatto.
-        #Scelgo casualmente uno dei GRB reali
-        grb_index = np.random.randint(0,len(real_swift_grb_list))
-        #Prendo gli errori del grb reale selezionato e faccio un vettore pescandoli a caso
-        #(con reinserimento) da usare come std per la variabile gaussiana che rapresenta i bin
-        errors_to_apply = real_swift_grb_list[grb_index].errs
-        max_err_index   = len(errors_to_apply)
-        std_bkg         = np.array([errors_to_apply[np.random.randint(0,max_err_index)] for val in counts])
-        #creo i conteggi con errore
-        counts = np.random.normal(loc = model, scale = std_bkg)
-        errs   = std_bkg ##VERIFICARE QUESTA COSA QUI   
-        ###
-        grb  = GRB(grb_name=grb_name, 
-                   times=times, 
-                   counts=counts, 
-                   errs=errs, 
-                   t90=t90[0], 
-                   model = model,
-                   modelbkg = modelbkg,
-                   bg = bg[0],
-                   grb_data_file_path=path+grb_file, 
-                   num_of_sig_pulses=n_pulses[0])
+                       num_of_sig_pulses=n_sig_pulses[0],
+                       n_pls=n_pls)
         grb_list_sim.append(grb)
 
     print("Total number of simulated GRBs: ", len(grb_sim_names))
@@ -1231,15 +1180,15 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
 
     # w_i = \frac{1/L_{\mathrm{tot}}^{(i)}}{\sum_{i=1}^{4} 1/L_{\mathrm{tot}}^{(i)}} 
     #
-    # L_{tot}^{(1)} = 1.20
-    # L_{tot}^{(2)} = 1.06
-    # L_{tot}^{(3)} = 1.27
-    # L_{tot}^{(4)} = 0.57
+    # L_{tot}^{(1)} = 
+    # L_{tot}^{(2)} = 
+    # L_{tot}^{(3)} = 
+    # L_{tot}^{(4)} = 
     #
-    # w1 = 0.193
-    # w2 = 0.218
-    # w3 = 0.182
-    # w4 = 0.406
+    # w1 = 
+    # w2 = 
+    # w3 = 
+    # w4 = 
     
     w1 = 1.
     w2 = 1.
@@ -1933,11 +1882,12 @@ def generate_GRBs(N_grb,                                            # number of 
                   test_pulse_distr=False                            # other parameters
                   ):
     """
-    This function generates a list of GRBs using the avalanche by Stern+96. As
-    input it takes the 7 parameters needed for the avalance model, and the 
-    parameters of the instrument considered. As output it returns a list, where 
-    each element of the list is an RGB object, that has passed the cosntraints 
-    selection (see "apply_constraints()" function). 
+    This function generates a list of GRBs using the pulse-avalanche stochastic
+    model by Stern+96. As input it takes the 7 parameters needed for the avalance 
+    model, and the parameters of the instrument considered. As output it returns 
+    a list, where each element of the list is an GRB object, which has successfully 
+    passed the constraints selection (see "apply_constraints()" function). 
+
     Input:
     - N_grb: total number of simulated GRBs to produce in output;
     ### 7 parameters
@@ -1961,7 +1911,7 @@ def generate_GRBs(N_grb,                                            # number of 
     - filter:
     ### other parameters
     - export_files: if True, every GRB that passed the constraint selection is
-                    exorted into an external file;
+                    exorted into an external file. The file contains 8 columns.
     - export_path
     - n_cut:
     - with_bg:
@@ -1969,10 +1919,10 @@ def generate_GRBs(N_grb,                                            # number of 
     - test_pulse_distr: if True, it appends to each GRB object also the info
                         on the number of significative pulses inside that GRB,
                         and we also compute the time distances between all the
-                        pulses in that GRB;
+                        pulses in that GRB.
     Output:
-    -grb_list_sim: list containing N_grb GRB objects, each lc satisfying the
-                   imposed constraints;
+    -grb_list_sim: list containing N_grb GRB objects, where each light-curve
+                   satisfies the imposed constraints.
     """
     def export_grb(grb, idx, instrument, path='../simulations/'):
         """
@@ -1984,33 +1934,48 @@ def generate_GRBs(N_grb,                                            # number of 
         - instrument: string with the name of the instrument;
         - path: path where to store the results of the simulations;
         """
-        outfile  = path+instrument+'/'+'lc'+str(idx)+'.txt'
-        savefile = open(outfile, 'w', encoding='utf-8')
-        times    = grb.times
-        lc       = grb.counts # this are COUNT, not count rates!
-        err_lc   = grb.errs
-        model    = grb.model
-        modelbkg = grb.modelbkg
-        bg       = grb.bg
-        T90      = grb.t90
-        n_pulses = grb.num_of_sig_pulses
+        outfile      = path+instrument+'/'+'lc'+str(idx)+'.txt'
+        savefile     = open(outfile, 'w', encoding='utf-8')
+        times        = grb.times
+        lc           = grb.counts # this are COUNTS, not count rates!
+        err_lc       = grb.errs
+        model        = grb.model
+        modelbkg     = grb.modelbkg
+        bg           = grb.bg
+        T90          = grb.t90
+        n_sig_pulses = grb.num_of_sig_pulses # N of significative pulses
+        n_pls        = int(grb.n_pls)        # total number of pulses composing the GRB (only for simulated ones)
+        savefile.write('# times    lc    err_lc    model    modelbkg    bg    T90    n_sig_pulses    n_pls\n')
         for i in range(len(times)):
-            savefile.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(times[i], lc[i], err_lc[i], model[i], modelbkg[i], bg, T90, n_pulses))
+            savefile.write('{0} {1} {2} {3} {4} {5} {6} {7} {8}\n'.format(times[i], lc[i], err_lc[i], model[i], modelbkg[i], bg, T90, n_sig_pulses, n_pls))
         savefile.close()
 
     def export_lc_params(LC, idx, instrument, path='../simulations/'):
         """
-        Export the simulated light curves in a file with these columns: 
-            times, counts, err_counts, T90.
+        Export all the values in the `params` dict of the simulated light curves
+        in a file.
         Input:
         - LC: object that contains the light curve;
         - idx: number of the light curve;
         - instrument: string with the name of the instrument;
         - path: path where to store the results of the simulations;
         """
-        outfile  = path+instrument+'/'+'lc'+str(idx)+'_lc_params.txt'
-        tau_list = [pulse['tau'] for pulse in LC._lc_params]
-        np.savetxt(outfile, tau_list, fmt='%f')
+        outfile           = path+instrument+'/'+'lc'+str(idx)+'_lc_params.txt'
+        savefile          = open(outfile, 'w', encoding='utf-8')
+        #
+        norm_list         = [pulse['norm'][0]      for pulse in LC._lc_params]
+        #t_delay_list     = [pulse['t_delay']      for pulse in LC._lc_params]
+        tau_list          = [pulse['tau']          for pulse in LC._lc_params]
+        #tau_r_list       = [pulse['tau_r']        for pulse in LC._lc_params]
+        counts_pulse_list = [pulse['counts_pulse'] for pulse in LC._lc_params]
+        #
+        savefile.write('# norm    tau    counts_pulse\n')
+        for i in range(len(LC._lc_params)):
+            savefile.write('{0} {1} {2}\n'.format(norm_list[i], tau_list[i], counts_pulse_list[i]))
+        savefile.close()
+        # # Save the number of pulses in each generated GRB:
+        # with open(path+instrument+'/'+'n_pls.txt', 'a') as file:
+        #     file.write("{n_pls}".format(n_pls=LC._n_pulses)+'\n')
 
     def export_lc(LC, idx, instrument, path='../simulations/'):
         """
@@ -2400,6 +2365,7 @@ def generate_GRBs(N_grb,                                            # number of 
                 eff_area=eff_area_lc,
                 bg_level=bg_level,
                 ### other parameters:
+                instrument=instrument,
                 n_cut=n_cut,
                 with_bg=with_bg)
         lc.generate_avalanche(seed=None)
@@ -2411,13 +2377,18 @@ def generate_GRBs(N_grb,                                            # number of 
             continue
 
         if test_pulse_distr:
-            # count how many pulses are signficative enough to be detected by MEPSA according to CG's formula
+            # count how many pulses are signficative enough to be detected by 
+            # MEPSA according to CG's formula
             #n_of_sig_pulses, \
             #n_of_total_pulses, \
             #sig_pulses = count_significative_pulses(lc, verbose=False)
             n_of_sig_pulses, \
             n_of_total_pulses, \
             sig_pulses = count_significative_pulses_ver2(lc, verbose=False)
+            lc._minimum_peak_rate_list   = None
+            lc._peak_rate_list           = None
+            lc._current_delay_list       = None
+            lc._minimum_pulse_delay_list = None
         else:
             n_of_sig_pulses, \
             n_of_total_pulses, \
@@ -2433,7 +2404,7 @@ def generate_GRBs(N_grb,                                            # number of 
         # convert the lc generated from the avalance into a GRB object
         grb = GRB(grb_name='lc_candidate.txt',
                   times=lc._times, 
-                  counts=lc._plot_lc,    # these are COUNTS (not count rates!). See avalanche.py
+                  counts=lc._plot_lc,    # these are COUNTS (not count rates!). See `avalanche.py`
                   model=lc._model,       # model COUNTS
                   modelbkg=lc._modelbkg, # model COUNTS + constant bgk
                   bg=lc._bg*lc._res,     # COUNTS of bkg
@@ -2445,7 +2416,8 @@ def generate_GRBs(N_grb,                                            # number of 
                   minimum_peak_rate_list=lc._minimum_peak_rate_list,
                   peak_rate_list=lc._peak_rate_list,
                   current_delay_list=lc._current_delay_list,
-                  minimum_pulse_delay_list=lc._minimum_pulse_delay_list)
+                  minimum_pulse_delay_list=lc._minimum_pulse_delay_list,
+                  n_pls=lc._n_pulses) # total number of pulses composing the GRB
                   
         # we use a temporary list that contains only _one_ lc, then we
         # check if that GRB satisfies the constraints imposed, ad if that is
@@ -2459,14 +2431,7 @@ def generate_GRBs(N_grb,                                            # number of 
             del(lc)
             continue
         grb_list_sim_temp = [ grb ]
-
-        # export_lc_params(LC=lc, 
-        #             idx='___'+str(cnt), 
-        #             instrument=instrument, 
-        #             path=export_path)
-        # cnt+=1
-        # del(lc)
-        
+       
         grb_list_sim_temp = apply_constraints(grb_list=grb_list_sim_temp, 
                                               bin_time=bin_time, 
                                               t90_threshold=t90_threshold, 
@@ -2475,32 +2440,29 @@ def generate_GRBs(N_grb,                                            # number of 
                                               t_f=t_f,
                                               filter=filter,
                                               verbose=False)
-        # save the GRB into the final list _only_ if it passed the
-        # constraints selection
+        # save the GRB into the final list _only_ if it passed the constraints selection
         if (len(grb_list_sim_temp)==1):
-            #print('Total number of pulses: ', len(lc._lc_params))
+            assert lc._n_pulses == len(lc._lc_params)
+            #print('Total number of pulses: ', lc._n_pulses)
             if export_files:
                 export_grb(grb=grb, 
                            idx=cnt, 
                            instrument=instrument,
                            path=export_path)
-                # export_lc_params(LC=lc, 
-                #                  idx=cnt, 
-                #                  instrument=instrument, 
-                #                  path=export_path)
+                export_lc_params(LC=lc, 
+                                 idx=cnt, 
+                                 instrument=instrument, 
+                                 path=export_path)
                 # export_lc(LC=lc, 
                 #           idx=cnt, 
                 #           instrument=instrument,
                 #           path=export_path)
                 grb.name = 'lc'+str(cnt)+'.txt'
                 #grb.data_file_path = export_path+instrument+'/'+'lc'+str(cnt)+'.txt'
-
             #if test_pulse_distr:
             #    #get all the time distances between the generated peaks and save them to a file. 
             #    pulse_time_distances.extend(getPulsesTimeDistance(sig_pulses))
             #    np.savetxt('time_distances.txt',np.array(pulse_time_distances))
-            ####################################################################
-
             grb_list_sim.append(grb)
             cnt+=1
         del(lc)
