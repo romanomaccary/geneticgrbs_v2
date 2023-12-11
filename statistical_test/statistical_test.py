@@ -750,6 +750,7 @@ def load_lc_sim(path, real_swift_grb_list=None):
         # read files
         try: 
             times, counts, errs, model, modelbkg, bg, t90, n_sig_pulses, n_pls = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
+            #times, counts, errs, model, modelbkg, bg, t90, n_sig_pulses       = np.genfromtxt(path+grb_file, unpack=True) # works with "export_grb()"
         except:
             times, counts, errs, t90 = np.genfromtxt(path+grb_file, unpack=True) # works with "export_LC()"
             n_sig_pulses = np.array([-1])
