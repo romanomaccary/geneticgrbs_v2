@@ -126,21 +126,21 @@ instr_batse         = {
     "sn_threshold" : sn_threshold_batse
 }
 
-# BATSE - COUNTS (WRONG!)
-name_batse          = 'batse_old'
-res_batse           = 0.064
-eff_area_batse      = 3600
-bg_level_batse      = 10.67
-t90_threshold_batse = 2
-sn_threshold_batse  = 70
-instr_batse         = {
-    "name"         : name_batse,
-    "res"          : res_batse,
-    "eff_area"     : eff_area_batse,
-    "bg_level"     : bg_level_batse,
-    "t90_threshold": t90_threshold_batse,
-    "sn_threshold" : sn_threshold_batse
-}
+# # BATSE - COUNTS (WRONG!)
+# name_batse          = 'batse_old'
+# res_batse           = 0.064
+# eff_area_batse      = 3600
+# bg_level_batse      = 10.67
+# t90_threshold_batse = 2
+# sn_threshold_batse  = 70
+# instr_batse         = {
+#     "name"         : name_batse,
+#     "res"          : res_batse,
+#     "eff_area"     : eff_area_batse,
+#     "bg_level"     : bg_level_batse,
+#     "t90_threshold": t90_threshold_batse,
+#     "sn_threshold" : sn_threshold_batse
+# }
 
 
 # Swift - COUNT RATES!!!
@@ -339,6 +339,7 @@ def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter):
      - filter: if True, apply savgol filter;
     Output:
      - s2n: signal to noise ratio;
+     - T20: duration of the GRB at 20% level;
     """
     T20, tstart, tstop = evaluateDuration20(times=times, 
                                             counts=counts,

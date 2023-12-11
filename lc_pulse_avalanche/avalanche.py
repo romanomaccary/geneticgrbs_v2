@@ -29,7 +29,8 @@ SEED=None
 # see `statistical_tests.ipybn`
 def generate_rand_from_pdf(pdf, x_grid, N=1):
     """
-    Generates `N` random numbers from a given probability distribution function `pdf`.
+    Generates `N` random numbers from a given probability distribution function
+    `pdf`, by taking values on the x-axis on a grid `x_grid`.
     """
     cdf             = np.cumsum(pdf)
     cdf             = cdf / cdf[-1]
@@ -39,7 +40,8 @@ def generate_rand_from_pdf(pdf, x_grid, N=1):
     return random_from_cdf
 
 # Load the pdf of peak count rates of each instrument, with which we
-# will sample A (we'll not sample A anymore from U[0,1])
+# will sample the amplitude A of each pulse (we'll not sample A anymore 
+# from U[0,1])
 
 peak_count_rates_batse = './kde_pdf_BATSE_peak_count_rates.txt'
 #peak_count_rates_swift = './kde_pdf_Swift_peak_count_rates.txt'
@@ -91,7 +93,7 @@ class LC(object):
     :with_bg: boolean flag for keeping or removing the background level at the 
               end of the generation
     :use_poisson: boolean flag for using the Poisson or the (rounded) 
-                  exponential for sampling the number of initial pulses and childs
+                  exponential for sampling the number of initial pulses and child
     """
     
     def __init__(self, mu=1.2, mu0=1, alpha=4, delta1=-0.5, delta2=0, 
@@ -100,15 +102,15 @@ class LC(object):
                  min_photon_rate=1.3, max_photon_rate=1300, sigma=5, 
                  n_cut=None, instrument='batse', verbose=False):
         
-        self._mu = mu # mu~1 --> critical runaway regime
-        self._mu0 = mu0 
-        self._alpha = alpha 
-        self._delta1 = delta1
-        self._delta2 = delta2
-        if tau_min > res and not isinstance(self, Restored_LC):
-            raise ValueError("tau_min should be smaller than res =", res)
+        self._mu      = mu # mu~1 --> critical runaway regime
+        self._mu0     = mu0 
+        self._alpha   = alpha 
+        self._delta1  = delta1
+        self._delta2  = delta2
         self._tau_min = tau_min
         self._tau_max = tau_max
+        if tau_min > res and not isinstance(self, Restored_LC):
+            raise ValueError("tau_min should be smaller than res =", res)
         self._eff_area = eff_area 
         self._bg = bg_level * self._eff_area # cnt/s
         self._min_photon_rate = min_photon_rate  
@@ -120,38 +122,41 @@ class LC(object):
         self._t_max = (self._n - 1) * self._res + self._t_min # ms
         self._times, self._step = np.linspace(self._t_min, self._t_max, self._n, retstep=True)
         # Arrays of COUNT RATES
-        self._rates = np.zeros(len(self._times))
-        self._sp_pulse = np.zeros(len(self._times))
+        self._rates       = np.zeros(len(self._times))
+        self._sp_pulse    = np.zeros(len(self._times))
         self._total_rates = np.zeros(len(self._times))
         # Arrays of COUNTS
         self._child_counts  = np.zeros(len(self._times))
         self._parent_counts = np.zeros(len(self._times))
         # Other parameters
-        self._lc_params = list()
-        self._sigma = sigma
-        self._n_cut = n_cut
-        self._n_pulses = 0
-        self._with_bg = with_bg
+        self._lc_params   = list()
+        self._sigma       = sigma
+        self._n_cut       = n_cut
+        self._n_pulses    = 0
+        self._with_bg     = with_bg
         self._use_poisson = use_poisson
 
         if instrument == 'batse':
-            self.peak_count_rate_sample = peak_count_rate_batse_sample
+            self._peak_count_rate_sample = peak_count_rate_batse_sample
+        else:
+            raise ValueError("Instrument not recognized")
         #elif instrument == 'swift':
-        #    self.peak_count_rate_sample = peak_count_rate_swift_sample
+        #    self._peak_count_rate_sample = peak_count_rate_swift_sample
         
-        if self._verbose:
-            print("Time resolution: ", self._step)
+        # if self._verbose:
+        #     print("Time resolution: ", self._step)
 
     #--------------------------------------------------------------------------#
      
     def norris_pulse(self, norm, tp, tau, tau_r):
         """
-        Computes a single pulse according to Norris et al., ApJ, 459, 393 (1996)
+        Computes a single pulse according to: 
+            Norris et al., ApJ, 459, 393 (1996).
         
         :t: times (lc x-axis), vector
         :tp: pulse peak time, scalar
         :tau: pulse width (decay time), scalar
-        tau_r: rise time, scalar
+        :tau_r: rise time, scalar
 
         :returns: an array of COUNT RATES
         """
@@ -159,13 +164,14 @@ class LC(object):
         self._n_pulses += 1
         
         if self._verbose:
-            print("Generating a new pulse with tau={:0.3f}".format(tau))
+            print("Generating a new pulse with tau = {:0.3f}".format(tau))
 
         t   = self._times 
         _tp = np.ones(len(t))*tp
         
         if tau_r == 0 or tau == 0: 
-            return np.zeros(len(t))
+            raise ValueError("`tau_r` or `tau` cannot be zero!")
+            #return np.zeros(len(t))
         
         return np.append(norm * np.exp(-(t[t<=tp]-_tp[t<=tp])**2/tau_r**2), \
                          norm * np.exp(-(t[t>tp] -_tp[t>tp])/tau))
@@ -183,11 +189,11 @@ class LC(object):
         t_shift: time delay relative to the parent pulse
         INITIAL parent pulse, or the IMMEDIATE parent pulse? It should be the INITIAL
 
-        LB: 't_shift' should be the time delay of the immediate parent pulse with 
+        LB: `t_shift` should be the time delay of the immediate parent pulse with 
         respect to the initial invisible trigger event; the time delay of the 
         child pulse w.r.t the parent event instead is computed here below.
 
-        Mi sembra che la definizione di t_shift data due righe sopra non sia 
+        Mi sembra che la definizione di `t_shift` data due righe sopra non sia 
         corretta, cioe' mi pare che ogni volta che chiami la funzione ricorsiva
         devi passare il delay TOTALE, ovvero la somma di tutti i delay dei
         pulses genitori!
@@ -214,7 +220,7 @@ class LC(object):
         
         # Loop over the child pulses
         for i in range(mu_b):
-           
+            
             # the time const of the child pulse (tau) is given by:
             #     p4(log10(tau/tau1)) = 1/(delta2 - delta1)
             # tau1: time const of the parent pulse
@@ -233,7 +239,7 @@ class LC(object):
             norm = uniform(low=0.0, high=1.0)
             # The amplitude (A) of each pulse is now sampled from the pdf of peak 
             # count RATES of each instrument
-            norm_A = np.random.choice(self.peak_count_rate_sample, size=1)
+            norm_A = np.random.choice(self._peak_count_rate_sample, size=1)
             
             self._rates    += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
             self._n_pulses -= 1 # since we're calling `norris_pulse` twice the times, we're counting the same pulse twice
@@ -248,13 +254,16 @@ class LC(object):
             # and self._child_counts), not count rates anymore, and we treat the
             # two cases separately (instead of integrating we multiply times tau).
 
+            count_rates_pulse = self.norris_pulse(norm_A, delta_t, tau, tau_r)
             if tau>self._res:
-                counts_pulse        = self.norris_pulse(norm_A, delta_t, tau, tau_r) * self._res
+                counts_pulse        = count_rates_pulse * self._res
                 self._child_counts += counts_pulse
             else:
-                counts_pulse        = self.norris_pulse(norm_A, delta_t, tau, tau_r) * tau
+                counts_pulse        = count_rates_pulse * tau
                 self._child_counts += counts_pulse
 
+            # Save a dictionary with the 4 parameters of the pulse, and the 
+            # total counts of the single pulse
             self._lc_params.append(dict(norm=norm_A,
                                         t_delay=delta_t,
                                         tau=tau,
@@ -286,7 +295,7 @@ class LC(object):
     
     def generate_avalanche(self, seed=SEED, return_array=False):
         """
-        Generates pulse avalanche
+        Generates the pulse avalanche, i.e., the GRB light curve.
         
         :seed: random seed
         :return_array: if True returns arrays of parameters, if False, a dict
@@ -299,10 +308,6 @@ class LC(object):
         
         if self._verbose:
             inspect.getdoc(self.generate_avalanche)
-            
-        """
-        Starting pulse avalanche
-        """
    
         # The number of spontaneous primary pulses (mu_s) is given by: 
         #     p5(mu_s) = exp(-mu_s/mu0)/mu0
@@ -322,7 +327,7 @@ class LC(object):
             print("Number of spontaneous (primary) pulses:", mu_s)
             print("--------------------------------------------------------------------------")
         
-        # for each of the mu_s _parent_ pulse, generate his child pulses
+        # For each of the mu_s _parent_ pulse, generate his child pulses
         for i in range(mu_s):
             # the time constant of spontaneous pulses (decay time tau0) is given by: 
             #     p6(log10 tau0) = 1/(log10 tau_max - log10 tau_min)
@@ -341,7 +346,7 @@ class LC(object):
             norm = uniform(low=0.0, high=1) 
             # The amplitude (A) of each pulse is now sampled from the pdf of peak 
             # count RATES of each instrument
-            norm_A = np.random.choice(self.peak_count_rate_sample, size=1)
+            norm_A = np.random.choice(self._peak_count_rate_sample, size=1)
             
             if self._verbose:
                 print("Spontaneous pulse amplitude: {:0.3f}".format(norm_A))
@@ -363,19 +368,18 @@ class LC(object):
             # Therefore, below we store the arrays of counts (self._parent_counts
             # and self._child_counts), not count rates anymore, and we treat the
             # two cases separately (instead of integrating we multiply times tau).
+            count_rates_pulse = self.norris_pulse(norm_A, t_delay, tau0, tau_r)
             if tau0>self._res:
-                counts_pulse         = self.norris_pulse(norm_A, t_delay, tau0, tau_r) * self._res
+                counts_pulse         = count_rates_pulse * self._res
                 self._parent_counts += counts_pulse
             else:
-                counts_pulse         = self.norris_pulse(norm_A, t_delay, tau0, tau_r) * tau0
+                counts_pulse         = count_rates_pulse * tau0
                 self._parent_counts += counts_pulse
             
-            # Save a dictionary with the 4 parameters of the pulse:
-            #     A (norm_A)
-            #     t_p (t_delay) 
-            #     tau_0 (tau) 
-            #     tau_r (tau_r) 
-            # in Stern & Svensson, ApJ, 469: L109 (1996), pag 2
+            # Save a dictionary with the 4 parameters of the pulse, and the 
+            # total counts of the single pulse: 
+            #     A (norm_A), t_p (t_delay), tau_0 (tau), tau_r (tau_r), 
+            # in Stern & Svensson, ApJ, 469: L109 (1996), pag 2.
             self._lc_params.append(dict(norm=norm_A,
                                         t_delay=t_delay,
                                         tau=tau0,
@@ -397,11 +401,12 @@ class LC(object):
             print("---")
             print("Total number of pulses                :", self._n_pulses)
 
-        # lc directly from the avalanche;
-        # sum the lc of the parents (_sp_pulse) and the lc of the childs (_rates)
-        # self._raw_lc has units: cnt/s/cm2
-        self._raw_lc        = self._sp_pulse      + self._rates # WRONG
-        self._raw_lc_counts = self._parent_counts + self._child_counts
+        # To obtain the lc from the avalanche, we sum the lc of the parents 
+        # (self._parent_counts) with the lc of the child (self._child_counts). 
+        # `self._raw_lc`        has units: cnt/cm2/s
+        # `self._raw_lc_counts` has units: cnt/cm2
+        self._raw_lc        = self._sp_pulse      + self._rates        # count RATES (do not use this!)
+        self._raw_lc_counts = self._parent_counts + self._child_counts # COUNTS
 
         self._max_raw_pcr = self._raw_lc.max()
         # if (self._max_raw_pcr<1.e-12):
@@ -412,7 +417,15 @@ class LC(object):
         #     return 0
         # else:
         #     self.check=1
-        self.check = 1
+        self._max_raw_pc = self._raw_lc_counts.max()
+        if (self._max_raw_pc<1.e-12):
+            # check that we have generated a lc with non-zero values; otherwise,
+            # exit and set the flag 'self.check=0', which indicates that this
+            # lc has to be skipped
+            self.check=0
+            return 0
+        else:
+            self.check=1
 
         population = np.geomspace(self._min_photon_rate , self._max_photon_rate, 1000)
         weights    = list(map(lambda x: x**(-3/2), population))
@@ -426,20 +439,19 @@ class LC(object):
         # Here, contrary to what happens in the function `restore_lc()` and thus
         # in the method `plot_lc` of the object LC, the variable `_plot_lc`` 
         # contains the COUNTS (and not the count RATES!)
-        self._model    = self._raw_lc_counts                                   # model COUNTS 
-        self._modelbkg = self._model + (self._bg * self._res)                  # model COUNTS + constant bgk counts
-        self._plot_lc  = np.random.poisson( self._modelbkg ).astype('float')   # total COUNT (signal+bkg) with Poisson
+        self._model    = self._raw_lc_counts                                 # model COUNTS 
+        self._modelbkg = self._model + (self._bg * self._res)                # model COUNTS + constant bgk counts
+        self._plot_lc  = np.random.poisson(self._modelbkg).astype('float')   # total COUNTS (signal+bkg) with Poisson
         self._err_lc   = np.sqrt(self._plot_lc)
         if self._with_bg: 
             pass
-        else: # background-subtracted
+        else: # background-subtracted lc
             self._plot_lc  = self._plot_lc - (self._bg * self._res)            # remove the constant bkg level
 
         self._get_lc_properties()
 
         #for p in self._lc_params:
         #    p['norm'] *= 0
-
         norms         = np.empty((0,))
         t_delays      = np.empty((0,))
         taus          = np.empty((0,))
