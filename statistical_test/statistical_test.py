@@ -305,7 +305,7 @@ def evaluateDuration20(times, counts, t90=None, t90_frac=15, bin_time=None, filt
         except:
             #print('window_length =', window)
             print('Error in "evaluateDuration20()" during the "savgol_filter()"...')
-            exit()
+            sys.exit()
 
     threshold_level = 0.20
     c_max           = np.max(counts)

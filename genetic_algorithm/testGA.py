@@ -92,18 +92,18 @@ if instrument=='batse':
     t90_threshold = 2     # [s] --> used to select only _long_ GRBs
     t90_frac      = 15
     sn_threshold  = 70    # signal-to-noise ratio
-    bin_time      = 0.064 # [s] temporal bins for BATSE (its time resolution)
+    bin_time      = 0.064 # [s] temporal bins for BATSE (time resolution)
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
-elif instrument=='batse_old': # galileo
-    t_i           = 0     # [s]
-    t_f           = 150   # [s]
-    eff_area      = 3600  # effective area of instrument [cm2]
-    bg_level      = 10.67 # background level [cnt/cm2/s]
-    t90_threshold = 2     # [s] --> used to select only _long_ GRBs
-    t90_frac      = 15
-    sn_threshold  = 70    # signal-to-noise ratio
-    bin_time      = 0.064 # [s] temporal bins for BATSE (its time resolution)
-    test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
+# elif instrument=='batse_old': # galileo
+#     t_i           = 0     # [s]
+#     t_f           = 150   # [s]
+#     eff_area      = 3600  # effective area of instrument [cm2]
+#     bg_level      = 10.67 # background level [cnt/cm2/s]
+#     t90_threshold = 2     # [s] --> used to select only _long_ GRBs
+#     t90_frac      = 15
+#     sn_threshold  = 70    # signal-to-noise ratio
+#     bin_time      = 0.064 # [s] temporal bins for BATSE (time resolution)
+#     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
 elif instrument=='swift':
     t_i           = 0                # [s]
     t_f           = 150              # [s]
@@ -112,7 +112,7 @@ elif instrument=='swift':
     t90_threshold = 2                # [s] --> used to select only _long_ GRBs
     t90_frac      = 15
     sn_threshold  = 20               # signal-to-noise ratio
-    bin_time      = 0.064            # [s] temporal bins for Swift (its time resolution)
+    bin_time      = 0.064            # [s] temporal bins for Swift (time resolution)
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
 elif instrument=='sax':
     t_i           = 0               # [s]

@@ -53,9 +53,8 @@ low_exp  = 2
 high_exp = 6
 x_grid_batse = np.linspace(10**low_exp, 10**high_exp, 2000000)
 #x_grid_swift = np.linspace(10**low_exp, 10**high_exp, 2000000)
-peak_count_rate_batse_sample = generate_rand_from_pdf(pdf_peak_count_rates_batse, x_grid_batse, N=1000000) 
-#peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift, x_grid_swift, N=1000000) 
-
+peak_count_rate_batse_sample = generate_rand_from_pdf(pdf_peak_count_rates_batse, x_grid_batse, N=100000) 
+#peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift, x_grid_swift, N=100000) 
 
 
 #==============================================================================#
@@ -221,25 +220,24 @@ class LC(object):
         # Loop over the child pulses
         for i in range(mu_b):
             
-            # the time const of the child pulse (tau) is given by:
+            # The time const of the child pulse (tau) is given by:
             #     p4(log10(tau/tau1)) = 1/(delta2 - delta1)
             # tau1: time const of the parent pulse
             tau = tau1 * 10**(uniform(low=self._delta1, high=self._delta2))
             
-            # rise time
+            # Rise time
             tau_r = 0.5 * tau
             
-            # the time delay (delta_t) of child pulse (with respect to the parent
+            # The time delay (delta_t) of child pulse (with respect to the parent
             # pulse) is given by:
             #     p3(delta_t) = exp(-delta_t/(alpha*tau))/(alpha*tau) 
             delta_t = t_shift + exponential(scale=self._alpha*tau)
             
-            # the amplitude (A) of each pulse is given by:
+            # The amplitude (A) of each pulse is given by:
             #     p1(A) = 1, in [0, 1]
             norm = uniform(low=0.0, high=1.0)
-            # The amplitude (A) of each pulse is now sampled from the pdf of peak 
-            # count RATES of each instrument
-            norm_A = np.random.choice(self._peak_count_rate_sample, size=1)
+            # Each pulse composing the LB has an amplitude sampled in U[0,A_max].
+            norm_A = uniform(low=0.0, high=self._A_max)
             
             self._rates    += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
             self._n_pulses -= 1 # since we're calling `norris_pulse` twice the times, we're counting the same pulse twice
@@ -326,27 +324,33 @@ class LC(object):
         if self._verbose:
             print("Number of spontaneous (primary) pulses:", mu_s)
             print("--------------------------------------------------------------------------")
+
+        # The amplitude (A) of each pulse is  sampled from a uniform distribution, 
+        # from A_min=0 to the value A_max sampled from the pdf of peak count 
+        # RATES of each instrument. A_max is the same for a given GRB (and it is
+        # drawn here below), and each pulse composing the LB has an amplitude 
+        # sampled in U[0,A_max].
+        self._A_max = np.random.choice(self._peak_count_rate_sample, size=1)
         
         # For each of the mu_s _parent_ pulse, generate his child pulses
         for i in range(mu_s):
-            # the time constant of spontaneous pulses (decay time tau0) is given by: 
+            # The time constant of spontaneous pulses (decay time tau0) is given by: 
             #     p6(log10 tau0) = 1/(log10 tau_max - log10 tau_min)
             tau0 = 10**(uniform(low=np.log10(self._tau_max), high=np.log10(self._tau_min)))
 
-            # rise time
+            # Rise time
             tau_r = 0.5 * tau0
 
-            # the time delay (t_delay) of each spontaneous primary pulses with
+            # The time delay (t_delay) of each spontaneous primary pulses with
             # respect to a common invisible trigger event is given by:
             #     p7(t) = exp(-t/(alpha*tau0))/(alpha*tau0)
             t_delay = exponential(scale=self._alpha*tau0)
 
-            # the amplitude (A) of each pulse is given by:
+            # The amplitude (A) of each pulse is given by:
             #     p1(A) = 1, in [0, 1]
             norm = uniform(low=0.0, high=1) 
-            # The amplitude (A) of each pulse is now sampled from the pdf of peak 
-            # count RATES of each instrument
-            norm_A = np.random.choice(self._peak_count_rate_sample, size=1)
+            # Each pulse composing the LB has an amplitude sampled in U[0,A_max].
+            norm_A = uniform(low=0.0, high=self._A_max)
             
             if self._verbose:
                 print("Spontaneous pulse amplitude: {:0.3f}".format(norm_A))
