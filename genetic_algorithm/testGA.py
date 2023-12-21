@@ -16,9 +16,9 @@ if sys.getrecursionlimit()<rec_lim:
     sys.setrecursionlimit(rec_lim)
 
 ### Suppress some warnings
-import warnings
-warnings.filterwarnings("ignore", message="p-value capped")
-warnings.filterwarnings("ignore", message="p-value floored")
+# import warnings
+# warnings.filterwarnings("ignore", message="p-value capped")
+# warnings.filterwarnings("ignore", message="p-value floored")
 
 ### Plots
 #import seaborn as sns
@@ -42,6 +42,7 @@ print_time=True
 #user='LB'
 #user='AF'
 user='bach'
+#user='pleiadi'
 if user=='bach':
     # library paths
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
@@ -50,6 +51,14 @@ if user=='bach':
     batse_path = '/astrodata/guidorzi/CGRO_BATSE/'
     swift_path = '/astrodata/guidorzi/Swift_BAT/'
     sax_path   = '/astrodata/guidorzi/BeppoSAX_GRBM/'
+elif user=='pleiadi':
+    # library paths
+    sys.path.append('/beegfs/mbulla/genetic_grbs/genetic/lc_pulse_avalanche/statistical_test')
+    sys.path.append('/beegfs/mbulla/genetic_grbs/genetic/lc_pulse_avalanche/lc_pulse_avalanche')
+    # real data
+    batse_path = '/beegfs/mbulla/genetic_grbs/CGRO_BATSE/'
+    swift_path = '/beegfs/mbulla/genetic_grbs/Swift_BAT/'
+    sax_path   = '/beegfs/mbulla/genetic_grbs/BeppoSAX_GRBM/'
 elif user=='LB':
     # library paths
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/statistical_test')
@@ -131,18 +140,6 @@ else:
 
 #------------------------------------------------------------------------------#
 
-# parent_selection_type = "sss"
-# crossover_probability = 0.5   # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
-# initial_population    = None  # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
-# mutation_type         = "random"
-# crossover_type        = "single_point"
-# num_generations       = 20                     # Number of generations.
-# sol_per_pop           = 500                    # Number of solutions in the population (i.e., number of different sets per generation).
-# num_parents_mating    = int(0.20*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
-# keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
-# keep_elitism          = int(sol_per_pop*0.005) # keep in the next generation the best N solution of the current generation
-# mutation_probability  = 0.03                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
-
 parent_selection_type = "tournament" 
 crossover_probability = 1                      # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
 initial_population    = None                   # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
@@ -162,6 +159,8 @@ test_pulse_distr      = False                  # add a fifth metric regarding th
 parallel_processing  = ["process", 50]         # USE THIS ONE!  
 #parallel_processing = ["thread", 50]       
 #parallel_processing = None
+
+filename_model = 'geneticGRB'
 
 # We impose constraints on the range of values that the 7 parameter can assume
 range_mu      = {"low": 0.80,            "high": 1.7}
@@ -298,7 +297,7 @@ duration_distr_real = compute_kde_log_duration(duration_list=duration_real)
 ################################################################################
 
 def fitness_func(solution, solution_idx=None):
-    global loss_list
+    # global loss_list
     #--------------------------------------------------------------------------#
     # Generate the GRBs
     #--------------------------------------------------------------------------#
@@ -441,48 +440,62 @@ def on_generation(ga_instance):
 
 if __name__ == '__main__':
 
-    ga_GRB = pygad.GA(num_generations=num_generations,
-                      num_parents_mating=num_parents_mating,
-                      sol_per_pop=sol_per_pop,
-                      num_genes=num_genes,
-                      gene_type=float,
-                      initial_population=initial_population,
-                      on_generation=on_generation,
-                      ### fitness function:
-                      fitness_func=fitness_func,
-                      ### parent selection:
-                      parent_selection_type=parent_selection_type,
-                      keep_parents=keep_parents,           
-                      keep_elitism=keep_elitism,           
-                      ### crossover:
-                      crossover_probability=crossover_probability,
-                      crossover_type=crossover_type,
-                      ### mutation:
-                      mutation_type=mutation_type,
-                      mutation_probability=mutation_probability,     
-                      ### set range of parameters:
-                      gene_space=range_constraints,
-                      ### other stuff:
-                      save_best_solutions=True,
-                      save_solutions=True,
-                      parallel_processing=parallel_processing,
-                      random_seed=random_seed)
+    # print(f"Arguments count: {len(sys.argv)}")
+    # for i, arg in enumerate(sys.argv):
+    #     print(f"Argument {i:>6}: {arg}")
+
+    if len(sys.argv)==1: # python testGA.py
+        print(f"\n[INFO] Running '{sys.argv[0]}'...\n")
+        MODE = 'first'
+    elif '-c' in sys.argv: # python testGA.py -c
+        print(f"\n[INFO] Resuming '{sys.argv[0]}' from checkpoint...\n")
+        MODE = 'resume'
+    else:
+        raise ValueError(f"Unrecognized command line argument(s): {sys.argv[1:]}")
+    
+    if MODE=='first':
+        ga_GRB = pygad.GA(num_generations=num_generations,
+                          num_parents_mating=num_parents_mating,
+                          sol_per_pop=sol_per_pop,
+                          num_genes=num_genes,
+                          gene_type=float,
+                          initial_population=initial_population,
+                          on_generation=on_generation,
+                          ### fitness function:
+                          fitness_func=fitness_func,
+                          ### parent selection:
+                          parent_selection_type=parent_selection_type,
+                          keep_parents=keep_parents,           
+                          keep_elitism=keep_elitism,           
+                          ### crossover:
+                          crossover_probability=crossover_probability,
+                          crossover_type=crossover_type,
+                          ### mutation:
+                          mutation_type=mutation_type,
+                          mutation_probability=mutation_probability,     
+                          ### set range of parameters:
+                          gene_space=range_constraints,
+                          ### other stuff:
+                          save_best_solutions=True,
+                          save_solutions=True,
+                          parallel_processing=parallel_processing,
+                          random_seed=random_seed)
+    
+    elif MODE=='resume':
+        # Load the saved GA instance
+        ga_GRB = pygad.load(filename=filename_model)
 
     # print summary of the GA
-    ga_GRB.summary()
-
-
+    ga_GRB.summary() 
+    
     ############################################################################
     # RUN THE GENETIC ALGORITHM
     ############################################################################
 
     init_run_time = time.perf_counter()
     #print('Starting the GA...\n')
-
-    # Run the GA to optimize the parameters of the function.
     ga_GRB.run()
     #ga_GRB.plot_fitness()
-    
     end_run_time = time.perf_counter()
 
     print('\n')
@@ -497,12 +510,7 @@ if __name__ == '__main__':
 
     ### Save the GA instance
     if save_model:
-        filename_model = 'geneticGRB'
         ga_GRB.save(filename=filename_model)
-
-    ### Load the saved GA instance
-    # loaded_ga_instance = pygad.load(filename=filename)
-    # loaded_ga_instance.plot_fitness()
 
 
     ############################################################################
