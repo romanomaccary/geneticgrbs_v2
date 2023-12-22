@@ -2,7 +2,7 @@
 # IMPORT LIBRARIES
 ################################################################################
 
-import os
+#import os
 import sys
 import time
 import pygad
@@ -156,10 +156,12 @@ N_grb                 = 2000                   # number of simulated GRBs to pro
 test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
 
 # Options for parallelization:
-parallel_processing  = ["process", 50]         # USE THIS ONE!  
-#parallel_processing = ["thread", 50]       
+n_processes = 50 # int(os.environ['OMP_NUM_THREADS'])
+parallel_processing  = ["process", n_processes]         # USE THIS ONE!  
+#parallel_processing = ["thread", n_processes]       
 #parallel_processing = None
 
+# Name of the pkl file where to export the GA instance at the end of the run
 filename_model = 'geneticGRB'
 
 # We impose constraints on the range of values that the 7 parameter can assume
@@ -297,7 +299,6 @@ duration_distr_real = compute_kde_log_duration(duration_list=duration_real)
 ################################################################################
 
 def fitness_func(solution, solution_idx=None):
-    # global loss_list
     #--------------------------------------------------------------------------#
     # Generate the GRBs
     #--------------------------------------------------------------------------#
@@ -413,13 +414,13 @@ def on_generation(ga_instance):
     global last_fitness, last_loss, current_fitness, current_loss
     print('--------------------------------------------------------------------------------')
     print("Generation     = {generation}".format(generation=ga_instance.generations_completed))
-    current_fitness = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1]
-    current_loss    = current_fitness**(-1)                
+    current_fitness       = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1]
+    current_loss          = current_fitness**(-1)                
     print("Best Loss      = {solution_loss}".format(solution_loss=current_loss))
     print("Best Fitness   = {fitness}".format(fitness=current_fitness))
     print("Fitness Change = {change}".format(change=current_fitness-last_fitness))
-    last_fitness = current_fitness
-    last_loss    = current_loss
+    last_fitness          = current_fitness
+    last_loss             = current_loss
     solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
     # Print the best solution of the current generation on TERMINAL
     print("Parameters of the best solution in the current generation:")
@@ -485,15 +486,101 @@ if __name__ == '__main__':
         # Load the saved GA instance
         ga_GRB = pygad.load(filename=filename_model)
 
+        # Reload the fitness function (otherwise it will raise an error, I don't know why...)
+        def fitness_func_reloaded(solution, solution_idx=None):
+            # global loss_list
+            #--------------------------------------------------------------------------#
+            # Generate the GRBs
+            #--------------------------------------------------------------------------#
+            grb_list_sim = generate_GRBs(# number of simulated GRBs to produce:
+                                         N_grb=N_grb,
+                                         # 7 parameters:
+                                         mu=solution[0],
+                                         mu0=solution[1],
+                                         alpha=solution[2],
+                                         delta1=solution[3],
+                                         delta2=solution[4],
+                                         tau_min=10**solution[5],  # sampled uniformly in log space
+                                         tau_max=solution[6],
+                                         # instrument parameters:
+                                         instrument=instrument,
+                                         bin_time=bin_time,
+                                         eff_area=eff_area,
+                                         bg_level=bg_level,
+                                         # constraint parameters:
+                                         sn_threshold=sn_threshold,
+                                         t90_threshold=t90_threshold,
+                                         t90_frac=t90_frac,
+                                         t_f=t_f,
+                                         filter=True,
+                                         # other parameters:
+                                         export_files=False,
+                                         n_cut=2500,
+                                         with_bg=False,
+                                         test_pulse_distr=test_pulse_distr)
+            if test_pulse_distr:
+                n_of_pulses_sim = [ grb.num_of_sig_pulses for grb in grb_list_sim ]
+            else:
+                n_of_pulses_sim = None
+
+            #--------------------------------------------------------------------------#
+            # Compute average quantities of simulated data needed for the loss function
+            #--------------------------------------------------------------------------#
+            ### TEST 1&2: Average Peak-Aligned Profiles
+            averaged_fluxes_sim, \
+            averaged_fluxes_cube_sim, \
+            averaged_fluxes_rms_sim = compute_average_quantities(grb_list=grb_list_sim,
+                                                                 t_f=t_f,
+                                                                 bin_time=bin_time,
+                                                                 filter=True)
+            ### TEST 3: Autocorrelation
+            # For the REAL LCs we use the Link+93 formula to compute the autocorrelation,
+            # whereas for the simulated LCs instead we use the scipy.signal.correlate
+            # function on the model curve, i.e., the one before adding the Poisson noise.
+            steps_sim, acf_sim = compute_autocorrelation(grb_list=grb_list_sim,
+                                                         N_lim=N_lim,
+                                                         t_max=t_f,
+                                                         bin_time=bin_time,
+                                                         mode='scipy',
+                                                         compute_rms=False)
+            ### TEST 4: Duration
+            #duration_sim = [ evaluateDuration20(times=grb.times, 
+            #                                    counts=grb.counts,
+            #                                    filter=True,
+            #                                    t90=grb.t90,
+            #                                    bin_time=bin_time)[0] for grb in grb_list_sim ]
+            duration_sim       = np.array( [ grb.t20 for grb in grb_list_sim ] )
+            duration_distr_sim = compute_kde_log_duration(duration_list=duration_sim)
+
+            #--------------------------------------------------------------------------#
+            # Compute loss
+            #--------------------------------------------------------------------------#
+            l2_loss = compute_loss(averaged_fluxes=averaged_fluxes_real,
+                                   averaged_fluxes_sim=averaged_fluxes_sim,
+                                   averaged_fluxes_cube=averaged_fluxes_cube_real,
+                                   averaged_fluxes_cube_sim=averaged_fluxes_cube_sim,
+                                   acf=acf_real,
+                                   acf_sim=acf_sim,
+                                   duration=duration_distr_real,
+                                   duration_sim=duration_distr_sim,
+                                   n_of_pulses=n_of_pulses_real,
+                                   n_of_pulses_sim=n_of_pulses_sim,
+                                   test_pulse_distr=test_pulse_distr)
+            fitness = 1.0 / (l2_loss + 1.e-9)
+            return fitness
+
+
+        ga_GRB.fitness_func = fitness_func_reloaded
+
     # print summary of the GA
     ga_GRB.summary() 
-    
+
     ############################################################################
     # RUN THE GENETIC ALGORITHM
     ############################################################################
 
     init_run_time = time.perf_counter()
-    #print('Starting the GA...\n')
+    print('\nStarting the GA...\n')
     ga_GRB.run()
     #ga_GRB.plot_fitness()
     end_run_time = time.perf_counter()
@@ -521,8 +608,7 @@ if __name__ == '__main__':
     # Print on terminal
     #--------------------------------------------------------------------------#
     solution, solution_fitness, solution_idx = ga_GRB.best_solution(ga_GRB.last_generation_fitness)
-    print('\n')
-    print('################################################################################')
+    print('\n################################################################################')
     print('################################################################################')
     print("* Parameters of the BEST solution:")
     print("    - mu      = {solution}".format(solution=solution[0]))
@@ -623,47 +709,96 @@ if __name__ == '__main__':
     # EXPORT DATA FOR THE PLOT 1
     ############################################################################
 
-    best_loss = np.array(ga_GRB.best_solutions_fitness)**(-1)
-    loss_list = np.array(ga_GRB.solutions_fitness)**(-1)
-    avg_loss  = np.zeros(num_generations+1)
-    std_loss  = np.zeros(num_generations+1)
-    for i in range(num_generations+1):
-        avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
-        std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
-    #print('best_loss[-1] =', best_loss[-1])
+    if MODE=='first':
+        best_loss = np.array(ga_GRB.best_solutions_fitness)**(-1)
+        loss_list = np.array(ga_GRB.solutions_fitness)**(-1)
+        avg_loss  = np.zeros(len(best_loss))
+        std_loss  = np.zeros(len(best_loss))
+        for i in range(len(best_loss)):
+            avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
+            std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
+        #print('best_loss[-1] =', best_loss[-1])
 
-    datafile = './datafile.txt'
-    file = open(datafile, 'w')
-    file.write('# generation\t best_loss\t avg_loss\t std_loss\t std_loss/sqrt(sol_per_pop)\n')
-    for i in range(num_generations+1):
-        file.write('{0} {1} {2} {3} {4}\n'.format(i, best_loss[i], avg_loss[i], std_loss[i], std_loss[i]/np.sqrt(sol_per_pop)))
-    file.close()
+        datafile = './datafile.txt'
+        file = open(datafile, 'w')
+        file.write('# generation\t best_loss\t avg_loss\t std_loss\t std_loss/sqrt(sol_per_pop)\n')
+        for i in range(len(best_loss)):
+            file.write('{0} {1} {2} {3} {4}\n'.format(i, best_loss[i], avg_loss[i], std_loss[i], std_loss[i]/np.sqrt(sol_per_pop)))
+        file.close()
 
+    elif MODE=='resume':
+        best_loss = np.array(ga_GRB.best_solutions_fitness)**(-1)
+        loss_list = np.array(ga_GRB.solutions_fitness)**(-1)
+        avg_loss  = np.zeros(len(best_loss))
+        std_loss  = np.zeros(len(best_loss))
+        best_loss_print = []
+        avg_loss_print = []
+        std_loss_print = []
+        for i in range(len(best_loss)):
+            avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
+            std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
+        #print('best_loss[-1] =', best_loss[-1])
+        for i in range(len(best_loss)):
+            if i%(num_generations+1)==0 and i!=0:
+                pass
+            else:
+                best_loss_print.append(best_loss[i])
+                avg_loss_print.append(avg_loss[i])
+                std_loss_print.append(std_loss[i])              
+
+        datafile = './datafile.txt'
+        file = open(datafile, 'w')
+        file.write('# generation\t best_loss\t avg_loss\t std_loss\t std_loss/sqrt(sol_per_pop)\n')
+        for i in range(len(best_loss_print)):
+            file.write('{0} {1} {2} {3} {4}\n'.format(i, best_loss_print[i], avg_loss_print[i], std_loss_print[i], std_loss_print[i]/np.sqrt(sol_per_pop)))
+        file.close()
 
     ############################################################################
     # EXPORT PLOT 1
     ############################################################################
 
     if save_plot:
-        plt.plot(best_loss, ls='-', lw=2, c='b')
-        #plt.yscale('log')
-        plt.xlabel(r'Generation')
-        plt.ylabel(r'Best Loss')
-        plt.savefig('fig01.pdf')
-        plt.clf()
+        if MODE=='first':
+            plt.plot(best_loss, ls='-', lw=2, c='b')
+            #plt.yscale('log')
+            plt.xlabel(r'Generation')
+            plt.ylabel(r'Best Loss')
+            plt.savefig('fig01.pdf')
+            plt.clf()
 
-        plt.errorbar(np.arange(num_generations+1), avg_loss, yerr=std_loss/np.sqrt(sol_per_pop), ls='-', lw=2, c='b')
-        #plt.yscale('log')
-        plt.xlabel(r'Generation')
-        plt.ylabel(r'Average Loss')
-        plt.savefig('fig02.pdf')
-        plt.clf()
+            plt.errorbar(np.arange(len(best_loss)), avg_loss, yerr=std_loss/np.sqrt(sol_per_pop), ls='-', lw=2, c='b')
+            #plt.yscale('log')
+            plt.xlabel(r'Generation')
+            plt.ylabel(r'Average Loss')
+            plt.savefig('fig02.pdf')
+            plt.clf()
 
-        plt.plot(std_loss, ls='-', lw=2, c='b')
-        plt.xlabel(r'Generation')
-        plt.ylabel(r'Standard Deviation of the loss')
-        plt.savefig('fig03.pdf')
-        plt.clf()
+            plt.plot(std_loss, ls='-', lw=2, c='b')
+            plt.xlabel(r'Generation')
+            plt.ylabel(r'Standard Deviation of the loss')
+            plt.savefig('fig03.pdf')
+            plt.clf()
+        
+        elif MODE=='resume':
+            plt.plot(np.array(best_loss_print), ls='-', lw=2, c='b')
+            #plt.yscale('log')
+            plt.xlabel(r'Generation')
+            plt.ylabel(r'Best Loss')
+            plt.savefig('fig01.pdf')
+            plt.clf()
+
+            plt.errorbar(np.arange(len(best_loss_print)), np.array(avg_loss_print), yerr=np.array(std_loss_print)/np.sqrt(sol_per_pop), ls='-', lw=2, c='b')
+            #plt.yscale('log')
+            plt.xlabel(r'Generation')
+            plt.ylabel(r'Average Loss')
+            plt.savefig('fig02.pdf')
+            plt.clf()
+
+            plt.plot(np.array(std_loss_print), ls='-', lw=2, c='b')
+            plt.xlabel(r'Generation')
+            plt.ylabel(r'Standard Deviation of the loss')
+            plt.savefig('fig03.pdf')
+            plt.clf()
     
 
     ############################################################################
@@ -701,8 +836,7 @@ if __name__ == '__main__':
     ############################################################################
     ############################################################################
 
-    print('\n\n')
+    print('\n')
     print('################################################################################')
     print('END')
     print('################################################################################')
-    print('\n\n')
