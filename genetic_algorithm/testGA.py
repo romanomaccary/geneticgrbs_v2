@@ -96,12 +96,12 @@ instrument = 'batse'
 if instrument=='batse':
     t_i           = 0     # [s]
     t_f           = 150   # [s]
-    eff_area      = 2025  # effective area of instrument [cm2]
-    bg_level      = 3.5   # background level [cnt/cm2/s]
-    t90_threshold = 2     # [s] --> used to select only _long_ GRBs
+    eff_area      = instr_batse['eff_area']      # 2025  # effective area of instrument [cm2]
+    bg_level      = instr_batse['bg_level']      # 2.8   # background level [cnt/cm2/s]
+    t90_threshold = instr_batse['t90_threshold'] # 2     # [s] --> used to select only _long_ GRBs
     t90_frac      = 15
-    sn_threshold  = 70    # signal-to-noise ratio
-    bin_time      = 0.064 # [s] temporal bins for BATSE (time resolution)
+    sn_threshold  = instr_batse['sn_threshold']  # 70    # signal-to-noise ratio
+    bin_time      = instr_batse['res']           # 0.064 # [s] temporal bins for BATSE (time resolution)
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
 # elif instrument=='batse_old': # galileo
 #     t_i           = 0     # [s]
@@ -156,7 +156,8 @@ N_grb                 = 2000                   # number of simulated GRBs to pro
 test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
 
 # Options for parallelization:
-n_processes = 50 # int(os.environ['OMP_NUM_THREADS'])
+n_processes = 50 
+# n_processes = int(os.environ['OMP_NUM_THREADS'])
 parallel_processing  = ["process", n_processes]         # USE THIS ONE!  
 #parallel_processing = ["thread", n_processes]       
 #parallel_processing = None
@@ -167,7 +168,7 @@ filename_model = 'geneticGRB'
 # We impose constraints on the range of values that the 7 parameter can assume
 range_mu      = {"low": 0.80,            "high": 1.7}
 range_mu0     = {"low": 0.80,            "high": 1.7} 
-range_alpha   = {"low": 1,               "high": 10} 
+range_alpha   = {"low": 1,               "high": 15} 
 range_delta1  = {"low": -1.5,            "high": -0.30-1.e-6} 
 range_delta2  = {"low": 0,               "high": 0.30}
 range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)} # sample tau_min uniformly in log space
@@ -225,9 +226,13 @@ if instrument=='batse':
     reb_factor          = np.inf
     peak_sn_level       = 10
     mepsa_out_file_list = [ batse_path+'PEAKS_ALL/peaks_'+el+'_all_bs_2.txt' for el in mepsa_out_file_list_temp ]
-    n_of_pulses_real    = readMEPSAres(mepsa_out_file_list=mepsa_out_file_list, # mepsa results on BATSE data
-                                       maximum_reb_factor=reb_factor, 
-                                       sn_level=peak_sn_level)
+    if test_pulse_distr:
+        n_of_pulses_real = readMEPSAres(mepsa_out_file_list=mepsa_out_file_list, # mepsa results on BATSE data
+                                        maximum_reb_factor=reb_factor, 
+                                        sn_level=peak_sn_level)
+    else:
+        n_of_pulses_real = None
+
 ### Load the Swift GRBs
 elif instrument=='swift': 
     # load all data
@@ -239,7 +244,8 @@ elif instrument=='swift':
                                       t90_frac=t90_frac, 
                                       sn_threshold=sn_threshold, 
                                       t_f=t_f)
-    n_of_pulses_real=None
+    n_of_pulses_real = None
+
 ### Load the BeppoSAX GRBs
 elif instrument=='sax': 
     # load all (HR) data
@@ -251,7 +257,7 @@ elif instrument=='sax':
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold, 
                                       t_f=t_f)
-    n_of_pulses_real=None
+    n_of_pulses_real = None
 else:
     raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
@@ -440,6 +446,10 @@ def on_generation(ga_instance):
 ################################################################################
 
 if __name__ == '__main__':
+    # Usage: 
+    #     - to run it the first time, type in the terminal: `python testGA.py`
+    #     - to continue the run, type in the terminal:      `python testGA.py -c`
+
 
     # print(f"Arguments count: {len(sys.argv)}")
     # for i, arg in enumerate(sys.argv):

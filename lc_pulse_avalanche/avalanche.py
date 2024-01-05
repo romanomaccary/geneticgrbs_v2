@@ -26,7 +26,7 @@ SEED=None
 #==============================================================================#
 #==============================================================================#
 
-# see `statistical_tests.ipybn`
+# see `statistical_tests.ipynb`
 def generate_rand_from_pdf(pdf, x_grid, N=1):
     """
     Generates `N` random numbers from a given probability distribution function
@@ -152,7 +152,7 @@ class LC(object):
         Computes a single pulse according to: 
             Norris et al., ApJ, 459, 393 (1996).
         
-        :t: times (lc x-axis), vector
+        :norm: amplitude of the pulse, scalar
         :tp: pulse peak time, scalar
         :tau: pulse width (decay time), scalar
         :tau_r: rise time, scalar
@@ -165,7 +165,7 @@ class LC(object):
         if self._verbose:
             print("Generating a new pulse with tau = {:0.3f}".format(tau))
 
-        t   = self._times 
+        t   = self._times # times (lc x-axis)
         _tp = np.ones(len(t))*tp
         
         if tau_r == 0 or tau == 0: 
@@ -235,12 +235,12 @@ class LC(object):
             
             # The amplitude (A) of each pulse is given by:
             #     p1(A) = 1, in [0, 1]
-            norm = uniform(low=0.0, high=1.0)
-            # Each pulse composing the LB has an amplitude sampled in U[0,A_max].
+            # norm = uniform(low=0.0, high=1.0)
+            # Each pulse (count-rate) composing the LC has an amplitude sampled in U[0,A_max].
             norm_A = uniform(low=0.0, high=self._A_max)
             
-            self._rates    += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
-            self._n_pulses -= 1 # since we're calling `norris_pulse` twice the times, we're counting the same pulse twice
+            # self._rates    += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
+            # self._n_pulses -= 1 # since we're calling `norris_pulse` twice the times, we're counting the same pulse twice
             # LB: this is not correct! Indeed, when tau is smaller than the bin_time,
             # then we cannot obtain the counts just by multiplying the count rate
             # times the bin time. In this case, we should integrate the count rate
@@ -330,7 +330,7 @@ class LC(object):
         # RATES of each instrument. A_max is the same for a given GRB (and it is
         # drawn here below), and each pulse composing the LB has an amplitude 
         # sampled in U[0,A_max].
-        self._A_max = np.random.choice(self._peak_count_rate_sample, size=1)
+        self._A_max = np.random.choice(self._peak_count_rate_sample, size=1)[0]
         
         # For each of the mu_s _parent_ pulse, generate his child pulses
         for i in range(mu_s):
@@ -348,7 +348,7 @@ class LC(object):
 
             # The amplitude (A) of each pulse is given by:
             #     p1(A) = 1, in [0, 1]
-            norm = uniform(low=0.0, high=1) 
+            # norm = uniform(low=0.0, high=1) 
             # Each pulse composing the LB has an amplitude sampled in U[0,A_max].
             norm_A = uniform(low=0.0, high=self._A_max)
             
@@ -360,8 +360,8 @@ class LC(object):
                 print("--------------------------------------------------------------------------")
             
             # Generate the pulse (count rates), and sum it into the array 'self._sp_pulse'
-            self._sp_pulse += self.norris_pulse(norm, t_delay, tau0, tau_r)  # WRONG
-            self._n_pulses -= 1 # since we're calling `norris_pulse` twice the times, we're counting the same pulse twice
+            # self._sp_pulse += self.norris_pulse(norm, t_delay, tau0, tau_r)  # WRONG
+            # self._n_pulses -= 1 # since we're calling `norris_pulse` twice the times, we're counting the same pulse twice
             # LB: this is not correct! Indeed, when tau is smaller than the bin_time,
             # then we cannot obtain the counts just by multiplying the count rate
             # times the bin time. In this case, we should integrate the count rate
@@ -389,7 +389,7 @@ class LC(object):
                                         tau=tau0,
                                         tau_r=tau_r,
                                         counts_pulse=np.sum(counts_pulse)))
-            
+
             # generate the avalanche of child pulses.
             # it takes as input the tau of the parent pulse (tau0) and the time
             # delay of the parent pulse (t_delay). 
@@ -409,10 +409,10 @@ class LC(object):
         # (self._parent_counts) with the lc of the child (self._child_counts). 
         # `self._raw_lc`        has units: cnt/cm2/s
         # `self._raw_lc_counts` has units: cnt/cm2
-        self._raw_lc        = self._sp_pulse      + self._rates        # count RATES (do not use this!)
+        # self._raw_lc        = self._sp_pulse      + self._rates        # count RATES (do not use this!)
         self._raw_lc_counts = self._parent_counts + self._child_counts # COUNTS
 
-        self._max_raw_pcr = self._raw_lc.max()
+        # self._max_raw_pcr = self._raw_lc.max()
         # if (self._max_raw_pcr<1.e-12):
         #     # check that we have generated a lc with non-zero values; otherwise,
         #     # exit and set the flag 'self.check=0', which indicates that this
@@ -431,28 +431,29 @@ class LC(object):
         else:
             self.check=1
 
-        population = np.geomspace(self._min_photon_rate , self._max_photon_rate, 1000)
-        weights    = list(map(lambda x: x**(-3/2), population))
-        weights    = weights / np.sum(weights)
-        ampl       = np.random.choice(population, p=weights) / self._max_raw_pcr
-        self._ampl = ampl
-
-        self._peak_value = self._max_raw_pcr * self._ampl
+        # population = np.geomspace(self._min_photon_rate , self._max_photon_rate, 1000)
+        # weights    = list(map(lambda x: x**(-3/2), population))
+        # weights    = weights / np.sum(weights)
+        # ampl       = np.random.choice(population, p=weights) / self._max_raw_pcr
+        # self._ampl = ampl
+        # self._peak_value = self._max_raw_pcr * self._ampl
 
         # lc from avalanche scaled + Poissonian bg added
-        # Here, contrary to what happens in the function `restore_lc()` and thus
-        # in the method `plot_lc` of the object LC, the variable `_plot_lc`` 
-        # contains the COUNTS (and not the count RATES!)
-        self._model    = self._raw_lc_counts                                 # model COUNTS 
-        self._modelbkg = self._model + (self._bg * self._res)                # model COUNTS + constant bgk counts
-        self._plot_lc  = np.random.poisson(self._modelbkg).astype('float')   # total COUNTS (signal+bkg) with Poisson
-        self._err_lc   = np.sqrt(self._plot_lc)
-        if self._with_bg: 
+        # Here (as in the method `plot_lc` of the object LC), the variable 
+        # `_plot_lc` contains the COUNTS (and not the count RATES!)
+        self._model           = self._raw_lc_counts                                 # model COUNTS 
+        self._modelbkg        = self._model + (self._bg * self._res)                # model COUNTS + constant bgk counts
+        self._plot_lc         = np.random.poisson(self._modelbkg).astype('float')   # total COUNTS (signal+bkg) with Poisson
+        self._plot_lc_with_bg = self._plot_lc  
+        self._err_lc          = np.sqrt(self._plot_lc)
+        if self._with_bg: # lc with background
             pass
         else: # background-subtracted lc
-            self._plot_lc  = self._plot_lc - (self._bg * self._res)            # remove the constant bkg level
+            self._plot_lc = self._plot_lc - (self._bg * self._res)   # total COUNTS (removed the constant bkg level)
 
         self._get_lc_properties()
+
+        assert self._n_pulses==len(self._lc_params)
 
         #for p in self._lc_params:
         #    p['norm'] *= 0
@@ -460,7 +461,7 @@ class LC(object):
         t_delays      = np.empty((0,))
         taus          = np.empty((0,))
         tau_rs        = np.empty((0,))
-        counts_pulses = np.empty((0,))
+        #counts_pulses = np.empty((0,))
 
         if return_array:
             for p in self._lc_params:
@@ -477,26 +478,30 @@ class LC(object):
 
     #--------------------------------------------------------------------------#
 
-    def plot_lc(self, rescale=True, save=True, name="./plot_lc.pdf", show_duration=False):
+    def plot_lc(self, rescale=True, save=False, name="./plot_lc.pdf", show_duration=False):
         """
-        Plots GRB light curve
+        Plots GRB light curve (COUNTS vs time)
         
         :rescale: to rescale the x-axis plotting only lc around T100
         :save: to save the plot to file
         :name: filename (including path) to save the plot
         """
-        
-        plt.xlabel('T-T0 (s)')
-        plt.ylabel('Count rate (cnt/s)')
 
-        self._restore_lc()
+        plt.figure(figsize=(9,6))
+        plt.xlabel(r'$T-T_0$ [s]', size=16)
+        plt.ylabel('Counts', size=16)
+        plt.xticks(fontsize=13)
+        plt.yticks(fontsize=13)
+
+        #self._restore_lc()
         
-        plt.step(self._times, self._plot_lc, where='post')
+        plt.step(self._times, self._plot_lc, where='post', color='k')
 
         if self._with_bg:
             plt.plot(np.linspace(self._t_min, self._t_max, num=2, endpoint=True), [self._bg, self._bg], 'r--')
         else:
-            pass#plt.plot(np.linspace(self._t_min, self._t_max, num=2, endpoint=True), [       0,        0], 'r--')
+            pass
+            #plt.plot(np.linspace(self._t_min, self._t_max, num=2, endpoint=True), [       0,        0], 'r--')
         
         if rescale:
             t_i = max(self._t_start - 0.5*self._t100, self._t_min)
@@ -504,10 +509,11 @@ class LC(object):
             plt.xlim([t_i, t_f])
             
         if show_duration:
-                plt.axvline(x=self._t_start, color='blue')
-                plt.axvline(x=self._t_stop,  color='blue')
-                plt.axvline(x=self._t90_i,   color='red')
-                plt.axvline(x=self._t90_f,   color='red')
+                plt.axvline(x=self._t_start, alpha=0.7, color='blue', label=r'$T_{100}$')
+                plt.axvline(x=self._t_stop,  alpha=0.7, color='blue')
+                plt.axvline(x=self._t90_i,   alpha=0.7, color='red',  label=r'$T_{90}$')
+                plt.axvline(x=self._t90_f,   alpha=0.7, color='red')
+                plt.legend(prop={'size': 16})
         
         if save:
             plt.savefig(name)
@@ -521,7 +527,9 @@ class LC(object):
         Calculates T90 and T100 durations along with their start and stop times, 
         total number of counts per T100, mean, max, and background count rates.
         """
-        
+#   #--------------------------------------------------------------------------#
+#   # V1
+#   #--------------------------------------------------------------------------#
 #        self._aux_index = np.where(self._raw_lc>self._raw_lc.max()*1e-4)
 #        #self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
 #        self._max_snr   = ((self._plot_lc/self._res - self._bg) * self._res / (self._bg * self._res)**0.5).max()
@@ -537,25 +545,25 @@ class LC(object):
 #        self._total_cnts = np.sum(self._aux_lc - self._bg*np.ones(len(self._aux_lc))) * self._res
 #                
 #        try:
+#            # compute T90_i
 #            sum_cnt = 0
 #            i = 0
 #            while sum_cnt < 0.05 * self._total_cnts:
 #                sum_cnt += (self._aux_lc[i] - self._bg) * self._res
 #                i += 1
-#                
 #            self._t90_i = self._aux_times[i]
 #                                     
+#            # compute T90_f
 #            sum_cnt = 0
 #            j = -1
 #            while sum_cnt < 0.05 * self._total_cnts:
 #                sum_cnt += (self._aux_lc[j] - self._bg) * self._res
 #                j += -1
-#
 #            self._t90_f = self._aux_times[j]      
 #
+#            # Define T90 as the difference between T90_f and T90_i
 #            self._t90 = self._t90_f - self._t90_i            
 #            self._t90_cnts = np.sum(self._aux_lc[i:j+1] - self._bg) * self._res
-#            
 #            assert self._t90_i < self._t90_f
 #            
 #        except:
@@ -564,50 +572,109 @@ class LC(object):
 #            self._t90_f    = self._t_stop
 #            self._t90_cnts = self._total_cnts
            
-    #--------------------------------------------------------------------------#
+#    #--------------------------------------------------------------------------#
+#    # V2
+#    #--------------------------------------------------------------------------#
+#        # LB: I think that `self._plot_lc` should be the background-subtracted
+#        self._aux_index = np.where(self._plot_lc>self._plot_lc.max()*1e-4)
+#        #self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
+#        self._max_snr   = ((self._plot_lc_with_bg/self._res - self._bg) * self._res / (self._bg * self._res)**0.5).max()
+#        self._aux_times = self._times[self._aux_index[0][0]:self._aux_index[0][-1]] # +1 in the index
+#        self._aux_lc    = self._plot_lc_with_bg[self._aux_index[0][0]:self._aux_index[0][-1]] / self._res
+#
+#        self._t_start = self._times[self._aux_index[0][0]]
+#        #self._t_stop = self._times[self._aux_index[0][-1]+1]
+#        self._t_stop  = self._times[self._aux_index[0][-1]]
+#        self._t100    = self._t_stop - self._t_start
+#        
+#        self._total_cnts = np.sum(self._aux_lc - self._bg*np.ones(len(self._aux_lc))) * self._res
+#                
+#        try:
+#            # compute T90_i
+#            sum_cnt = 0
+#            i = 0
+#            while sum_cnt < 0.05 * self._total_cnts:
+#                sum_cnt += (self._aux_lc[i] - self._bg) * self._res
+#                i += 1
+#            self._t90_i = self._aux_times[i]
+#                                     
+#            # compute T90_f
+#            sum_cnt = 0
+#            j = -1
+#            while sum_cnt < 0.05 * self._total_cnts:
+#                sum_cnt += (self._aux_lc[j] - self._bg) * self._res
+#                j += -1
+#            self._t90_f = self._aux_times[j]      
+#
+#            # Define T90 as the difference between T90_f and T90_i
+#            self._t90      = self._t90_f - self._t90_i
+#            self._t90_cnts = np.sum(self._aux_lc[i:j+1] - self._bg) * self._res
+#            assert self._t90 > 0
+#            
+#        except:
+#            print('Weird stuff happened...')
+#            self._t90      = self._t100
+#            self._t90_i    = self._t_start
+#            self._t90_f    = self._t_stop
+#            self._t90_cnts = self._total_cnts
+           
 
-        self._aux_index = np.where(self._plot_lc>self._plot_lc.max()*1e-4)
+    #--------------------------------------------------------------------------#
+    # V3
+    #--------------------------------------------------------------------------#
+       
+        self._aux_index = np.where(self._model>self._model.max()*1e-4)
         #self._aux_index = np.where((self._plot_lc - self._bg) * self._res / (self._bg * self._res)**0.5 >= self._sigma)
-        self._max_snr   = ((self._plot_lc/self._res - self._bg) * self._res / (self._bg * self._res)**0.5).max()
+        self._max_snr   = ((self._plot_lc_with_bg/self._res - self._bg) * self._res / (self._bg * self._res)**0.5).max()
         self._aux_times = self._times[self._aux_index[0][0]:self._aux_index[0][-1]] # +1 in the index
-        self._aux_lc    = self._plot_lc[self._aux_index[0][0]:self._aux_index[0][-1]] / self._res
+        # as `self._aux_lc` lc, we use the 'model' one, which is just the sum of the single pulses
+        self._aux_lc    = self._model[self._aux_index[0][0]:self._aux_index[0][-1]] / self._res  # count RATES
 
         self._t_start = self._times[self._aux_index[0][0]]
         #self._t_stop = self._times[self._aux_index[0][-1]+1]
         self._t_stop  = self._times[self._aux_index[0][-1]]
-            
-        self._t100 = self._t_stop - self._t_start
+        self._t100    = self._t_stop - self._t_start
         
-        self._total_cnts = np.sum(self._aux_lc - self._bg*np.ones(len(self._aux_lc))) * self._res
+        self._total_cnts = np.sum(self._aux_lc) * self._res
+        #self._total_cnts = np.sum(self._aux_lc - self._bg*np.ones(len(self._aux_lc))) * self._res
                 
         try:
+            # compute T90_i
             sum_cnt = 0
             i = 0
             while sum_cnt < 0.05 * self._total_cnts:
-                sum_cnt += (self._aux_lc[i] - self._bg) * self._res
+                sum_cnt += (self._aux_lc[i]) * self._res
+                #sum_cnt += (self._aux_lc[i] - self._bg) * self._res
                 i += 1
-                
+            if i!=0:
+                i-=1
             self._t90_i = self._aux_times[i]
                                      
+            # compute T90_f
             sum_cnt = 0
             j = -1
             while sum_cnt < 0.05 * self._total_cnts:
-                sum_cnt += (self._aux_lc[j] - self._bg) * self._res
+                sum_cnt += (self._aux_lc[j]) * self._res
+                #sum_cnt += (self._aux_lc[j] - self._bg) * self._res
                 j += -1
-
+            if j!=-1:
+                j+=1
             self._t90_f = self._aux_times[j]      
 
-            self._t90 = self._t90_f - self._t90_i            
-            self._t90_cnts = np.sum(self._aux_lc[i:j+1] - self._bg) * self._res
-            
-            assert self._t90_i < self._t90_f
+            # Define T90 as the difference between T90_f and T90_i
+            self._t90      = self._t90_f - self._t90_i
+            self._t90_cnts = np.sum(self._aux_lc[i:j+1]) * self._res
+            #self._t90_cnts = np.sum(self._aux_lc[i:j+1] - self._bg) * self._res
+            #if(self._t90<=0):
+            #    print(self._t90)
+            assert self._t90 > 0
             
         except:
+            #print('Weird stuff happened...')
             self._t90      = self._t100
             self._t90_i    = self._t_start
             self._t90_f    = self._t_stop
             self._t90_cnts = self._total_cnts
-           
     #--------------------------------------------------------------------------#
 
 
@@ -640,31 +707,31 @@ class LC(object):
         return "{:0.2f}".format(self._max_snr)
     
     #--------------------------------------------------------------------------#
-    
-    def _restore_lc(self):
-        """Restores GRB LC from avalanche parameters.
-        Here we are plotting the count RATES, not the counts!"""
-        
-        self._raw_lc = np.zeros(len(self._times))
-        
-        for par in self._lc_params:
-            norm          = par['norm']
-            t_delay       = par['t_delay']
-            tau           = par['tau']
-            tau_r         = par['tau_r']
-            self._raw_lc += self.norris_pulse(norm, t_delay, tau, tau_r)
-
-        if self._with_bg:
-            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
-            self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
-            self._plot_lc = self._plot_lc / self._res                               # total count rates (signal+bkg) with Poisson
-        else:
-            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
-            self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
-            self._plot_lc = self._plot_lc / self._res                               # total count rates (signal+bkg) with Poisson
-            self._plot_lc = self._plot_lc - self._bg                                # total count rates (signal) with Poisson
-
-        self._get_lc_properties()
+#    #TODO LB: THIS METHOD HAS TO BE UPDATED TO THE NEW VERSION OF THE CODE!
+#    def _restore_lc(self):
+#        """Restores GRB LC from avalanche parameters.
+#        Here we are plotting the count RATES, not the counts!"""
+#        
+#        self._raw_lc = np.zeros(len(self._times))
+#        
+#        for par in self._lc_params:
+#            norm          = par['norm']
+#            t_delay       = par['t_delay']
+#            tau           = par['tau']
+#            tau_r         = par['tau_r']
+#            self._raw_lc += self.norris_pulse(norm, t_delay, tau, tau_r)
+#
+#        if self._with_bg:
+#            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
+#            self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
+#            self._plot_lc = self._plot_lc / self._res                               # total count rates (signal+bkg) with Poisson
+#        else:
+#            self._plot_lc = (self._raw_lc * self._ampl * self._eff_area) + self._bg # total count rates (signal+bkg)
+#            self._plot_lc = np.random.poisson( self._res * self._plot_lc )          # total count (signal+bkg) with Poisson
+#            self._plot_lc = self._plot_lc / self._res                               # total count rates (signal+bkg) with Poisson
+#            self._plot_lc = self._plot_lc - self._bg                                # total count rates (signal) with Poisson
+#
+#        self._get_lc_properties()
         
     #--------------------------------------------------------------------------#
 

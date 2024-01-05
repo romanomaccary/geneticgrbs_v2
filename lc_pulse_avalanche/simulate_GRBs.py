@@ -22,9 +22,13 @@ from matplotlib import rc
 user='LB'
 #user='AF'
 #user='bach'
+#user='pleiadi'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche')
+elif user=='pleiadi':
+    sys.path.append('/beegfs/mbulla/genetic_grbs/genetic/lc_pulse_avalanche/statistical_test')
+    sys.path.append('/beegfs/mbulla/genetic_grbs/genetic/lc_pulse_avalanche/lc_pulse_avalanche')
 elif user=='LB':
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/statistical_test')
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/lc_pulse_avalanche')
@@ -276,8 +280,6 @@ tau_max = 26
 # tau_min = 0.015446264618348984
 # tau_max = 41.55450235716483
 
-# The 7 values obtained from Swift v23 optimization are
-
 # The 7 values obtained from Swift v24 optimization are
 # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF)
 # mu      = 1.2821767278364844
@@ -298,12 +300,24 @@ tau_max = 26
 # tau_min = 6.5224264304019425e-06
 # tau_max = 14.816904711205176
 
+# The 7 values obtained from BATSE v30 optimization are
+# (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
+# corrected sampling of the individual peaks)
+# MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+# mu      = 1.08
+# mu0     = 1.18
+# alpha   = 9.78
+# delta1  = -0.81
+# delta2  = 0.10
+# tau_min = 0.04
+# tau_max = 32.20
+
 #------------------------------------------------------------------------------#
 
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=5000
+N_grb=1000 # 5000
 
 instrument = 'batse'
 #instrument = 'swift'
