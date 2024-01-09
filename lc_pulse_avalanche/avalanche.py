@@ -1,6 +1,6 @@
 import inspect
-import math
-from math import exp, log
+#import math
+#from math import exp, log
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.random import exponential, lognormal, normal, uniform
@@ -422,6 +422,7 @@ class LC(object):
         # else:
         #     self.check=1
         self._max_raw_pc = self._raw_lc_counts.max()
+        self._peak_value = self._max_raw_pc
         if (self._max_raw_pc<1.e-12):
             # check that we have generated a lc with non-zero values; otherwise,
             # exit and set the flag 'self.check=0', which indicates that this
@@ -668,7 +669,7 @@ class LC(object):
             #if(self._t90<=0):
             #    print(self._t90)
             assert self._t90 > 0
-            
+ 
         except:
             #print('Weird stuff happened...')
             self._t90      = self._t100
@@ -676,7 +677,6 @@ class LC(object):
             self._t90_f    = self._t_stop
             self._t90_cnts = self._total_cnts
     #--------------------------------------------------------------------------#
-
 
     @property
     def T90(self):
@@ -781,7 +781,7 @@ class LC(object):
 
         self._f.create_dataset(f'GRB_PARAMETERS/GRB_{self._grb_counter}', data=grb_array)
         self._f[f'GRB_PARAMETERS/GRB_{self._grb_counter}'].attrs['PEAK_VALUE'] = peak_value
-        self._f[f'GRB_PARAMETERS/GRB_{self._grb_counter}'].attrs['N_PULSES'] = n_pulses
+        self._f[f'GRB_PARAMETERS/GRB_{self._grb_counter}'].attrs['N_PULSES']   = n_pulses
         self._grb_counter += 1
 
 

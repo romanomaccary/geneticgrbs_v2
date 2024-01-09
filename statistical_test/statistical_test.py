@@ -26,21 +26,25 @@ SEED=None
 #SEED=42
 #np.random.seed(SEED)
 
+################################################################################
 
 user='LB'
 #user='AF'
+#user='MM'
 #user='bach
 if user=='bach':
     sys.path.append('/home/')
 elif user=='LB':
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/lc_pulse_avalanche')
-    ### AF: Ho spostato queste due istruzioni qui sotto perchè ho un problema con i font nel pc che non ho ancora risolto
     rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
     rc('text', usetex=True)
 elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
+elif user=='MM':
+    sys.path.append('')
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
+    
 from avalanche import LC
 
 ################################################################################
@@ -126,7 +130,7 @@ instr_batse         = {
     "sn_threshold" : sn_threshold_batse
 }
 
-# # BATSE - COUNTS (WRONG!)
+# # BATSE - COUNTS (WRONG)
 # name_batse          = 'batse_old'
 # res_batse           = 0.064
 # eff_area_batse      = 3600
@@ -143,7 +147,7 @@ instr_batse         = {
 # }
 
 
-# Swift - COUNT RATES!!!
+# Swift - COUNT RATES
 # - Effective area:
 #   https://swift.gsfc.nasa.gov/proposals/tech_appd/swiftta_v17/node27.html)
 #   Approximately 1400 cm^2.
@@ -218,7 +222,7 @@ instr_sax_lr         = {
 name_fermi          = 'fermi'
 res_fermi           = 0.064
 eff_area_fermi      = 100 
-bg_level_fermi      = (400/eff_area_fermi) #TO BE CHECKED
+bg_level_fermi      = (400/eff_area_fermi) #TODO: TO BE CHECKED
 t90_threshold_fermi = 2
 sn_threshold_fermi  = 5
 instr_fermi         = {
@@ -229,12 +233,12 @@ instr_fermi         = {
     "t90_threshold": t90_threshold_fermi,
     "sn_threshold" : sn_threshold_fermi
 }
-fermi_prob_dict     = {1:0.02056555, 
-                       2:0.23907455, 
-                       3:0.40616967, 
-                       4:0.18508997, 
-                       5:0.13367609, 
-                       6:0.01542416}
+fermi_prob_dict     = {1: 0.02056555, 
+                       2: 0.23907455, 
+                       3: 0.40616967, 
+                       4: 0.18508997, 
+                       5: 0.13367609, 
+                       6: 0.01542416}
 
 
 ################################################################################

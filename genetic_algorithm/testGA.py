@@ -41,6 +41,7 @@ print_time=True
 ### Set the username for the path of the files:
 #user='LB'
 #user='AF'
+#user='MM'
 user='bach'
 #user='pleiadi'
 if user=='bach':
@@ -75,6 +76,14 @@ elif user=='AF':
     batse_path = 'E:/grb_to_test/CGRO_BATSE/'
     swift_path = 'E:/grb_to_test/Swift_BAT/'
     sax_path   = 'E:/grb_to_test/BeppoSAX_GRBM/'
+elif user=='MM':
+    # library paths
+    sys.path.append('')
+    sys.path.append('')
+    # real data
+    batse_path = ''
+    swift_path = ''
+    sax_path   = ''
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
