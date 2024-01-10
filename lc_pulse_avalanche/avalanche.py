@@ -44,17 +44,19 @@ def generate_rand_from_pdf(pdf, x_grid, N=1):
 # from U[0,1])
 
 peak_count_rates_batse = './kde_pdf_BATSE_peak_count_rates.txt'
-#peak_count_rates_swift = './kde_pdf_Swift_peak_count_rates.txt'
+peak_count_rates_swift = './kde_pdf_Swift_peak_count_rates.txt'
 #
 pdf_peak_count_rates_batse = np.loadtxt(peak_count_rates_batse)
-#pdf_peak_count_rates_swift = np.loadtxt(peak_count_rates_swift)
+pdf_peak_count_rates_swift = np.loadtxt(peak_count_rates_swift)
 #
-low_exp  = 2
-high_exp = 6
-x_grid_batse = np.linspace(10**low_exp, 10**high_exp, 2000000)
-#x_grid_swift = np.linspace(10**low_exp, 10**high_exp, 2000000)
+low_exp_batse  =  2
+low_exp_swift  = -3
+high_exp_batse =  6
+high_exp_swift =  3
+x_grid_batse = np.linspace(10**low_exp_batse, 10**high_exp_batse, 2000000)
+x_grid_swift = np.linspace(10**low_exp_swift, 10**high_exp_swift, 2000000)
 peak_count_rate_batse_sample = generate_rand_from_pdf(pdf_peak_count_rates_batse, x_grid_batse, N=100000) 
-#peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift, x_grid_swift, N=100000) 
+peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift, x_grid_swift, N=100000) 
 
 
 #==============================================================================#
