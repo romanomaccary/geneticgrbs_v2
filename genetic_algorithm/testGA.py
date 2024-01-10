@@ -180,7 +180,7 @@ range_mu0     = {"low": 0.80,            "high": 1.7}
 range_alpha   = {"low": 1,               "high": 15} 
 range_delta1  = {"low": -1.5,            "high": -0.30-1.e-6} 
 range_delta2  = {"low": 0,               "high": 0.30}
-range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)} # sample tau_min uniformly in log space
+range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)} # sample `tau_min` uniformly in log space
 range_tau_max = {"low": bin_time,        "high": 50}
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
@@ -217,15 +217,15 @@ print('\n\n')
 init_load_time = time.perf_counter()
 
 ### Load the BATSE GRBs
-if instrument=='batse': 
+if instrument=='batse':
     # load all data
-    grb_list_real = load_lc_batse(path=batse_path) 
+    grb_list_real = load_lc_batse(path=batse_path)
     # apply constraints
-    grb_list_real = apply_constraints(grb_list=grb_list_real, 
-                                      bin_time=bin_time, 
-                                      t90_threshold=t90_threshold, 
+    grb_list_real = apply_constraints(grb_list=grb_list_real,
+                                      bin_time=bin_time,
+                                      t90_threshold=t90_threshold,
                                       t90_frac=t90_frac,
-                                      sn_threshold=sn_threshold, 
+                                      sn_threshold=sn_threshold,
                                       t_f=t_f)
     # load MEPSA results on BATSE (only those that satisfy the constraint!)
     mepsa_out_file_list_temp = []

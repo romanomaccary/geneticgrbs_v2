@@ -43,8 +43,10 @@ def generate_rand_from_pdf(pdf, x_grid, N=1):
 # will sample the amplitude A of each pulse (we'll not sample A anymore 
 # from U[0,1])
 
-peak_count_rates_batse = './kde_pdf_BATSE_peak_count_rates.txt'
-peak_count_rates_swift = './kde_pdf_Swift_peak_count_rates.txt'
+peak_count_rates_batse  = './kde_pdf_BATSE_peak_count_rates.txt'
+#peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'
+peak_count_rates_swift  = './kde_pdf_Swift_peak_count_rates.txt'
+#peak_count_rates_swift = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'
 #
 pdf_peak_count_rates_batse = np.loadtxt(peak_count_rates_batse)
 pdf_peak_count_rates_swift = np.loadtxt(peak_count_rates_swift)
@@ -139,10 +141,10 @@ class LC(object):
 
         if instrument == 'batse':
             self._peak_count_rate_sample = peak_count_rate_batse_sample
+        elif instrument == 'swift':
+            self._peak_count_rate_sample = peak_count_rate_swift_sample
         else:
             raise ValueError("Instrument not recognized")
-        #elif instrument == 'swift':
-        #    self._peak_count_rate_sample = peak_count_rate_swift_sample
         
         # if self._verbose:
         #     print("Time resolution: ", self._step)

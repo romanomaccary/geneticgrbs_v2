@@ -381,31 +381,31 @@ else:
 from datetime import datetime
 start = datetime.now()
 
-test_pulse_distr = False#True
+test_pulse_distr = False # True
 test  = generate_GRBs(# number of simulated GRBs to produce
-                      N_grb=N_grb, 
+                      N_grb=N_grb,
                       # 7 parameters
-                      mu=mu, 
-                      mu0=mu0, 
-                      alpha=alpha, 
-                      delta1=delta1, 
-                      delta2=delta2,  
-                      tau_min=tau_min, 
-                      tau_max=tau_max, 
+                      mu=mu,
+                      mu0=mu0,
+                      alpha=alpha,
+                      delta1=delta1,
+                      delta2=delta2,
+                      tau_min=tau_min,
+                      tau_max=tau_max,
                       # instrument parameters
-                      instrument=instrument, 
-                      bin_time=res, 
+                      instrument=instrument,
+                      bin_time=res,
                       eff_area=eff_area,
-                      bg_level=bg_level, 
+                      bg_level=bg_level,
                       # constraint parameters
                       t90_threshold=t90_threshold,
-                      sn_threshold=sn_threshold, 
-                      t_f=t_f, 
+                      sn_threshold=sn_threshold,
+                      t_f=t_f,
                       filter=True,
                       # other parameters
-                      export_files=True, 
-                      export_path=export_path, 
-                      n_cut=2000, 
+                      export_files=True,
+                      export_path=export_path,
+                      n_cut=2000,
                       with_bg=False,
                       test_pulse_distr=test_pulse_distr)
 
