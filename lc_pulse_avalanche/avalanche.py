@@ -8,17 +8,6 @@ from scipy.stats import poisson
 #from scipy.stats import loguniform
 import os, h5py
 
-"""
-The 7 free parameters to be optimized are:
-    - mu
-    - mu0
-    - alpha
-    - delta1
-    - delta2
-    - tau_min
-    - tau_max
-"""
-
 SEED=None
 #SEED=42
 #np.random.seed(SEED)
@@ -42,7 +31,6 @@ def generate_rand_from_pdf(pdf, x_grid, N=1):
 # Load the pdf of peak count rates of each instrument, with which we
 # will sample the amplitude A of each pulse (we'll not sample A anymore 
 # from U[0,1])
-
 peak_count_rates_batse  = './kde_pdf_BATSE_peak_count_rates.txt'
 #peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'
 peak_count_rates_swift  = './kde_pdf_Swift_peak_count_rates.txt'
@@ -60,6 +48,21 @@ x_grid_swift = np.linspace(10**low_exp_swift, 10**high_exp_swift, 2000000)
 peak_count_rate_batse_sample = generate_rand_from_pdf(pdf_peak_count_rates_batse, x_grid_batse, N=100000) 
 peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift, x_grid_swift, N=100000) 
 
+
+# Load the (gaussian) errors of the Swift GRBs
+# bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10. , 21.5443469 , 46.41588834, 100. ])
+bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10.])
+path_swift_errs = './'
+#path_swift_errs = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/'
+dict_errs_swift = {}
+for i in range(1, len(bins_swift_errs)+1):
+    with open(path_swift_errs+'swift_errs_'+str(i)+'.txt', 'r') as f:
+        dict_errs_swift[str(i)] = f.readlines()
+for key in dict_errs_swift.keys():
+    for i, line in enumerate(dict_errs_swift[key]):
+        line       = line.rstrip(' \n')   
+        errs_split = list(map(float, line.split(' ')))
+        dict_errs_swift[key][i] = errs_split
 
 #==============================================================================#
 # Define the class LC describing the light curve.                              #
@@ -139,6 +142,7 @@ class LC(object):
         self._with_bg     = with_bg
         self._use_poisson = use_poisson
 
+        self._instrument = instrument
         if instrument == 'batse':
             self._peak_count_rate_sample = peak_count_rate_batse_sample
         elif instrument == 'swift':
@@ -332,7 +336,7 @@ class LC(object):
         # The amplitude (A) of each pulse is  sampled from a uniform distribution, 
         # from A_min=0 to the value A_max sampled from the pdf of peak count 
         # RATES of each instrument. A_max is the same for a given GRB (and it is
-        # drawn here below), and each pulse composing the LB has an amplitude 
+        # drawn here below), and each pulse composing the LC has an amplitude 
         # sampled in U[0,A_max].
         self._A_max = np.random.choice(self._peak_count_rate_sample, size=1)[0]
         
@@ -443,18 +447,54 @@ class LC(object):
         # self._ampl = ampl
         # self._peak_value = self._max_raw_pcr * self._ampl
 
-        # lc from avalanche scaled + Poissonian bg added
-        # Here (as in the method `plot_lc` of the object LC), the variable 
-        # `_plot_lc` contains the COUNTS (and not the count RATES!)
-        self._model           = self._raw_lc_counts                                 # model COUNTS 
-        self._modelbkg        = self._model + (self._bg * self._res)                # model COUNTS + constant bgk counts
-        self._plot_lc         = np.random.poisson(self._modelbkg).astype('float')   # total COUNTS (signal+bkg) with Poisson
-        self._plot_lc_with_bg = self._plot_lc  
-        self._err_lc          = np.sqrt(self._plot_lc)
-        if self._with_bg: # lc with background
-            pass
-        else: # background-subtracted lc
-            self._plot_lc = self._plot_lc - (self._bg * self._res)   # total COUNTS (removed the constant bkg level)
+        # lc from avalanche scaled + Poissonian bg added (for BATSE)
+        # For BATSE, the variable `_plot_lc` contains the COUNTS (and not the count RATES!)
+        if self._instrument == 'batse':
+            self._model           = self._raw_lc_counts                                 # model COUNTS 
+            self._modelbkg        = self._model + (self._bg * self._res)                # model COUNTS + constant bgk counts
+            self._plot_lc         = np.random.poisson(self._modelbkg).astype('float')   # total COUNTS (signal+noise) with Poisson
+            self._plot_lc_with_bg = self._plot_lc  
+            self._err_lc          = np.sqrt(self._plot_lc)
+            if self._with_bg: # lc with background
+                pass
+            else: # background-subtracted lc
+                self._plot_lc = self._plot_lc - (self._bg * self._res)   # total COUNTS (removed the constant bkg level)
+        
+        # For Swift, the variable `_plot_lc` contains the COUNTS RATES (and not the counts!)
+        elif self._instrument == 'swift':
+            self._model           = self._raw_lc_counts                                 # model COUNTS 
+            self._model_rate      = self._model / self._res                             # model COUNT RATES
+            self._modelbkg        = self._model      # bkg 0 in Swift
+            self._modelbkg_rate   = self._model_rate # bkg 0 in Swift
+            #
+            if np.max(self._model_rate)<bins_swift_errs[1]:
+                errs_swift_list = dict_errs_swift['1']
+            elif np.max(self._model_rate)<bins_swift_errs[2]: 
+                errs_swift_list = dict_errs_swift['2']
+            elif np.max(self._model_rate)<bins_swift_errs[3]: 
+                errs_swift_list = dict_errs_swift['3']
+            elif np.max(self._model_rate)<bins_swift_errs[4]: 
+                errs_swift_list = dict_errs_swift['4']
+            elif np.max(self._model_rate)<bins_swift_errs[5]: 
+                errs_swift_list = dict_errs_swift['5']
+            elif np.max(self._model_rate)<bins_swift_errs[6]: 
+                errs_swift_list = dict_errs_swift['6']
+            else: 
+                errs_swift_list = dict_errs_swift['7']
+            #
+            grb_index             = np.random.randint(len(errs_swift_list))
+            errors_to_apply       = errs_swift_list[grb_index]
+            max_err_index         = len(errors_to_apply)
+            std_bkg               = np.array([errors_to_apply[np.random.randint(0,max_err_index)] for val in self._model_rate])
+            self._plot_lc         = np.random.normal(loc=self._model_rate, scale=std_bkg) # total COUNTS RATE (signal+noise) with Gauss
+            self._plot_lc_with_bg = self._plot_lc  
+            self._err_lc          = std_bkg 
+            # Since we set the noise as gaussian using std from real data, we
+            # don't need to add the background level to the model
+            # if self._with_bg: # lc with background
+            #     pass
+            # else: # background-subtracted lc
+            #     self._plot_lc = self._plot_lc - (self._bg * self._res)   # total COUNTS (removed the constant bkg level)
 
         self._get_lc_properties()
 
@@ -494,7 +534,10 @@ class LC(object):
 
         plt.figure(figsize=(9,6))
         plt.xlabel(r'$T-T_0$ [s]', size=16)
-        plt.ylabel('Counts', size=16)
+        if self._instrument == 'batse':
+            plt.ylabel('Counts', size=16)
+        elif self._instrument == 'swift':
+            plt.ylabel('Count Rates', size=16)
         plt.xticks(fontsize=13)
         plt.yticks(fontsize=13)
 
@@ -815,4 +858,3 @@ class Restored_LC(LC):
 
 #==============================================================================#
 #==============================================================================#
-

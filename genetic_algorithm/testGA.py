@@ -180,7 +180,8 @@ range_mu0     = {"low": 0.80,            "high": 1.7}
 range_alpha   = {"low": 1,               "high": 15} 
 range_delta1  = {"low": -1.5,            "high": -0.30-1.e-6} 
 range_delta2  = {"low": 0,               "high": 0.30}
-range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)} # sample `tau_min` uniformly in log space
+range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)}  # sample `tau_min` uniformly in log    space
+#range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)} # sample `tau_min` uniformly in linear space
 range_tau_max = {"low": bin_time,        "high": 50}
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
@@ -325,7 +326,8 @@ def fitness_func(solution, solution_idx=None):
                                  alpha=solution[2],
                                  delta1=solution[3],
                                  delta2=solution[4],
-                                 tau_min=10**solution[5],  # sampled uniformly in log space
+                                 tau_min=10**solution[5], # sample `tau_min` uniformly in log    space
+                                 #tau_min=solution[5],    # sample `tau_min` uniformly in linear space
                                  tau_max=solution[6],
                                  # instrument parameters:
                                  instrument=instrument,
@@ -414,7 +416,8 @@ def write_best_par_per_epoch(solution, filename='best_par_per_epoch.txt'):
         file.write("alpha   = {solution}".format(solution=solution[2])+'\n')
         file.write("delta1  = {solution}".format(solution=solution[3])+'\n')
         file.write("delta2  = {solution}".format(solution=solution[4])+'\n')
-        file.write("tau_min = {solution}".format(solution=10**(solution[5]))+'\n')
+        file.write("tau_min = {solution}".format(solution=10**(solution[5]))+'\n') # sample `tau_min` uniformly in log    space
+        #file.write("tau_min = {solution}".format(solution=solution[5])+'\n')      # sample `tau_min` uniformly in linear space
         file.write("tau_max = {solution}".format(solution=solution[6])+'\n')
         file.write('\n')
 
@@ -444,8 +447,9 @@ def on_generation(ga_instance):
     print("    - alpha   = {solution}".format(solution=solution[2]))
     print("    - delta1  = {solution}".format(solution=solution[3]))
     print("    - delta2  = {solution}".format(solution=solution[4]))
-    print("    - tau_min = {solution}".format(solution=10**(solution[5])))
-    print("    - tau_max = {solution}".format(solution=solution[6]))
+    print("    - tau_min = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log    space
+    #print("    - tau_min = {solution}".format(solution=solution[5]))      # sample `tau_min` uniformly in linear space
+    print("    - tau_max = {solution}".format(solution=solution[6]))      
     # Print the best solution of the current generation on FILE
     write_best_par_per_epoch(solution)
 
@@ -519,7 +523,8 @@ if __name__ == '__main__':
                                          alpha=solution[2],
                                          delta1=solution[3],
                                          delta2=solution[4],
-                                         tau_min=10**solution[5],  # sampled uniformly in log space
+                                         tau_min=10**solution[5],  # sample `tau_min` uniformly in log    space
+                                         #tau_min=solution[5],     # sample `tau_min` uniformly in linear space
                                          tau_max=solution[6],
                                          # instrument parameters:
                                          instrument=instrument,
@@ -635,7 +640,8 @@ if __name__ == '__main__':
     print("    - alpha   = {solution}".format(solution=solution[2]))
     print("    - delta1  = {solution}".format(solution=solution[3]))
     print("    - delta2  = {solution}".format(solution=solution[4]))
-    print("    - tau_min = {solution}".format(solution=10**(solution[5])))
+    print("    - tau_min = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log    space
+    #print("    - tau_min = {solution}".format(solution=solution[5]))      # sample `tau_min` uniformly in linear space
     print("    - tau_max = {solution}".format(solution=solution[6]))
     print("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
     print("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))
@@ -704,7 +710,8 @@ if __name__ == '__main__':
     file.write('\n')
     file.write("    - delta2  = {solution}".format(solution=solution[4]))
     file.write('\n')
-    file.write("    - tau_min = {solution}".format(solution=10**(solution[5])))
+    file.write("    - tau_min = {solution}".format(solution=10**(solution[5])))  # sample `tau_min` uniformly in log    space
+    #file.write("    - tau_min = {solution}".format(solution=solution[5]))       # sample `tau_min` uniformly in linear space
     file.write('\n')
     file.write("    - tau_max = {solution}".format(solution=solution[6]))
     file.write('\n')
@@ -751,8 +758,8 @@ if __name__ == '__main__':
         avg_loss  = np.zeros(len(best_loss))
         std_loss  = np.zeros(len(best_loss))
         best_loss_print = []
-        avg_loss_print = []
-        std_loss_print = []
+        avg_loss_print  = []
+        std_loss_print  = []
         for i in range(len(best_loss)):
             avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
             std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
@@ -797,7 +804,7 @@ if __name__ == '__main__':
             plt.ylabel(r'Standard Deviation of the loss')
             plt.savefig('fig03.pdf')
             plt.clf()
-        
+
         elif MODE=='resume':
             plt.plot(np.array(best_loss_print), ls='-', lw=2, c='b')
             #plt.yscale('log')
@@ -836,7 +843,8 @@ if __name__ == '__main__':
     all_gen_alpha   = np.array(all_gen_sol[:,2])       # array with all the alpha   of the ALL generations
     all_gen_delta1  = np.array(all_gen_sol[:,3])       # array with all the delta1  of the ALL generations
     all_gen_delta2  = np.array(all_gen_sol[:,4])       # array with all the delta1  of the ALL generations
-    all_gen_tau_min = 10**(np.array(all_gen_sol[:,5])) # array with all the tau_min of the ALL generations
+    all_gen_tau_min = 10**(np.array(all_gen_sol[:,5])) # array with all the tau_min of the ALL generations # sample `tau_min` uniformly in log    space
+    #all_gen_tau_min = np.array(all_gen_sol[:,5])      # array with all the tau_min of the ALL generations # sample `tau_min` uniformly in linear space
     all_gen_tau_max = np.array(all_gen_sol[:,6])       # array with all the tau_max of the ALL generations
 
     data_all_gen = {
