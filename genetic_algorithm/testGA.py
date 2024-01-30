@@ -96,15 +96,15 @@ from avalanche import LC
 ################################################################################
 
 ### Choose the instrument
-instrument = 'batse'
-#instrument = 'swift'
+#instrument = 'batse'
+instrument = 'swift'
 #instrument = 'sax'
 
 #------------------------------------------------------------------------------#
 
 if instrument=='batse':
-    t_i           = 0     # [s]
-    t_f           = 150   # [s]
+    t_i           = 0                            # [s]
+    t_f           = 150                          # [s]
     eff_area      = instr_batse['eff_area']      # 2025  # effective area of instrument [cm2]
     bg_level      = instr_batse['bg_level']      # 2.8   # background level [cnt/cm2/s]
     t90_threshold = instr_batse['t90_threshold'] # 2     # [s] --> used to select only _long_ GRBs
@@ -123,14 +123,14 @@ if instrument=='batse':
 #     bin_time      = 0.064 # [s] temporal bins for BATSE (time resolution)
 #     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
 elif instrument=='swift':
-    t_i           = 0                # [s]
-    t_f           = 150              # [s]
-    eff_area      = 1400             # effective area of instrument [cm2]
-    bg_level      = (10000/eff_area) # background level [cnt/cm2/s]
-    t90_threshold = 2                # [s] --> used to select only _long_ GRBs
+    t_i           = 0                            # [s]
+    t_f           = 150                          # [s]
+    eff_area      = instr_swift['eff_area']      # 1400 # effective area of instrument [cm2]
+    bg_level      = instr_swift['bg_level']      # (10000/eff_area) # background level [cnt/cm2/s]
+    t90_threshold = instr_swift['t90_threshold'] # 2 # [s] --> used to select only _long_ GRBs
     t90_frac      = 15
-    sn_threshold  = 20               # signal-to-noise ratio
-    bin_time      = 0.064            # [s] temporal bins for Swift (time resolution)
+    sn_threshold  = instr_swift['sn_threshold']  # 15 # signal-to-noise ratio
+    bin_time      = instr_swift['res']           # 0.064 # [s] temporal bins for Swift (time resolution)
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
 elif instrument=='sax':
     t_i           = 0               # [s]
@@ -164,14 +164,16 @@ mutation_probability  = 0.04                   # by default is 'None', otherwise
 N_grb                 = 2000                   # number of simulated GRBs to produce per set of parameters
 test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
 
-# Options for parallelization:
-n_processes = 50 
-# n_processes = int(os.environ['OMP_NUM_THREADS'])
-parallel_processing  = ["process", n_processes]         # USE THIS ONE!  
+# Options for parallelization
+if user=='pleiadi':
+    n_processes = int(os.environ['OMP_NUM_THREADS'])
+else:
+    n_processes = 50
+parallel_processing  = ["process", n_processes]  # USE THIS ONE!  
 #parallel_processing = ["thread", n_processes]       
 #parallel_processing = None
 
-# Name of the pkl file where to export the GA instance at the end of the run
+# Name of the pkl file where to save the GA instance at the end of the run
 filename_model = 'geneticGRB'
 
 # We impose constraints on the range of values that the 7 parameter can assume
@@ -181,7 +183,7 @@ range_alpha   = {"low": 1,               "high": 15}
 range_delta1  = {"low": -1.5,            "high": -0.30-1.e-6} 
 range_delta2  = {"low": 0,               "high": 0.30}
 range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)}  # sample `tau_min` uniformly in log    space
-#range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)} # sample `tau_min` uniformly in linear space
+#range_tau_min = {"low": 1.e-2,          "high": bin_time-1.e-6}            # sample `tau_min` uniformly in linear space
 range_tau_max = {"low": bin_time,        "high": 50}
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
@@ -228,7 +230,7 @@ if instrument=='batse':
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold,
                                       t_f=t_f)
-    # load MEPSA results on BATSE (only those that satisfy the constraint!)
+    # Load MEPSA results on BATSE (ONLY those that satisfy the constraint!)
     mepsa_out_file_list_temp = []
     for i in range(len(grb_list_real)):
         name = grb_list_real[i].name
@@ -268,6 +270,7 @@ elif instrument=='sax':
                                       sn_threshold=sn_threshold, 
                                       t_f=t_f)
     n_of_pulses_real = None
+
 else:
     raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
@@ -351,7 +354,7 @@ def fitness_func(solution, solution_idx=None):
         n_of_pulses_sim = None
 
     #--------------------------------------------------------------------------#
-    # Compute average quantities of simulated data needed for the loss function
+    # COMPUTE AVERAGE QUANTITIES OF SIMULATED DATA
     #--------------------------------------------------------------------------#
     ### TEST 1&2: Average Peak-Aligned Profiles
     averaged_fluxes_sim, \
@@ -380,7 +383,7 @@ def fitness_func(solution, solution_idx=None):
     duration_distr_sim = compute_kde_log_duration(duration_list=duration_sim)
 
     #--------------------------------------------------------------------------#
-    # Compute loss
+    # COMPUTE LOSS
     #--------------------------------------------------------------------------#
     l2_loss = compute_loss(averaged_fluxes=averaged_fluxes_real,
                            averaged_fluxes_sim=averaged_fluxes_sim,
@@ -780,7 +783,7 @@ if __name__ == '__main__':
         file.close()
 
     ############################################################################
-    # EXPORT PLOT 1
+    # PLOT THE RESULTS
     ############################################################################
 
     if save_plot:
@@ -843,8 +846,8 @@ if __name__ == '__main__':
     all_gen_alpha   = np.array(all_gen_sol[:,2])       # array with all the alpha   of the ALL generations
     all_gen_delta1  = np.array(all_gen_sol[:,3])       # array with all the delta1  of the ALL generations
     all_gen_delta2  = np.array(all_gen_sol[:,4])       # array with all the delta1  of the ALL generations
-    all_gen_tau_min = 10**(np.array(all_gen_sol[:,5])) # array with all the tau_min of the ALL generations # sample `tau_min` uniformly in log    space
-    #all_gen_tau_min = np.array(all_gen_sol[:,5])      # array with all the tau_min of the ALL generations # sample `tau_min` uniformly in linear space
+    all_gen_tau_min = 10**(np.array(all_gen_sol[:,5])) # array with all the tau_min of the ALL generations  # sample `tau_min` uniformly in log    space
+    #all_gen_tau_min = np.array(all_gen_sol[:,5])      # array with all the tau_min of the ALL generations  # sample `tau_min` uniformly in linear space
     all_gen_tau_max = np.array(all_gen_sol[:,6])       # array with all the tau_max of the ALL generations
 
     data_all_gen = {

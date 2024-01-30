@@ -15,7 +15,7 @@ SEED=None
 #==============================================================================#
 #==============================================================================#
 
-# see `statistical_tests.ipynb`
+### See `statistical_tests.ipynb`
 def generate_rand_from_pdf(pdf, x_grid, N=1):
     """
     Generates `N` random numbers from a given probability distribution function
@@ -28,7 +28,7 @@ def generate_rand_from_pdf(pdf, x_grid, N=1):
     random_from_cdf = x_grid[value_bins]
     return random_from_cdf
 
-# Load the pdf of peak count rates of each instrument, with which we
+### Load the pdf of peak count rates of each instrument, with which we
 # will sample the amplitude A of each pulse (we'll not sample A anymore 
 # from U[0,1])
 peak_count_rates_batse  = './kde_pdf_BATSE_peak_count_rates.txt'
@@ -49,7 +49,7 @@ peak_count_rate_batse_sample = generate_rand_from_pdf(pdf_peak_count_rates_batse
 peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift, x_grid_swift, N=100000) 
 
 
-# Load the (gaussian) errors of the Swift GRBs
+### Load the (gaussian) errors of the Swift GRBs
 # bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10. , 21.5443469 , 46.41588834, 100. ])
 bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10.])
 path_swift_errs = './'
@@ -60,7 +60,7 @@ for i in range(1, len(bins_swift_errs)+1):
         dict_errs_swift[str(i)] = f.readlines()
 for key in dict_errs_swift.keys():
     for i, line in enumerate(dict_errs_swift[key]):
-        line       = line.rstrip(' \n')   
+        line       = line.rstrip(' \n')
         errs_split = list(map(float, line.split(' ')))
         dict_errs_swift[key][i] = errs_split
 
@@ -141,14 +141,14 @@ class LC(object):
         self._n_pulses    = 0
         self._with_bg     = with_bg
         self._use_poisson = use_poisson
+        self._instrument  = instrument
 
-        self._instrument = instrument
-        if instrument == 'batse':
+        if self._instrument == 'batse':
             self._peak_count_rate_sample = peak_count_rate_batse_sample
-        elif instrument == 'swift':
+        elif self._instrument == 'swift':
             self._peak_count_rate_sample = peak_count_rate_swift_sample
         else:
-            raise ValueError("Instrument not recognized")
+            raise ValueError("Instrument not recognized...")
         
         # if self._verbose:
         #     print("Time resolution: ", self._step)
@@ -244,7 +244,7 @@ class LC(object):
             # The amplitude (A) of each pulse is given by:
             #     p1(A) = 1, in [0, 1]
             # norm = uniform(low=0.0, high=1.0)
-            # Each pulse (count-rate) composing the LC has an amplitude sampled in U[0,A_max].
+            # Each pulse (count-rate) composing the LC has an amplitude sampled in U[0,A_max]
             norm_A = uniform(low=0.0, high=self._A_max)
             
             # self._rates    += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
@@ -636,7 +636,7 @@ class LC(object):
 #        self._t100    = self._t_stop - self._t_start
 #        
 #        self._total_cnts = np.sum(self._aux_lc - self._bg*np.ones(len(self._aux_lc))) * self._res
-#                
+#        
 #        try:
 #            # compute T90_i
 #            sum_cnt = 0
