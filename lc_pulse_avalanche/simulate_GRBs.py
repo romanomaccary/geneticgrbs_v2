@@ -18,8 +18,8 @@ from matplotlib import rc
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
-user='LB'
-#user='AF'
+#user='LB'
+user='AF'
 #user='MM'
 #user='bach'
 #user='pleiadi'
@@ -38,7 +38,7 @@ elif user=='LB':
 elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/statistical_test')
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
-    export_path='C:/Users/lisaf/Desktop/fermi_sim/'
+    export_path='C:/Users/lisaf/Desktop/'
 elif user=='MM':
     sys.path.append('')
     sys.path.append('')
@@ -332,7 +332,7 @@ tau_max = 34.8
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=5000
+N_grb=100
 
 instrument = 'batse'
 #instrument = 'swift'

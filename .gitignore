@@ -168,3 +168,12 @@ statistical_test/test_mepsa.txt
 statistical_test/test_lc_4.txt
 statistical_test/avalanche.py
 lc_pulse_avalanche/mock_lc.txt
+lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt
+lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt
+lc_pulse_avalanche/swift_errs_1.txt
+lc_pulse_avalanche/swift_errs_2.txt
+lc_pulse_avalanche/swift_errs_3.txt
+lc_pulse_avalanche/swift_errs_4.txt
+lc_pulse_avalanche/swift_errs_5.txt
+lc_pulse_avalanche/swift_errs_6.txt
+lc_pulse_avalanche/swift_errs_7.txt
