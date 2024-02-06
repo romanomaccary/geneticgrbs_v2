@@ -168,7 +168,7 @@ test_pulse_distr      = False                  # add a fifth metric regarding th
 if user=='pleiadi':
     n_processes = int(os.environ['OMP_NUM_THREADS'])
 else:
-    n_processes = 50
+    n_processes = 40
 parallel_processing  = ["process", n_processes]  # USE THIS ONE!  
 #parallel_processing = ["thread", n_processes]       
 #parallel_processing = None

@@ -943,11 +943,14 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064,
     - grb_list: list containing each GRB as an object;
     - t_f: range of time over which we compute the averaged fluxes;
     - bin_time: temporal bin size of the instrument [s] (0.064 is BATSE);
+    - filter: if True, apply a Savitzky-Golay filter to the averaged fluxes;
+    - filter_window: window length of the Savitzky-Golay filter;
+    - compute_rms: if True, the function computes and returns also the rms;
     Output: 
-    - averaged_fluxes:        <(F/F_p)>
-    - averaged_fluxes_cube:   <(F/F_p)^3>
-    - averaged_fluxes_rms : ( <(F/F_p)^2> - <F/F_p>^2 )^(1/2)
-    - averaged_fluxes_rms : ( <(F/F_p)^6> - <(F/F_p)^3>^2 )^(1/2) (optional)
+    - averaged_fluxes:             <(F/F_p)>
+    - averaged_fluxes_cube:        <(F/F_p)^3>
+    - averaged_fluxes_rms :      ( <(F/F_p)^2> - <F/F_p>^2 )^(1/2)
+    - averaged_fluxes_cube_rms : ( <(F/F_p)^6> - <(F/F_p)^3>^2 )^(1/2) (optional)
     """
     n_steps                = int(t_f/bin_time)
     averaged_fluxes        = np.zeros(n_steps)
@@ -956,23 +959,28 @@ def compute_average_quantities(grb_list, t_f=150, bin_time=0.064,
     if compute_rms:
         averaged_fluxes_cube_square = np.zeros(n_steps)
 
+    skipped_grbs = 0
     for grb in grb_list:
         c_max         = np.max(grb.counts)
         i_c_max       = np.argmax(grb.counts)
-        fluxes_to_sum = grb.counts[i_c_max:i_c_max+n_steps] / c_max
+        fluxes_to_sum = np.array( grb.counts[i_c_max:i_c_max+n_steps] / c_max )
         assert np.isclose(fluxes_to_sum[0], 1, atol=1e-06), "ERROR: The peak is not aligned correctly..."
-        
+        if len(fluxes_to_sum) != n_steps:
+            skipped_grbs += 1
+            continue
         averaged_fluxes        += fluxes_to_sum
         averaged_fluxes_square += fluxes_to_sum**2
         averaged_fluxes_cube   += fluxes_to_sum**3
         if compute_rms:
             averaged_fluxes_cube_square += fluxes_to_sum**6
+    if skipped_grbs/len(grb_list)>0.10:
+        print("\nWARNING: more than 10% of GRBs have been skipped, for reasons that I don't know...\n")
 
-    averaged_fluxes        /= len(grb_list)
-    averaged_fluxes_square /= len(grb_list)
-    averaged_fluxes_cube   /= len(grb_list)
+    averaged_fluxes        /= ( len(grb_list) - skipped_grbs )
+    averaged_fluxes_square /= ( len(grb_list) - skipped_grbs )
+    averaged_fluxes_cube   /= ( len(grb_list) - skipped_grbs )
     if compute_rms:
-        averaged_fluxes_cube_square /= len(grb_list)
+        averaged_fluxes_cube_square /= ( len(grb_list) - skipped_grbs )
 
     averaged_fluxes_rms = np.sqrt(averaged_fluxes_square - averaged_fluxes**2)
     if compute_rms:
