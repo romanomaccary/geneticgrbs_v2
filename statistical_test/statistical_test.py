@@ -2263,7 +2263,7 @@ def generate_GRBs(N_grb,                                            # number of 
     def export_lc_params(LC, idx, instrument, path='../simulations/'):
         """
         Export all the values in the `params` dict of the simulated light curves
-        in a file.
+        in a txt file.
         Input:
         - LC: object that contains the light curve;
         - idx: number of the light curve;
@@ -2759,11 +2759,12 @@ def generate_GRBs(N_grb,                                            # number of 
                            idx=cnt, 
                            instrument=instrument,
                            path=export_path)
-                if False:
+                export_grb_parameters=False
+                if export_grb_parameters:
                     export_lc_params(LC=lc, 
-                                    idx=cnt, 
-                                    instrument=instrument, 
-                                    path=export_path)
+                                     idx=cnt, 
+                                     instrument=instrument, 
+                                     path=export_path)
                 # export_lc(LC=lc, 
                 #           idx=cnt, 
                 #           instrument=instrument,

@@ -18,8 +18,8 @@ from matplotlib import rc
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
-#user='LB'
-user='AF'
+user='LB'
+#user='AF'
 #user='MM'
 #user='bach'
 #user='pleiadi'
@@ -332,7 +332,7 @@ tau_max = 34.8
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=100
+N_grb=1000
 
 instrument = 'batse'
 #instrument = 'swift'
