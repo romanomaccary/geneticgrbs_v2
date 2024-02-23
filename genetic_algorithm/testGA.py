@@ -43,11 +43,20 @@ print_time=True
 #user='AF'
 #user='MM'
 user='bach'
+#user='gravity'
 #user='pleiadi'
 if user=='bach':
     # library paths
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche')
+    # real data
+    batse_path = '/astrodata/guidorzi/CGRO_BATSE/'
+    swift_path = '/astrodata/guidorzi/Swift_BAT/'
+    sax_path   = '/astrodata/guidorzi/BeppoSAX_GRBM/'
+elif user=='gravity':
+    # library paths
+    sys.path.append('/home/bazzanini/PYTHON/genetic3/statistical_test')
+    sys.path.append('/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche')
     # real data
     batse_path = '/astrodata/guidorzi/CGRO_BATSE/'
     swift_path = '/astrodata/guidorzi/Swift_BAT/'

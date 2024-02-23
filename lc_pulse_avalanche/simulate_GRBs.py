@@ -22,10 +22,14 @@ user='LB'
 #user='AF'
 #user='MM'
 #user='bach'
+#user='gravity'
 #user='pleiadi'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche')
+elif user=='gravity':
+    sys.path.append('/home/bazzanini/PYTHON/genetic3/statistical_test')
+    sys.path.append('/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche')
 elif user=='pleiadi':
     sys.path.append('/beegfs/mbulla/genetic_grbs/genetic/lc_pulse_avalanche/statistical_test')
     sys.path.append('/beegfs/mbulla/genetic_grbs/genetic/lc_pulse_avalanche/lc_pulse_avalanche')
@@ -332,7 +336,7 @@ tau_max = 34.8
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=1000
+N_grb=5000
 
 instrument = 'batse'
 #instrument = 'swift'

@@ -31,8 +31,11 @@ SEED=None
 user='LB'
 #user='AF'
 #user='MM'
-#user='bach
+#user='bach'
+#user='gravity'
 if user=='bach':
+    sys.path.append('/home/')
+elif user=='gravity':
     sys.path.append('/home/')
 elif user=='LB':
     sys.path.append('/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/GRBs/lc_pulse_avalanche/lc_pulse_avalanche')
@@ -2759,7 +2762,7 @@ def generate_GRBs(N_grb,                                            # number of 
                            idx=cnt, 
                            instrument=instrument,
                            path=export_path)
-                export_grb_parameters=False
+                export_grb_parameters=True
                 if export_grb_parameters:
                     export_lc_params(LC=lc, 
                                      idx=cnt, 

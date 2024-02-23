@@ -33,8 +33,10 @@ def generate_rand_from_pdf(pdf, x_grid, N=1):
 # from U[0,1])
 peak_count_rates_batse  = './kde_pdf_BATSE_peak_count_rates.txt'
 #peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'
+#peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'
 peak_count_rates_swift  = './kde_pdf_Swift_peak_count_rates.txt'
 #peak_count_rates_swift = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'
+#peak_count_rates_swift = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'
 #
 pdf_peak_count_rates_batse = np.loadtxt(peak_count_rates_batse)
 pdf_peak_count_rates_swift = np.loadtxt(peak_count_rates_swift)
@@ -52,8 +54,9 @@ peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift
 ### Load the (gaussian) errors of the Swift GRBs
 # bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10. , 21.5443469 , 46.41588834, 100. ])
 bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10.])
-path_swift_errs = './'
+path_swift_errs = './' 
 #path_swift_errs = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/'
+#path_swift_errs = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/'
 dict_errs_swift = {}
 for i in range(1, len(bins_swift_errs)+1):
     with open(path_swift_errs+'swift_errs_'+str(i)+'.txt', 'r') as f:
