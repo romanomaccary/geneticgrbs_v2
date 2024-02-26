@@ -5,6 +5,7 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rc
 import ctypes
 from scipy.signal import savgol_filter
 from scipy import signal
@@ -14,11 +15,8 @@ from sklearn.neighbors import KernelDensity
 from scipy.stats import anderson_ksamp, ks_2samp
 from scipy.special import expit
 from tqdm import tqdm
-
 import seaborn as sns
 sns.set_style('darkgrid')
-
-from matplotlib import rc
 
 ################################################################################
 
@@ -103,6 +101,7 @@ class GRB:
         return copy_grb
 
 ################################################################################
+################################################################################
 
 # Dictionaries where the properties of instruments are stored:
 # - name         : name of the instrument
@@ -113,11 +112,11 @@ class GRB:
 # - sn_threshold : used to select only lc with high S2N    
 
 
-# BATSE - COUNTS
-# -Effective area reference: 
-#  https://heasarc.gsfc.nasa.gov/docs/cgro/nra/appendix_g.html#V.%20BATSE%20GUEST%20INVESTIGATOR%20PROGRAM
-#  2025 cm^2
-# -Background: 
+#------------------------------------------------------------------------------#
+# BATSE (counts)
+#------------------------------------------------------------------------------#
+# - Effective area: 2025 cm^2 (https://heasarc.gsfc.nasa.gov/docs/cgro/nra/appendix_g.html#V.%20BATSE%20GUEST%20INVESTIGATOR%20PROGRAM)
+# - Background: 2.8 (computed from the average of the background LC, see `statistical_test.ipynb`)
 name_batse          = 'batse'
 res_batse           = 0.064
 eff_area_batse      = 2025
@@ -133,7 +132,9 @@ instr_batse         = {
     "sn_threshold" : sn_threshold_batse
 }
 
-# # BATSE - COUNTS (WRONG)
+#------------------------------------------------------------------------------#
+# BATSE WRONG --> galileo (counts)
+#------------------------------------------------------------------------------#
 # name_batse          = 'batse_old'
 # res_batse           = 0.064
 # eff_area_batse      = 3600
@@ -149,8 +150,9 @@ instr_batse         = {
 #     "sn_threshold" : sn_threshold_batse
 # }
 
-
-# Swift - COUNT RATES
+#------------------------------------------------------------------------------#
+# Swift (count rates)
+#------------------------------------------------------------------------------#
 # - Effective area:
 #   https://swift.gsfc.nasa.gov/proposals/tech_appd/swiftta_v17/node27.html)
 #   Approximately 1400 cm^2.
@@ -173,7 +175,9 @@ instr_swift         = {
     "sn_threshold" : sn_threshold_swift
 }
 
-# BeppoSAX - COUNTS
+#------------------------------------------------------------------------------#
+# BeppoSAX (counts)
+#------------------------------------------------------------------------------#
 # - Catalog and Instrument:
 #   https://ui.adsabs.harvard.edu/abs/2009ApJS..180..192F/abstract)
 # - Geometric Area:
@@ -184,7 +188,7 @@ instr_swift         = {
 #   420 cm^2 secondo questa reference (nel migliore dei casi)
 # - Background: Misura delle performance in volo dello strumento
 #   https://ui.adsabs.harvard.edu/abs/1997SPIE.3114..186F/abstract)
-#   Qui è presente una misura del bkg medio: 1000 cnt/s (pag. 4, paragrafo 3)
+#   Qui e' presente una misura del bkg medio: 1000 cnt/s (pag. 4, paragrafo 3)
 #
 # BeppoSAX (HR)
 name_sax          = 'sax'
@@ -203,7 +207,7 @@ instr_sax         = {
 }
 # BeppoSAX (LR)
 name_sax_lr          = 'sax_lr'
-res_sax_lr           = 1
+res_sax_lr           = 1.0
 eff_area_sax_lr      = eff_area_sax
 bg_level_sax_lr      = bg_level_sax
 t90_threshold_sax_lr = t90_threshold_sax
@@ -217,7 +221,9 @@ instr_sax_lr         = {
     "sn_threshold" : sn_threshold_sax_lr
 }
 
-# FERMI/GBM - COUNTS (WIP)
+#------------------------------------------------------------------------------#
+# FERMI/GBM (counts (WIP))
+#------------------------------------------------------------------------------#
 # - Effective area: Average on all detectors, as reported by 
 #   https://sites.astro.caltech.edu/~srk/XC/Notes/GBM.pdf
 # - Background: TO BE ADDED
@@ -244,6 +250,7 @@ fermi_prob_dict     = {1: 0.02056555,
                        6: 0.01542416}
 
 
+################################################################################
 ################################################################################
 
 # def evaluateT90(times, counts):
@@ -1330,8 +1337,8 @@ def make_plot(instrument, test_times,
     #--------------------------------------------------------------------------#
 
     # plots
-    ax[0,0].plot(test_times**(1/3),     averaged_fluxes,                color='b', lw=1.5, alpha=1.00, label = label_instr)
-    ax[0,0].plot(test_times**(1/3),     averaged_fluxes_sim,            color='r', lw=1.5, alpha=0.75, label = label_sim)
+    ax[0,0].plot(test_times**(1/3),     averaged_fluxes,                color='b', lw=1.5, alpha=1.00, label=label_instr)
+    ax[0,0].plot(test_times**(1/3),     averaged_fluxes_sim,            color='r', lw=1.5, alpha=0.75, label=label_sim)
     ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms[1:],        color='b', lw=1.5, alpha=1.00)
     ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms_sim[1:],    color='r', lw=1.5, alpha=0.75)
     # error bars
@@ -1381,7 +1388,7 @@ def make_plot(instrument, test_times,
 
     # plots
     ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube,     color='b', lw=1.5, label=label_instr)
-    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube_sim, color='r', lw=1.5, label=label_sim,   alpha=0.75)
+    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube_sim, color='r', lw=1.5, label=label_sim, alpha=0.75)
     # error bars
     if err_bars:
         errs     = averaged_fluxes_cube_rms     / np.sqrt(n_grb_real)

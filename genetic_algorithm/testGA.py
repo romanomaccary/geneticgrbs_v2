@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-### Increase the recursion limit
-rec_lim=40000
+### Increase the recursion limit to avoid: "RecursionError: maximum recursion depth exceeded in comparison"
+rec_lim=50000
 if sys.getrecursionlimit()<rec_lim:
     sys.setrecursionlimit(rec_lim)
 
@@ -108,6 +108,7 @@ from avalanche import LC
 #instrument = 'batse'
 instrument = 'swift'
 #instrument = 'sax'
+#instrument = 'fermi'
 
 #------------------------------------------------------------------------------#
 
@@ -121,16 +122,6 @@ if instrument=='batse':
     sn_threshold  = instr_batse['sn_threshold']  # 70    # signal-to-noise ratio
     bin_time      = instr_batse['res']           # 0.064 # [s] temporal bins for BATSE (time resolution)
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
-# elif instrument=='batse_old': # galileo
-#     t_i           = 0     # [s]
-#     t_f           = 150   # [s]
-#     eff_area      = 3600  # effective area of instrument [cm2]
-#     bg_level      = 10.67 # background level [cnt/cm2/s]
-#     t90_threshold = 2     # [s] --> used to select only _long_ GRBs
-#     t90_frac      = 15
-#     sn_threshold  = 70    # signal-to-noise ratio
-#     bin_time      = 0.064 # [s] temporal bins for BATSE (time resolution)
-#     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
 elif instrument=='swift':
     t_i           = 0                            # [s]
     t_f           = 150                          # [s]
@@ -142,22 +133,51 @@ elif instrument=='swift':
     bin_time      = instr_swift['res']           # 0.064 # [s] temporal bins for Swift (time resolution)
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
 elif instrument=='sax':
-    t_i           = 0               # [s]
-    #t_f          = 150             # [s]
-    t_f           = 50              # [s] (HR)
-    eff_area      = 420             # effective area of instrument [cm2]
-    bg_level      = (1000/eff_area) # background level [cnt/cm2/s]
-    t90_threshold = 2               # [s] --> used to select only _long_ GRBs
+    t_i           = 0                          # [s]
+    t_f           = 50                         # [s] (HR)
+    eff_area      = instr_sax['eff_area']      # 420 # effective area of instrument [cm2]
+    bg_level      = instr_sax['bg_level']      # (1000/eff_area) # background level [cnt/cm2/s]
+    t90_threshold = instr_sax['t90_threshold'] # 2 # [s] --> used to select only _long_ GRBs
     t90_frac      = 15
-    sn_threshold  = 10              # signal-to-noise ratio
-    #bin_time     = 1.0             # [s] temporal bins for BeppoSAX
-    bin_time      = 0.0078125       # [s] temporal bins for BeppoSAX (HR)
+    sn_threshold  = instr_sax['sn_threshold']  # 10 # signal-to-noise ratio
+    bin_time      = instr_sax['res']           # 0.0078125 # [s] temporal bins for BeppoSAX (HR)
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
+elif instrument=='sax_lr':
+    t_i           = 0                              # [s]
+    t_f           = 150                            # [s] (LR)
+    eff_area      = instr_sax_lr['eff_area']       # 420 # effective area of instrument [cm2]
+    bg_level      = instr_sax_lr['bg_level']       # (1000/eff_area) # background level [cnt/cm2/s]
+    t90_threshold = instr_sax_lr['t90_threshold']  # 2 # [s] --> used to select only _long_ GRBs
+    t90_frac      = 15
+    sn_threshold  = instr_sax_lr['sn_threshold']   # 10   # signal-to-noise ratio
+    bin_time      = instr_sax_lr['res']            # 1.0  # [s] temporal bins for BeppoSAX (LR)
+    test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
+elif instrument=='fermi':
+    t_i           = 0                            # [s]
+    t_f           = 150                          # [s]
+    eff_area      = instr_fermi['eff_area']      # 100 # effective area of instrument [cm2]
+    bg_level      = instr_fermi['bg_level']      # (400/eff_area_fermi) # background level [cnt/cm2/s]
+    t90_threshold = instr_fermi['t90_threshold'] # 2 # [s] --> used to select only _long_ GRBs
+    t90_frac      = 15
+    sn_threshold  = instr_fermi['sn_threshold']  # 5 # signal-to-noise ratio
+    bin_time      = instr_fermi['res']           # 0.064 # [s] temporal bins for Fermi
+    test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
+# elif instrument=='batse_old': # it is actually for 'galileo'
+#     t_i           = 0     # [s]
+#     t_f           = 150   # [s]
+#     eff_area      = 3600  # effective area of instrument [cm2]
+#     bg_level      = 10.67 # background level [cnt/cm2/s]
+#     t90_threshold = 2     # [s] --> used to select only _long_ GRBs
+#     t90_frac      = 15
+#     sn_threshold  = 70    # signal-to-noise ratio
+#     bin_time      = 0.064 # [s] temporal bins for BATSE (time resolution)
+#     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
 else:
-    raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
+    raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax", "sax_lr", and "fermi".')
 
 #------------------------------------------------------------------------------#
 
+# Genetic Algorithm parameters
 parent_selection_type = "tournament" 
 crossover_probability = 1                      # 'None' means couples parent k with parent k+1, otherwise it selects from the parents candidate list each one of them with probability 'crossover_probability', and then it takes two of them at random
 initial_population    = None                   # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
@@ -170,6 +190,7 @@ keep_parents          = 0                      # if 0, keep NO parents (the ones
 keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
+# Other parameters
 N_grb                 = 2000                   # number of simulated GRBs to produce per set of parameters
 test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
 
@@ -177,7 +198,7 @@ test_pulse_distr      = False                  # add a fifth metric regarding th
 if user=='pleiadi':
     n_processes = int(os.environ['OMP_NUM_THREADS'])
 else:
-    n_processes = 40
+    n_processes = 50
 parallel_processing  = ["process", n_processes]  # USE THIS ONE!  
 #parallel_processing = ["thread", n_processes]       
 #parallel_processing = None
@@ -193,7 +214,7 @@ range_delta1  = {"low": -1.5,            "high": -0.30-1.e-6}
 range_delta2  = {"low": 0,               "high": 0.30}
 range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)}  # sample `tau_min` uniformly in log    space
 #range_tau_min = {"low": 1.e-2,          "high": bin_time-1.e-6}            # sample `tau_min` uniformly in linear space
-range_tau_max = {"low": bin_time,        "high": 50}
+range_tau_max = {"low": 1,               "high": 50}
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
 # mu0=1
@@ -326,7 +347,10 @@ duration_distr_real = compute_kde_log_duration(duration_list=duration_real)
 # DEFINE FITNESS FUNCTION OF THE GENETIC ALGORITHM
 ################################################################################
 
-def fitness_func(solution, solution_idx=None):
+# pygad 3.X
+def fitness_func(ga_instance, solution, solution_idx=None):
+# pygad 2.X
+# def fitness_func(solution, solution_idx=None):
     #--------------------------------------------------------------------------#
     # Generate the GRBs
     #--------------------------------------------------------------------------#
@@ -522,7 +546,10 @@ if __name__ == '__main__':
         ga_GRB = pygad.load(filename=filename_model)
 
         # Reload the fitness function (otherwise it will raise an error, I don't know why...)
-        def fitness_func_reloaded(solution, solution_idx=None):
+        # pygad 3.X
+        def fitness_func_reloaded(ga_instance, solution, solution_idx=None):
+        # pygad 2.X
+        # def fitness_func_reloaded(solution, solution_idx=None):
             # global loss_list
             #--------------------------------------------------------------------------#
             # Generate the GRBs
