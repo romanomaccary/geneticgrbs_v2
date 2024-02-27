@@ -1,6 +1,6 @@
 # GeneticGRBs
 
-This repository contains the Python code that implements a Genetic Algorithm (GA) optimization of the seven parameters of the [Stern & Svensson (1996)](https://iopscience.iop.org/article/10.1086/310267) (SS96) stochastic pulse avalanche model for the generation of simulated GRB light curves, developed in [this]() Astronomy & Astrophysics (A&A) paper (also on [arXiv]()).
+This repository contains the Python code that implements a Genetic Algorithm (GA) optimization of the seven parameters of the [Stern & Svensson (1996)](https://iopscience.iop.org/article/10.1086/310267) (SS96) stochastic pulse avalanche model for the generation of simulated GRB light curves, developed in [this]() paper (also on [arXiv]()).
 
 _Reference Paper_:
 
