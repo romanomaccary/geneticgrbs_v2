@@ -10,7 +10,7 @@ _Code Contributors_ (in alphabetical order): G. Angora, L. Bazzanini, L. Ferro, 
 
 The GA has been implemented using [`PyGAD`](https://github.com/ahmedfgad/GeneticAlgorithmPython) (`v3.3.1`), a FOSS Python library containing a collection of several machine learning algorithms.
 
-The Python code that implements the SS96 stochastic model was orginally forked from [this public repository](https://github.com/anastasia-tsvetkova/lc_pulse_avalanche), but has undergone significant changes.
+The Python code that implements the SS96 stochastic model was originally forked from [this public repository](https://github.com/anastasia-tsvetkova/lc_pulse_avalanche), but has undergone significant changes.
 
 <p align="center">
 <img src="avalanche.png"  alt="" width = "450" />
