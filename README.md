@@ -8,6 +8,11 @@ _Corresponding Author_:
 
 _Code Contributors_ (in alphabetical order): G. Angora, L. Bazzanini, L. Ferro, C. Guidorzi, and A. Tsvetkova.
 
+
+## Description
+
+In order to run the GA minimization procedure, the BATSE or the _Swift_/BAT light curves (LCs) are needed. Instead, if you just want to simulate a new set of LCs (given a set of seven SS96 parameters) the code in this repository should be sufficient.
+
 The GA has been implemented using [`PyGAD`](https://github.com/ahmedfgad/GeneticAlgorithmPython) (`v3.3.1`), a FOSS Python library containing a collection of several machine learning algorithms.
 
 The Python code that implements the SS96 stochastic model was originally forked from [this public repository](https://github.com/anastasia-tsvetkova/lc_pulse_avalanche), but has undergone significant changes.
@@ -16,23 +21,13 @@ The Python code that implements the SS96 stochastic model was originally forked 
 <img src="avalanche.png"  alt="" width = "450" />
 </p>
 
-Please cite the following paper if you use this code in your work:
-```
-@article{,
-  title={},
-  author={},
-  journal={},
-  pages={},
-  year={},
-  publisher={}
-}
-```
-
 
 
 ## Installation
 
-Follow the instructions in the file `conda_pygad3_env.txt`, namely:
+To run the code, it is advised to create a self-contained `conda` environment with all the proper libraries installed.
+
+To create the conda environment (called `pygad3`), just follow the instructions in the file `conda_pygad3_env.txt`, namely run the following four lines of code:
 
 1. `conda create -n pygad3 python=3.10`
 
@@ -45,3 +40,17 @@ Follow the instructions in the file `conda_pygad3_env.txt`, namely:
 
 
 ## Usage
+
+## Other
+
+Please cite the following paper if you use this code in your work:
+```
+@article{,
+  title={},
+  author={},
+  journal={},
+  pages={},
+  year={},
+  publisher={}
+}
+```
