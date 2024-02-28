@@ -4,7 +4,7 @@ This repository contains the Python code that implements a Genetic Algorithm (GA
 
 - _Reference Paper_: [Long gamma-ray burst light curves as the result of a common stochastic pulse-avalanche process]().
 
-- _Corresponding Author_: Lorenzo Bazzanini, University of Ferrara ( `bzzlnz  at unife.it` )
+- _Corresponding Author_: Lorenzo Bazzanini, University of Ferrara ( `bzzlnz  AT  unife.it` )
 
 - _Code Contributors_ (in alphabetical order): G. Angora, L. Bazzanini, L. Ferro, C. Guidorzi, and A. Tsvetkova.
 
@@ -66,7 +66,7 @@ tau_max =
 
 ```
 
-To generate the LCs, change the value of the parameters in the file `./simulate_GRBs.py `, and then run:
+To generate the LCs, change the value of the parameters in the file `./simulate_GRBs.py `, define the variable for the instrument (`instrument = 'batse'`, or `instrument = 'swift'`), and then run:
 ```
 # move to the right directory
 cd ./lc_pulse_avalanche
@@ -77,6 +77,7 @@ python3 simulate_GRBs.py
 ```
 
 ### Running the GA optimization
+#TODO
 ```
 # move to the right directory
 cd ./genetic_algorithm
