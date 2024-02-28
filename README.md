@@ -4,7 +4,7 @@ This repository contains the Python code that implements a Genetic Algorithm (GA
 
 - _Reference Paper_: [Long gamma-ray burst light curves as the result of a common stochastic pulse-avalanche process]().
 
-- _Corresponding Author_: Lorenzo Bazzanini, University of Ferrara ( `bzzlnz  AT  unife.it` )
+- _Corresponding Author_: Lorenzo Bazzanini, University of Ferrara ( `bzzlnz  AT  unife  DOT  it` )
 
 - _Code Contributors_ (in alphabetical order): G. Angora, L. Bazzanini, L. Ferro, C. Guidorzi, and A. Tsvetkova.
 
@@ -22,8 +22,6 @@ This repository contains the Python code that implements a Genetic Algorithm (GA
 
 ## Description
 
-In order to run the GA minimization procedure, the BATSE or the _Swift_/BAT light curves are needed. Instead, if you just want to simulate a new set of LCs (given a set of seven SS96 parameters) the code in this repository should be sufficient.
-
 The GA has been implemented using [`PyGAD`](https://github.com/ahmedfgad/GeneticAlgorithmPython) ([Gad 2023](https://link.springer.com/article/10.1007/s11042-023-17167-y)), a FOSS Python library containing a collection of several machine learning algorithms.
 
 The Python code that implements the SS96 stochastic model is also contained in this repo; it was originally forked from [this public repository](https://github.com/anastasia-tsvetkova/lc_pulse_avalanche) by one of the co-authors, but has undergone significant changes.
@@ -36,7 +34,7 @@ The Python code that implements the SS96 stochastic model is also contained in t
 
 ## Installation
 
-To run the code, it is advised to create a self-contained `conda` environment with all the proper libraries installed. To create the aformentioned environment, called `pygad3`, just run the following four lines of code (or follow the instructions in the file `./conda_pygad3_env.txt`, which contains also the version of all installed packages):
+To run the code, it is advised to create a self-contained `conda` environment with all the required libraries installed. To create the aformentioned environment, which we called `pygad3`, just run the following four lines of code (or follow the instructions in the file `./conda_pygad3_env.txt`, which contains also the version of all the installed packages):
 ```
 # 1. create the conda environment 
 conda create -n pygad3 python=3.10
@@ -53,9 +51,18 @@ conda install ipykernel --update-deps --force-reinstall
 
 
 ## Usage
+In order to run the GA minimization procedure, the BATSE or the _Swift_/BAT light curves are needed. Instead, if you just want to simulate a new set of LCs (given a set of seven SS96 parameters) the code in this repository should be sufficient.
+
+#NOTE: before running anything, you have to unzip all the nine archives in the `./lc_pulse_avalance` folder (seven `swift_errs_*.txt.zip`, `kde_pdf_Swift_peak_count_rates.txt.zip`, and `kde_pdf_BATSE_peak_count_rates.txt.zip`). To do that, you can just run the following command:
+```
+# move to the right directory
+cd ./lc_pulse_avalance
+# extract all the files
+tar -xzf swift_errs_1.txt.zip; tar -xzf swift_errs_2.txt.zip; tar -xzf swift_errs_3.txt.zip; tar -xzf swift_errs_4.txt.zip; tar -xzf swift_errs_5.txt.zip; tar -xzf swift_errs_6.txt.zip; tar -xzf swift_errs_7.txt.zip; tar -xzf kde_pdf_Swift_peak_count_rates.txt.zip; tar -xzf kde_pdf_BATSE_peak_count_rates.txt.zip
+```
 
 ### Generation of a set of simulated LCs
-The value of the optimized parameters (see paper) are:
+The value of the optimized parameters (see our paper above) are:
 ```
 # BATSE
 mu      = 1.02
@@ -77,7 +84,7 @@ tau_max =
 
 ```
 
-To generate the LCs, change the value of the parameters in the file `./simulate_GRBs.py `, define the variable for the instrument (`instrument = 'batse'`, or `instrument = 'swift'`), and then run:
+To generate the LCs, change the value of the parameters in the file `./simulate_GRBs.py`, and define the needed variable for the instrument (`instrument = 'batse'` or `instrument = 'swift'`, if you want to simulate BATSE or Swift LCs, respectively), and then run:
 ```
 # move to the right directory
 cd ./lc_pulse_avalanche
