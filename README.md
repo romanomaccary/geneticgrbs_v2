@@ -9,6 +9,17 @@ This repository contains the Python code that implements a Genetic Algorithm (GA
 - _Code Contributors_ (in alphabetical order): G. Angora, L. Bazzanini, L. Ferro, C. Guidorzi, and A. Tsvetkova.
 
 
+
+## Table of Contents  
+- [Description](#description)  
+- [Installation](#installation)  
+- [Usage](#usage)
+  - [Generation of a set of simulated LCs](#generation-of-a-set-of-simulated-lcs)
+  - [Running the GA optimization](#running-the-ga-optimization)
+- [Other](#other)
+
+
+
 ## Description
 
 In order to run the GA minimization procedure, the BATSE or the _Swift_/BAT light curves are needed. Instead, if you just want to simulate a new set of LCs (given a set of seven SS96 parameters) the code in this repository should be sufficient.
