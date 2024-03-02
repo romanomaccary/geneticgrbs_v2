@@ -28,7 +28,6 @@ SEED=None
 
 user='LB'
 #user='AF'
-#user='MM'
 #user='bach'
 #user='gravity'
 if user=='bach':
@@ -41,8 +40,6 @@ elif user=='LB':
     rc('text', usetex=True)
 elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
-elif user=='MM':
-    sys.path.append('')
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
     
@@ -742,7 +739,7 @@ def load_lc_fermi(path):
 
 ################################################################################
 
-def load_lc_sim(path, real_swift_grb_list=None):
+def load_lc_sim(path):
     """
     Load the simulated light curves, which were previously generated and saved
     as files, named 'lcXXX.txt', one file for each simulated GRB ("XXX" is the 
@@ -776,19 +773,6 @@ def load_lc_sim(path, real_swift_grb_list=None):
         model    = np.float32(model)
         modelbkg = np.float32(modelbkg)
         bg       = np.float32(bg)
-
-        if real_swift_grb_list!=None:
-            # Applico qua gli errori al modello esatto.
-            # Scelgo casualmente uno dei GRB reali
-            grb_index = np.random.randint(0,len(real_swift_grb_list))
-            #Prendo gli errori del grb reale selezionato e faccio un vettore pescandoli a caso
-            #(con reinserimento) da usare come std per la variabile gaussiana che rappresenta i bin
-            errors_to_apply = real_swift_grb_list[grb_index].errs
-            max_err_index   = len(errors_to_apply)
-            std_bkg         = np.array([errors_to_apply[np.random.randint(0,max_err_index)] for val in counts])
-            #creo i conteggi con errore
-            counts = np.random.normal(loc = model, scale = std_bkg)
-            errs   = std_bkg     
 
         grb      = GRB(grb_name=grb_name, 
                        times=times, 
@@ -1311,12 +1295,15 @@ def make_plot(instrument, test_times,
         n_grb_real=578
     elif instrument=='swift':
         label_instr='Swift'
-        n_grb_real=561
+        label_sim='Sim (GA)'
+        n_grb_real=531
     elif instrument=='sax':
         label_instr='BeppoSAX'
+        label_sim='Sim (GA)'
         n_grb_real=121
     elif instrument=='fermi':
         label_instr='Fermi'
+        label_sim='Sim (GA)'
         n_grb_real=245
     else:
         raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')

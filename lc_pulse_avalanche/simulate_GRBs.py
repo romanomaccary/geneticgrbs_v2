@@ -14,13 +14,17 @@ from matplotlib import rc
 #rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 #rc('text', usetex=True)
 
+### Increase the recursion limit to avoid: "RecursionError: maximum recursion depth exceeded in comparison"
+rec_lim=50000
+if sys.getrecursionlimit()<rec_lim:
+    sys.setrecursionlimit(rec_lim)
+
 #seed=42
 #np.random.seed(SEED)
 
 # set the username for the path of the files:
 user='LB'
 #user='AF'
-#user='MM'
 #user='bach'
 #user='gravity'
 #user='pleiadi'
@@ -43,10 +47,6 @@ elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/statistical_test')
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
     export_path='C:/Users/lisaf/Desktop/'
-elif user=='MM':
-    sys.path.append('')
-    sys.path.append('')
-    export_path=''
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
@@ -323,13 +323,26 @@ from avalanche import LC
 # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
 # corrected sampling of the individual peaks), corrected T90 estimate 
 # MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
-mu      = 1.02
-mu0     = 0.96
-alpha   = 2.84
-delta1  = -1.32
-delta2  = 0.28
+# mu      = 1.02
+# mu0     = 0.96
+# alpha   = 2.84
+# delta1  = -1.32
+# delta2  = 0.28
+# tau_min = 0.02
+# tau_max = 34.8
+
+
+# The 7 values obtained from Swift v32 optimization are
+# (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
+# corrected sampling of the individual peaks), corrected T90 estimate 
+# MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+mu      = 1.26
+mu0     = 1.17
+alpha   = 2.96
+delta1  = -0.69
+delta2  = 0.26
 tau_min = 0.02
-tau_max = 34.8
+tau_max = 47.8
 
 #------------------------------------------------------------------------------#
 
@@ -338,8 +351,8 @@ t_f=150 # [s]
 
 N_grb=5000
 
-instrument = 'batse'
-#instrument = 'swift'
+#instrument = 'batse'
+instrument = 'swift'
 #instrument = 'sax'
 #instrument = 'sax_lr'
 #instrument = 'fermi'
@@ -409,7 +422,7 @@ test  = generate_GRBs(# number of simulated GRBs to produce
                       # other parameters
                       export_files=True,
                       export_path=export_path,
-                      n_cut=2000,
+                      n_cut=2500,
                       with_bg=False,
                       test_pulse_distr=test_pulse_distr)
 
