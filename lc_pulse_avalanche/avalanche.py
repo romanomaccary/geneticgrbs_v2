@@ -88,7 +88,7 @@ class LC(object):
     :tau_max: upper boundary of log-normal probability distribution of tau_0
     :t_min: GRB LC start time
     :t_max: GRB LC stop time
-    :res: GRB LC time resolution (s) (a.k.a., bin time)
+    :res: GRB LC time resolution (s) (i.e., bin time)
     :eff_area: effective area of instrument (cm2)
     :bg_level: background level rate per unit area of detector (cnt/cm2/s)
     :min_photon_rate: left  boundary of -3/2 log N - log S distribution (ph/cm2/s)
@@ -182,7 +182,7 @@ class LC(object):
         if self._verbose:
             print("Generating a new pulse with tau = {:0.3f}".format(tau))
 
-        t   = self._times # times (lc x-axis)
+        t   = (self._times).astype(np.float64) # times (lc x-axis)
         _tp = np.ones(len(t))*tp
         
         if tau_r == 0 or tau == 0: 
@@ -190,7 +190,7 @@ class LC(object):
             #return np.zeros(len(t))
         
         return np.append(norm * np.exp(-(t[t<=tp]-_tp[t<=tp])**2/tau_r**2), \
-                         norm * np.exp(-(t[t>tp] -_tp[t>tp])/tau))
+                         norm * np.exp(-(t[t>tp] -_tp[t>tp])/tau)).astype(np.float64)
 
     #--------------------------------------------------------------------------#
    
@@ -242,6 +242,12 @@ class LC(object):
             # tau1: time const of the parent pulse
             tau = tau1 * 10**(uniform(low=self._delta1, high=self._delta2))
             
+            # The avalanche stops when the time constant tau of the pulse goes 
+            # below the 1/10 of the time resolution (self._res)
+            frac_res = 0.1
+            if (tau < (frac_res*self._res)):
+                continue
+            
             # Rise time
             tau_r = 0.5 * tau
             
@@ -268,15 +274,22 @@ class LC(object):
             # Therefore, below we store the arrays of counts (self._parent_counts
             # and self._child_counts), not count rates anymore, and we treat the
             # two cases separately (instead of integrating we multiply times tau).
-
+#
             count_rates_pulse = self.norris_pulse(norm_A, delta_t, tau, tau_r)
+            #print('\n\n\n')
+            #print('SUM COUNTS RATES:')
+            #print(np.sum(count_rates_pulse))
             if tau>self._res:
                 counts_pulse        = count_rates_pulse * self._res
                 self._child_counts += counts_pulse
             else:
                 counts_pulse        = count_rates_pulse * tau
                 self._child_counts += counts_pulse
-
+            # export the array `counts_pulse` to a txt file
+            #np.savetxt('../simulations/counts_pulse_'+str(norm_A)+'.txt', counts_pulse)
+            #print('\n\n\n')
+            #print('SUM COUNTS:')
+            #print(np.sum(counts_pulse))
             # Save a dictionary with the 4 parameters of the pulse, and the 
             # total counts of the single pulse
             self._lc_params.append(dict(norm=norm_A,
@@ -293,16 +306,18 @@ class LC(object):
                 print("--------------------------------------------------------------------------")
 
             # The avalanche stops when the time constant tau of the pulse goes 
-            # below the 1/100 of the time resolution (self._res), or when the  
-            # number of total pulses becomes greater than a given number of our 
-            # choice (self._n_cut).
-            if (tau > (1.e-2*self._res)):
-                # continue avalanche (otherwise, stop this chain)
+            # below the 1/10 of the time resolution (self._res), which has
+            # been already checked above, OR when the number of total pulses 
+            # becomes greater than a given number of our choice (self._n_cut).
+            if (tau >= (frac_res*self._res)): # THIS IS ALWAYS TRUE SINCE WE CHECKED IT ABOVE!
                 if self._n_cut is None:
                     self._rec_gen_pulse(tau, delta_t)
                 else:
                     if self._n_pulses < self._n_cut:
                         self._rec_gen_pulse(tau, delta_t)
+            # else, stop this brach of the family tree chain
+            else:
+                continue 
 
         return self._rates
     
@@ -354,20 +369,24 @@ class LC(object):
             # The time constant of spontaneous pulses (decay time tau0) is given by: 
             #     p6(log10 tau0) = 1/(log10 tau_max - log10 tau_min)
             tau0 = 10**(uniform(low=np.log10(self._tau_max), high=np.log10(self._tau_min)))
+            tau0 = np.float64(tau0)
 
             # Rise time
             tau_r = 0.5 * tau0
+            tau_r = np.float64(tau_r)
 
             # The time delay (t_delay) of each spontaneous primary pulses with
             # respect to a common invisible trigger event is given by:
             #     p7(t) = exp(-t/(alpha*tau0))/(alpha*tau0)
             t_delay = exponential(scale=self._alpha*tau0)
+            t_delay = np.float64(t_delay)
 
             # The amplitude (A) of each pulse is given by:
             #     p1(A) = 1, in [0, 1]
             # norm = uniform(low=0.0, high=1) 
             # Each pulse composing the LB has an amplitude sampled in U[0,A_max].
             norm_A = uniform(low=0.0, high=self._A_max)
+            norm_A = np.float64(norm_A)
             
             if self._verbose:
                 print("Spontaneous pulse amplitude: {:0.3f}".format(norm_A))

@@ -349,6 +349,7 @@ tau_max = 47.8
 t_i=0   # [s]
 t_f=150 # [s]
 
+#N_grb=1
 N_grb=5000
 
 #instrument = 'batse'
@@ -390,7 +391,7 @@ elif instrument=='fermi':
     sn_threshold  = instr_fermi['sn_threshold']
     t_f           = 50 # s
 else:
-    raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax", "sax_lr".')
+    raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax", "sax_lr", "fermi".')
 
 
 ################################################################################

@@ -726,14 +726,17 @@ def load_lc_fermi(path):
         grb_data_file_path  = lc_file_path
 
         t90 = t90_info[np.where(grb_trig_name == grb_name)[0][0]]
-        grb = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs,
-                  t90=t90, grb_data_file_path=grb_data_file_path)
+        grb = GRB(grb_name=grb_name, 
+                  times=times, 
+                  counts=counts, 
+                  errs=errs,
+                  t90=t90, 
+                  grb_data_file_path=grb_data_file_path)
         fermi_grb_list.append(grb)
 
     print('Total number of GRB: ', len(grb_dir_list))
     print('GRB with no bs file: ', grb_with_no_bs)
     print('Number of accepted GRB: ', len(fermi_grb_list))
-
 
     return fermi_grb_list
 
@@ -1139,7 +1142,7 @@ def reject_sampling_fermi(prob_dict):
 
     while bad_val:
         num_dect = np.random.randint(min(prob_dict.keys()),max(prob_dict.keys())+1)
-        yprob = np.random.rand()
+        yprob    = np.random.rand()
         if yprob <= prob_dict[num_dect]:
             bad_val = False
 
@@ -1300,11 +1303,11 @@ def make_plot(instrument, test_times,
     elif instrument=='sax':
         label_instr='BeppoSAX'
         label_sim='Sim (GA)'
-        n_grb_real=121
+        n_grb_real=121 # #TODO: check this number
     elif instrument=='fermi':
         label_instr='Fermi'
         label_sim='Sim (GA)'
-        n_grb_real=245
+        n_grb_real=245 # #TODO: check this number
     else:
         raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
@@ -1655,16 +1658,19 @@ def make_plot_one(instrument, test_times,
     if instrument=='batse':
         label_instr='BATSE'
         label_sim='Sim (GA)'
-        n_grb_real=578
+        n_grb_real=585
     elif instrument=='swift':
         label_instr='Swift'
-        n_grb_real=561
+        label_sim='Sim (GA)'
+        n_grb_real=531
     elif instrument=='sax':
         label_instr='BeppoSAX'
-        n_grb_real=121
+        label_sim='Sim (GA)'
+        n_grb_real=121 # #TODO: check this number
     elif instrument=='fermi':
         label_instr='Fermi'
-        n_grb_real=245
+        label_sim='Sim (GA)'
+        n_grb_real=245 # #TODO: check this number
     else:
         raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
 
@@ -2271,14 +2277,14 @@ def generate_GRBs(N_grb,                                            # number of 
         savefile          = open(outfile, 'w', encoding='utf-8')
         #
         norm_list         = [pulse['norm']         for pulse in LC._lc_params]
-        #t_delay_list     = [pulse['t_delay']      for pulse in LC._lc_params]
+        t_delay_list      = [pulse['t_delay']      for pulse in LC._lc_params]
         tau_list          = [pulse['tau']          for pulse in LC._lc_params]
-        #tau_r_list       = [pulse['tau_r']        for pulse in LC._lc_params]
+        tau_r_list        = [pulse['tau_r']        for pulse in LC._lc_params]
         counts_pulse_list = [pulse['counts_pulse'] for pulse in LC._lc_params]
         #
-        savefile.write('# norm    tau    counts_pulse\n')
+        savefile.write('# norm    t_delay    tau     tau_r    counts_pulse\n')
         for i in range(len(LC._lc_params)):
-            savefile.write('{0} {1} {2}\n'.format(norm_list[i], tau_list[i], counts_pulse_list[i]))
+            savefile.write('{0} {1} {2} {3} {4}\n'.format(norm_list[i], t_delay_list[i], tau_list[i], tau_r_list[i], counts_pulse_list[i]))
         savefile.close()
         # # Save the number of pulses in each generated GRB:
         # with open(path+instrument+'/'+'n_pls.txt', 'a') as file:
