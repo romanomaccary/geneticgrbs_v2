@@ -808,8 +808,8 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
     - sn_threshold;
     - bin_time: temporal bin size of the instrument [s];
     - t_f: time after the peak that we need the signal to last [s];
-    - sn_distr: if True, return also the distribution of the s2n of all the 
-                GRBs in input;
+    - sn_distr: if True, returns and export also the distribution of the s2n of  
+                _only_ the GRBs that have passed the constraint selection;
     - filter: if True, is applies a savgol filter before computing the S2N;
     Output:
     - good_grb_list: list of GRB objects, where each one is a GRB that satisfies
@@ -818,7 +818,7 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
                  of those selected); 
     """
     good_grb_list = []
-    sn_levels     = []
+    sn_levels     = {}
     grb_with_neg_t20 = 0
     for grb in grb_list:
         times   = np.float32(grb.times)
@@ -838,8 +838,9 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
             #remove GRB if the t20% is negative
             grb_with_neg_t20 += 1
             s_n = 0
-        if sn_distr:
-            sn_levels.append(s_n)
+        # if sn_distr:
+        #     sn_levels[grb.name] = s_n
+
         cond_1 = t90>t90_threshold
         cond_2 = s_n>sn_threshold
         #cond_2 = s_n_peak>sn_threshold
@@ -847,11 +848,20 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
         if ( cond_1 and cond_2 and cond_3 ):
             grb.t20 = T20
             good_grb_list.append(grb)
+            if sn_distr:
+                sn_levels[grb.name] = s_n
 
     if verbose:
         print("Total number of input GRBs: ", len(grb_list))
         print("GRBs with negative duration: ", grb_with_neg_t20)
         print("GRBs that satisfy the constraints: ", len(good_grb_list)) 
+
+    # Export the s2n distribution of the GRBs that passed the constraints
+    if sn_distr:
+        with open('./sn_distr.txt', 'w') as f:
+            print("# grb_name    s2n", file=f)
+            for name, value in sn_levels.items():
+                print(f"{name}    {value}", file=f)
 
     if sn_distr:
         return good_grb_list, sn_levels
