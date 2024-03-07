@@ -2201,7 +2201,7 @@ def generate_GRBs(N_grb,                                            # number of 
                   sn_threshold, t_f,                                # constraint parameters 
                   t90_threshold, t90_frac=15, filter=True,          # constraint parameters
                   export_files=False, export_path='None',           # other parameters
-                  n_cut=2000, with_bg=False, seed=None,             # other parameters
+                  n_cut=2500, with_bg=False, seed=None,             # other parameters
                   test_pulse_distr=False                            # other parameters
                   ):
     """

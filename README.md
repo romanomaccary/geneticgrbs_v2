@@ -22,20 +22,29 @@ This repository contains the Python code that implements a Genetic Algorithm (GA
 
 ## Description
 
-The GA has been implemented using [`PyGAD`](https://github.com/ahmedfgad/GeneticAlgorithmPython) ([Gad 2023](https://link.springer.com/article/10.1007/s11042-023-17167-y)), a FOSS Python library containing a collection of several machine learning algorithms.
+The light curves of long GRBs show a wide variety of morphologies, which current LC simulation models based on the internal shock paradigm still fail to fully reproduce. The reason is that, despite the recent significant advance in understanding the energetics and dynamics of long GRBs, the nature of their inner engine, how the relativist outflow is powered, and the dissipation mechanisms are still not understood. This limits our ability to properly describe and simulate those transients. 
 
-The Python code that implements the SS96 stochastic model is also contained in this repo; it was originally forked from [this public repository](https://github.com/anastasia-tsvetkova/lc_pulse_avalanche) by one of the co-authors, but has undergone significant changes.
+A promising way to gain insights into these topics is modeling of GRB light curves as the result of a common stochastic process. In the Burst And Transient Source Experiment (BATSE) era, a stochastic pulse avalanche model was proposed and tested by comparing ensemble-average properties of simulated and real light curves, proposed by [SS96](https://iopscience.iop.org/article/10.1086/310267). 
+
+Using machine learning, we optimized this stochastic model's parameters by exploiting the GA's capability to thoroughly explore the parameter space. We revived this model by applying it to two independent datasets, BATSE and Swift/BAT. The average properties are successfully reproduced. Notwithstanding the different populations and passbands of both data sets, the corresponding optimal parameters are interestingly similar. In particular, for both sets the dynamics appears to be close to a critical state, which is key to reproduce the observed variety of time profiles. Our results propel the avalanche character in a critical regime as a key trait of the energy release in GRB engines, which underpins some kind of instability.
+
 
 <p align="center">
 <img src="avalanche.png"  alt="" width = "450" />
 </p>
+
+The GA has been implemented using [`PyGAD`](https://github.com/ahmedfgad/GeneticAlgorithmPython) ([Gad 2023](https://link.springer.com/article/10.1007/s11042-023-17167-y)), a FOSS Python library containing a collection of several machine learning algorithms.
+
+The Python code that implements the SS96 stochastic model is also contained in this repo; it was originally forked from [this public repository](https://github.com/anastasia-tsvetkova/lc_pulse_avalanche) by one of the co-authors, but has undergone significant changes.
+
+To identify the peaks in the LCs we have used [`MEPSA`](https://www.fe.infn.it/u/guidorzi/new_guidorzi_files/code.html) ([Guidorzi 2015](https://www.sciencedirect.com/science/article/pii/S2213133715000025)), which is an algorithm aimed at identifying peaks within a uniformly sampled, background subtracted/detrended time series affected by statistical uncorrelated Gaussian noise, conceived specifically for the analysis of GRB LCs. 
 
 
 
 ## Installation
 
 To run the code, it is advised to create a self-contained `conda` environment with all the required libraries installed. To create the aformentioned environment, which we called `pygad3`, just run the following four lines of code (or follow the instructions in the file `./conda_pygad3_env.txt`, which contains also the version of all the installed packages):
-```
+```bash
 # 1. create the conda environment 
 conda create -n pygad3 python=3.10
 
@@ -54,7 +63,7 @@ conda install ipykernel --update-deps --force-reinstall
 In order to run the GA minimization procedure, the BATSE or the _Swift_/BAT light curves are needed. Instead, if you just want to simulate a new set of LCs (given a set of seven SS96 parameters) the code in this repository should be sufficient.
 
 #NOTE: before running anything, you have to unzip all the nine archives in the `./lc_pulse_avalance` folder (seven `swift_errs_*.txt.zip`, `kde_pdf_Swift_peak_count_rates.txt.zip`, and `kde_pdf_BATSE_peak_count_rates.txt.zip`). To do that, you can just run the following command:
-```
+```bash
 # move to the right directory
 cd ./lc_pulse_avalance
 # extract all the files
@@ -65,27 +74,26 @@ tar -xzf swift_errs_1.txt.zip; tar -xzf swift_errs_2.txt.zip; tar -xzf swift_err
 The value of the optimized parameters (see our paper above) are:
 ```
 # BATSE
-mu      = 1.02
+mu      = 1.09
 mu0     = 0.96
-alpha   = 2.84
-delta1  = -1.32
-delta2  = 0.28
+alpha   = 2.10
+delta1  = -1.27
+delta2  = 0.24
 tau_min = 0.02
-tau_max = 34.8
+tau_max = 41.2
 
 # Swift/BAT
-mu      = 
-mu0     = 
-alpha   = 
-delta1  = 
-delta2  = 
-tau_min = 
-tau_max = 
-
+mu      = 1.26
+mu0     = 1.29
+alpha   = 3.18
+delta1  = -0.93
+delta2  = 0.25
+tau_min = 0.02
+tau_max = 48.2
 ```
 
 To generate the LCs, change the value of the parameters in the file `./simulate_GRBs.py`, and define the needed variable for the instrument (`instrument = 'batse'` or `instrument = 'swift'`, if you want to simulate BATSE or Swift LCs, respectively), and then run:
-```
+```bash
 # move to the right directory
 cd ./lc_pulse_avalanche
 # activate the conda env
@@ -96,7 +104,7 @@ python3 simulate_GRBs.py
 
 ### Running the GA optimization
 #TODO
-```
+```bash
 # move to the right directory
 cd ./genetic_algorithm
 # activate the conda env

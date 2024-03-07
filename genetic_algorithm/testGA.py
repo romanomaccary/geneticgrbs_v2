@@ -41,8 +41,8 @@ print_time=True
 ### Set the username for the path of the files:
 #user='LB'
 #user='AF'
-user='bach'
-#user='gravity'
+#user='bach'
+user='gravity'
 #user='pleiadi'
 if user=='bach':
     # library paths
@@ -182,17 +182,18 @@ keep_elitism          = 0                      # keep in the next generation the
 mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 # Other parameters
-N_grb                 = 2000                   # number of simulated GRBs to produce per set of parameters
-test_pulse_distr      = False                  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
+N_grb            = 2000   # number of simulated GRBs to produce per set of parameters
+n_cut            = 2500   # maximum number of pulses to consider in the avalanche model
+test_pulse_distr = False  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
 
 # Options for parallelization
 if user=='pleiadi':
     n_processes = int(os.environ['OMP_NUM_THREADS'])
 else:
-    n_processes = 50
+    n_processes = 100
 parallel_processing  = ["process", n_processes]  # USE THIS ONE!  
-#parallel_processing = ["thread", n_processes]       
-#parallel_processing = None
+#parallel_processing = ["thread", n_processes]   # this is slower
+#parallel_processing = None                      # single thread
 
 # Name of the pkl file where to save the GA instance at the end of the run
 filename_model = 'geneticGRB'
@@ -369,7 +370,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                                  filter=True,
                                  # other parameters:
                                  export_files=False,
-                                 n_cut=2500,
+                                 n_cut=n_cut,
                                  with_bg=False,
                                  test_pulse_distr=test_pulse_distr)
     if test_pulse_distr:
@@ -569,7 +570,7 @@ if __name__ == '__main__':
                                          filter=True,
                                          # other parameters:
                                          export_files=False,
-                                         n_cut=2500,
+                                         n_cut=n_cut,
                                          with_bg=False,
                                          test_pulse_distr=test_pulse_distr)
             if test_pulse_distr:

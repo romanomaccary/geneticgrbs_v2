@@ -14,7 +14,7 @@ from matplotlib import rc
 #rc('text', usetex=True)
 
 ### Increase the recursion limit to avoid: "RecursionError: maximum recursion depth exceeded in comparison"
-rec_lim = 50000
+rec_lim=50000
 if sys.getrecursionlimit()<rec_lim:
     sys.setrecursionlimit(rec_lim)
 
@@ -76,35 +76,36 @@ from avalanche import LC
 # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
 # corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value
 # MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
-mu      = 1.09
-mu0     = 0.96
-alpha   = 2.10
-delta1  = -1.27
-delta2  = 0.24
-tau_min = 0.02
-tau_max = 41.2
+# mu      = 1.09
+# mu0     = 0.96
+# alpha   = 2.10
+# delta1  = -1.27
+# delta2  = 0.24
+# tau_min = 0.02
+# tau_max = 41.2
 
 # The 7 values obtained from Swift v34 optimization are
 # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
 # corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value
 # MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
-# mu      = 
-# mu0     = 
-# alpha   = 
-# delta1  = 
-# delta2  = 
-# tau_min = 
-# tau_max = 
+mu      = 1.26
+mu0     = 1.29
+alpha   = 3.18
+delta1  = -0.93
+delta2  = 0.25
+tau_min = 0.02
+tau_max = 48.2
 
 #------------------------------------------------------------------------------#
 
 t_i=0   # [s]
 t_f=150 # [s]
 
-N_grb=5000
+N_grb=5000 # number of simulated GRBs to produce per set of parameters
+n_cut=2500 # maximum number of pulses to consider in the avalanche model
 
-instrument = 'batse'
-#instrument = 'swift'
+#instrument = 'batse'
+instrument = 'swift'
 #instrument = 'sax'
 #instrument = 'sax_lr'
 #instrument = 'fermi'
@@ -174,7 +175,7 @@ test  = generate_GRBs(# number of simulated GRBs to produce
                       # other parameters
                       export_files=True,
                       export_path=export_path,
-                      n_cut=2500,
+                      n_cut=n_cut,
                       with_bg=False,
                       test_pulse_distr=test_pulse_distr)
 
