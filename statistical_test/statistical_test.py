@@ -2122,6 +2122,430 @@ def make_plot_errs(test_times,
 
     plt.show()
 
+
+################################################################################
+
+def make_plot_2sim(instrument, test_times, 
+                   # plot 1
+                   averaged_fluxes,      
+                   averaged_fluxes_sim,
+                   averaged_fluxes_sim_ga,
+                   averaged_fluxes_rms,  
+                   averaged_fluxes_rms_sim,
+                   averaged_fluxes_rms_sim_ga,
+                   # plot 2
+                   averaged_fluxes_cube, 
+                   averaged_fluxes_cube_sim,
+                   averaged_fluxes_cube_sim_ga,
+                   # plot 3
+                   steps, 
+                   steps_sim, 
+                   steps_sim_ga, 
+                   bin_time, 
+                   acf, 
+                   acf_sim,
+                   acf_sim_ga,
+                   # plot 4
+                   duration, 
+                   duration_sim,
+                   duration_sim_ga,
+                   # mode
+                   log=True, 
+                   hist=False, 
+                   # error bars
+                   err_bars=False, 
+                   sigma=1,
+                   averaged_fluxes_cube_rms=None, 
+                   averaged_fluxes_cube_rms_sim=None,
+                   averaged_fluxes_cube_rms_sim_ga=None,
+                   acf_rms=None,                  
+                   acf_rms_sim=None,
+                   acf_rms_sim_ga=None,
+                   n_grb_real=None,          
+                   n_grb_sim=None, 
+                   n_grb_sim_ga=None, 
+                   # save plot
+                   save_fig=False, 
+                   name_fig='fig.pdf'):
+    """
+    Make plot as in Stern et al., 1996.
+    """
+    fig, ax = plt.subplots(2, 2, figsize=(14,12))
+
+    if instrument=='batse':
+        label_instr='BATSE'
+        n_grb_real=578
+    elif instrument=='swift':
+        label_instr='Swift'
+        n_grb_real=561
+    elif instrument=='sax':
+        label_instr='BeppoSAX'
+        n_grb_real=121
+    elif instrument=='fermi':
+        label_instr='Fermi'
+        n_grb_real=245
+    else:
+        raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
+
+    averaged_fluxes             = np.array(averaged_fluxes)
+    averaged_fluxes_sim         = np.array(averaged_fluxes_sim)
+    averaged_fluxes_sim_ga      = np.array(averaged_fluxes_sim_ga)
+    averaged_fluxes_rms         = np.array(averaged_fluxes_rms)
+    averaged_fluxes_rms_sim     = np.array(averaged_fluxes_rms_sim)
+    averaged_fluxes_rms_sim_ga  = np.array(averaged_fluxes_rms_sim_ga)
+    averaged_fluxes_cube        = np.array(averaged_fluxes_cube)
+    averaged_fluxes_cube_sim    = np.array(averaged_fluxes_cube_sim)
+    averaged_fluxes_cube_sim_ga = np.array(averaged_fluxes_cube_sim_ga)
+    acf                         = np.array(acf)
+    acf_sim                     = np.array(acf_sim)
+    acf_sim_ga                  = np.array(acf_sim_ga)
+    duration                    = np.array(duration)
+    duration_sim                = np.array(duration_sim)
+    duration_sim_ga             = np.array(duration_sim_ga)
+
+    #--------------------------------------------------------------------------#
+    # <(F/F_p)>
+    #--------------------------------------------------------------------------#
+
+    # plots
+    ax[0,0].plot(test_times**(1/3),     averaged_fluxes,                color='b', lw=1.5, alpha=1.00, label = label_instr)
+    ax[0,0].plot(test_times**(1/3),     averaged_fluxes_sim_ga,         color='r', lw=1.5, alpha=0.75, label = r'Sim (GA)', ls='-')
+    ax[0,0].plot(test_times**(1/3),     averaged_fluxes_sim,            color='g', lw=1.0, alpha=0.75, label = r'Sim (SS96)', ls='--')
+    ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms[1:],        color='b', lw=1.5, alpha=1.00)
+    ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms_sim_ga[1:], color='r', lw=1.5, alpha=0.75, ls='-')
+    ax[0,0].plot(test_times[1:]**(1/3), averaged_fluxes_rms_sim[1:],    color='g', lw=1.0, alpha=0.75, ls='--')
+    # error bars
+    if err_bars:
+        errs        = averaged_fluxes_rms        / np.sqrt(n_grb_real)
+        errs_sim    = averaged_fluxes_rms_sim    / np.sqrt(n_grb_sim)
+        errs_sim_ga = averaged_fluxes_rms_sim_ga / np.sqrt(n_grb_sim_ga)
+        #
+        ax[0,0].fill_between(test_times**(1/3),
+                             averaged_fluxes-sigma*errs,
+                             averaged_fluxes+sigma*errs,
+                             color='b',
+                             alpha=0.2) 
+        ax[0,0].fill_between(test_times**(1/3),
+                             averaged_fluxes_sim-sigma*errs_sim,
+                             averaged_fluxes_sim+sigma*errs_sim,
+                             color='g',
+                             alpha=0.2)
+        ax[0,0].fill_between(test_times**(1/3),
+                             averaged_fluxes_sim_ga-sigma*errs_sim_ga,
+                             averaged_fluxes_sim_ga+sigma*errs_sim_ga,
+                             color='r',
+                             alpha=0.2)
+    # set scale
+    if log:
+        ax[0,0].set_yscale('log', base=10) 
+        #ax[0,0].set_xlim(0,test_times[-1]**(1/3))
+        if err_bars:
+            ax[0,0].set_ylim(1.e-3, 1.2)
+    else:
+        pass
+        #ax[0,0].set_xlim(0,test_times[-1]**(1/3))
+    # set labels
+    ax[0,0].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$', size=18)
+    if log:
+        ax[0,0].set_ylabel(r'$F_{rms},\quad \langle F/F_p\rangle$', size=18)
+        #ax[0,0].set_ylabel(r'$\log F_{rms},\quad \log \langle F/F_p\rangle$', size=18)
+    else:
+        ax[0,0].set_ylabel(r'$F_{rms},\quad \langle F/F_p\rangle$', size=18)
+    #
+    ax[0,0].text(3,   10**(-0.7), r'$F_{rms}$',              fontsize=20)
+    ax[0,0].text(2.2, 10**(-1.7), r'$\langle F/F_p\rangle$', fontsize=20)
+    #
+    ax[0,0].grid(True, which="major", lw=1.0, ls="-")
+    ax[0,0].grid(True, which="minor", lw=0.3, ls="-")
+    ax[0,0].xaxis.set_tick_params(labelsize=14)
+    ax[0,0].yaxis.set_tick_params(labelsize=14)
+    ax[0,0].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
+
+    #--------------------------------------------------------------------------#
+    # <(F/F_p)^3>
+    #--------------------------------------------------------------------------#
+
+    # plots
+    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube,        color='b', lw=1.5, label=label_instr)
+    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube_sim_ga, color='r', lw=1.5, label='Sim (GA)',   alpha=0.75, ls='-')
+    ax[0,1].plot(test_times**(1/3), averaged_fluxes_cube_sim,    color='g', lw=1.0, label='Sim (SS96)', alpha=0.75, ls='--')
+    # error bars
+    if err_bars:
+        errs        = averaged_fluxes_cube_rms        / np.sqrt(n_grb_real)
+        errs_sim    = averaged_fluxes_cube_rms_sim    / np.sqrt(n_grb_sim)
+        errs_sim_ga = averaged_fluxes_cube_rms_sim_ga / np.sqrt(n_grb_sim_ga)
+        #
+        ax[0,1].fill_between(test_times**(1/3),
+                             averaged_fluxes_cube-sigma*errs,
+                             averaged_fluxes_cube+sigma*errs,
+                             color='b',
+                             alpha=0.2) 
+        ax[0,1].fill_between(test_times**(1/3),
+                             averaged_fluxes_cube_sim-sigma*errs_sim,
+                             averaged_fluxes_cube_sim+sigma*errs_sim,
+                             color='g',
+                             alpha=0.2)
+        ax[0,1].fill_between(test_times**(1/3),
+                             averaged_fluxes_cube_sim_ga-sigma*errs_sim_ga,
+                             averaged_fluxes_cube_sim_ga+sigma*errs_sim_ga,
+                             color='r',
+                             alpha=0.2)
+
+    # set scale
+    if log:
+        ax[0,1].set_yscale('log', base=10)
+        #ax[0,1].set_xlim(0,test_times[-1]**(1/3))
+        if err_bars:
+            ax[0,1].set_ylim(7.e-5, 1)
+    else:
+        pass
+        #ax[0,1].set_xlim(0,test_times[-1]**(1/3))
+    # set labels
+    ax[0,1].set_xlabel(r'$(\mathrm{time}\ [s])^{1/3}$', size=18)
+    if log:
+        ax[0,1].set_ylabel(r'$\langle (F/F_p)^3 \rangle$', size=18)
+        #ax[0,1].set_ylabel(r'$\log \langle (F/F_p)^3 \rangle$', size=18)
+    else:
+        ax[0,1].set_ylabel(r'$\langle (F/F_p)^3 \rangle$', size=18)
+    #
+    ax[0,1].grid(True, which="major", lw=1.0, ls="-")
+    ax[0,1].grid(True, which="minor", lw=0.3, ls="-")
+    ax[0,1].xaxis.set_tick_params(labelsize=14)
+    ax[0,1].yaxis.set_tick_params(labelsize=14)
+    ax[0,1].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
+
+    #--------------------------------------------------------------------------#
+    # AUTOCORRELATION
+    #--------------------------------------------------------------------------#
+
+    # plots
+    ax[1,0].plot((steps       *bin_time)**(1/3), acf,        color='b', lw=1.5, label=label_instr)
+    ax[1,0].plot((steps_sim_ga*bin_time)**(1/3), acf_sim_ga, color='r', lw=1.5, label='Sim (GA)',   alpha=0.75, ls='-')
+    ax[1,0].plot((steps_sim   *bin_time)**(1/3), acf_sim,    color='g', lw=1.0, label='Sim (SS96)', alpha=0.75, ls='--')
+    # error bars
+    if err_bars:
+        errs        = acf_rms        / np.sqrt(n_grb_real)
+        errs_sim    = acf_rms_sim    / np.sqrt(n_grb_sim)
+        errs_sim_ga = acf_rms_sim_ga / np.sqrt(n_grb_sim_ga)
+        #
+        ax[1,0].fill_between((steps*bin_time)**(1/3),
+                             acf-sigma*errs,
+                             acf+sigma*errs,
+                             color='b',
+                             alpha=0.2) 
+        ax[1,0].fill_between((steps_sim*bin_time)**(1/3),
+                             acf_sim-sigma*errs_sim,
+                             acf_sim+sigma*errs_sim,
+                             color='g',
+                             alpha=0.2)
+        ax[1,0].fill_between((steps_sim_ga*bin_time)**(1/3),
+                             acf_sim_ga-sigma*errs_sim_ga,
+                             acf_sim_ga+sigma*errs_sim_ga,
+                             color='r',
+                             alpha=0.2)
+    # set scale
+    if log:
+        ax[1,0].set_yscale('log', base=10)
+    else:
+        pass
+    # set labels
+    ax[1,0].set_xlabel(r'$(\mathrm{timelag}\ [s])^{1/3}$', size=18)
+    if log:
+        ax[1,0].set_ylabel(r'$\langle ACF \rangle$', size=18)
+        #ax[1,0].set_ylabel(r'$\log \langle ACF \rangle$', size=18)
+    else:
+        ax[1,0].set_ylabel(r'$\langle ACF \rangle$', size=18)
+    #
+    ax[1,0].grid(True, which="major", lw=1.0, ls="-")
+    ax[1,0].grid(True, which="minor", lw=0.3, ls="-")
+    ax[1,0].xaxis.set_tick_params(labelsize=14)
+    ax[1,0].yaxis.set_tick_params(labelsize=14)
+    ax[1,0].legend(prop={'size':15}, loc="lower left", facecolor='white', framealpha=0.5)
+
+    #--------------------------------------------------------------------------#
+    # DISTRIBUTION OF DURATIONS
+    #--------------------------------------------------------------------------#
+
+    if log:
+        duration        = np.log10(duration)
+        duration_sim    = np.log10(duration_sim)
+        duration_sim_ga = np.log10(duration_sim_ga)
+    if log:
+        range_hist = [-1.0, 3.5]
+    else:
+        range_hist = None
+
+    if hist:
+        # histogram
+        n_bins=30
+        n1, bins = np.histogram(a=duration,        bins=n_bins, range=range_hist)
+        n2, bins = np.histogram(a=duration_sim,    bins=n_bins, range=range_hist)
+        n3, bins = np.histogram(a=duration_sim_ga, bins=n_bins, range=range_hist)
+
+        bin_centres = 0.5 * (bins[:-1] + bins[1:])
+
+        ax[1,1].bar(x=bins[:-1], 
+                    height=n1/(np.diff(bins)[0]*len(duration)),     
+                    width=np.diff(bins), 
+                    align='edge',
+                    #facecolor='None',
+                    #edgecolor='b',
+                    #linewidth=2,
+                    alpha=0.6,
+                    color='b',
+                    label=label_instr)
+        ax[1,1].bar(x=bins[:-1], 
+                    height=n2/(np.diff(bins)[0]*len(duration_sim)), 
+                    width=np.diff(bins), 
+                    align='edge',
+                    #facecolor='None',
+                    edgecolor='g',
+                    linewidth=1.5,
+                    alpha=0.4,
+                    color='r',
+                    label='Sim (SS96)')
+        ax[1,1].bar(x=bins[:-1], 
+                    height=n3/(np.diff(bins)[0]*len(duration_sim_ga)), 
+                    width=np.diff(bins), 
+                    align='edge',
+                    #facecolor='None',
+                    edgecolor='r',
+                    linewidth=2,
+                    alpha=0.4,
+                    color='r',
+                    label='Sim (GA)')
+        
+        ax[1,1].set_ylim(-0.025,1.0)
+
+        if err_bars:
+            # Plot the error bars, centred on (bin_centre, bin_count), with length y_error
+            ax[1,1].errorbar(x=bin_centres, 
+                             y=n1/(np.diff(bins)[0]*len(duration)),
+                             yerr=sigma*np.sqrt(n1)/(np.diff(bins)[0]*len(duration)), 
+                             fmt='.', 
+                             color='b',
+                             capsize=3,
+                             elinewidth=1.5)
+            ax[1,1].errorbar(x=bin_centres, 
+                             y=n2/(np.diff(bins)[0]*len(duration_sim)),
+                             yerr=sigma*np.sqrt(n2)/(np.diff(bins)[0]*len(duration_sim)), 
+                             fmt='.', 
+                             color='g',
+                             capsize=3,
+                             elinewidth=1.5)
+            ax[1,1].errorbar(x=bin_centres, 
+                             y=n3/(np.diff(bins)[0]*len(duration_sim_ga)),
+                             yerr=sigma*np.sqrt(n3)/(np.diff(bins)[0]*len(duration_sim_ga)), 
+                             fmt='.', 
+                             color='r',
+                             capsize=3,
+                             elinewidth=1.5)
+
+    else: 
+        # kernel density estimation
+        h_opt = 0.09 # values obtained with GridSearch optimization (see the notebook in DEBUG section)
+        if log:
+            x_grid = np.linspace(-2,    5, 1000)
+        else:
+            x_grid = np.linspace(-2, 1000, 1000)
+        y_plot_real    = stats.norm.pdf(x_grid, duration[:, None],        h_opt)
+        y_plot_sim     = stats.norm.pdf(x_grid, duration_sim[:, None],    h_opt)
+        y_plot_sim_ga  = stats.norm.pdf(x_grid, duration_sim_ga[:, None], h_opt)
+        y_plot_real   /= (len(duration))
+        y_plot_sim    /= (len(duration_sim))
+        y_plot_sim_ga /= (len(duration_sim_ga))
+        kde_real       = y_plot_real.sum(0)
+        kde_sim        = y_plot_sim.sum(0)
+        kde_sim_ga     = y_plot_sim_ga.sum(0)
+        # plot
+        ax[1,1].plot(x_grid, kde_real,   c='b', lw=1.5, label=label_instr,  zorder=5)
+        ax[1,1].plot(x_grid, kde_sim_ga, c='r', lw=1.5, label='Sim (GA)',   zorder=6, ls='-')
+        ax[1,1].plot(x_grid, kde_sim,    c='g', lw=1.0, label='Sim (SS96)', zorder=7, ls='--')
+        # errors
+        if err_bars:
+            n_resample=500
+            kde_real_r_stack        = np.zeros([len(kde_real),   n_resample])
+            kde_real_r_stack_sim    = np.zeros([len(kde_sim),    n_resample])
+            kde_real_r_stack_sim_ga = np.zeros([len(kde_sim_ga), n_resample])
+            for i in range(n_resample):
+                dur_resampled_real    = resample(duration,        replace=True)
+                dur_resampled_sim     = resample(duration_sim,    replace=True)
+                dur_resampled_sim_ga  = resample(duration_sim_ga, replace=True)
+                y_plot_real_r      = stats.norm.pdf(x_grid, dur_resampled_real[:, None],    h_opt)
+                y_plot_sim_r       = stats.norm.pdf(x_grid, dur_resampled_sim[:, None],     h_opt)
+                y_plot_sim_ga_r    = stats.norm.pdf(x_grid, dur_resampled_sim_ga[:, None],  h_opt)
+                y_plot_real_r     /= (len(dur_resampled_real))
+                y_plot_sim_r      /= (len(dur_resampled_sim))
+                y_plot_sim_ga_r   /= (len(dur_resampled_sim_ga))
+                kde_real_r         = y_plot_real_r.sum(0)
+                kde_sim_r          = y_plot_sim_r.sum(0)
+                kde_sim_ga_r       = y_plot_sim_ga_r.sum(0)
+                kde_real_r_stack[:,i]        = kde_real_r
+                kde_real_r_stack_sim[:,i]    = kde_sim_r
+                kde_real_r_stack_sim_ga[:,i] = kde_sim_ga_r
+                # plot
+                # ax[1,1].plot(x_grid, kde_real_r, c='cyan',   lw=1, alpha=0.05, zorder=3)
+                # ax[1,1].plot(x_grid, kde_sim_r,  c='orange', lw=1, alpha=0.05, zorder=4)
+            rms        = np.std(kde_real_r_stack,        axis=1)
+            rms_sim    = np.std(kde_real_r_stack_sim,    axis=1)
+            rms_sim_ga = np.std(kde_real_r_stack_sim_ga, axis=1)
+            errs        = rms     #/ np.sqrt(n_resample)
+            errs_sim    = rms_sim #/ np.sqrt(n_resample)
+            errs_sim_ga = rms_sim_ga #/ np.sqrt(n_resample)
+            ax[1,1].fill_between(x_grid,
+                                 kde_real-sigma*errs,
+                                 kde_real+sigma*errs,
+                                 color='b',
+                                 alpha=0.2,
+                                 zorder=1) 
+            ax[1,1].fill_between(x_grid,
+                                 kde_sim-sigma*errs_sim,
+                                 kde_sim+sigma*errs_sim,
+                                 color='g',
+                                 alpha=0.2,
+                                 zorder=2)
+            ax[1,1].fill_between(x_grid,
+                                 kde_sim_ga-sigma*errs_sim_ga,
+                                 kde_sim_ga+sigma*errs_sim_ga,
+                                 color='r',
+                                 alpha=0.2,
+                                 zorder=2)
+
+    # set scale
+    if log:
+        ax[1,1].set_xlim(-1.0,3.5)
+    else:
+        pass
+    # set label
+    ax[1,1].set_ylabel('(Normalized) Number of events',    size=18)
+    if log:
+        ax[1,1].set_xlabel(r'$\log\mathrm{duration}$ [s]', size=18)
+    else:
+        ax[1,1].set_xlabel(r'$\mathrm{duration}$ [s]',     size=18)
+    #
+    ax[1,1].grid(True, which="major", lw=1.0, ls="-")
+    ax[1,1].grid(True, which="minor", lw=0.3, ls="-")
+    ax[1,1].xaxis.set_tick_params(labelsize=14)
+    ax[1,1].yaxis.set_tick_params(labelsize=14)
+    ax[1,1].legend(prop={'size':15}, loc="upper left", facecolor='white', framealpha=0.5)
+
+    #from scipy.stats import ks_2samp
+    #ks_test_res = ks_2samp(n1, n2)
+    #print(ks_test_res)
+    #from scipy.stats import anderson_ksamp
+    #ad_res = anderson_ksamp([n1, n2])
+    #print(ad_res)
+
+    #--------------------------------------------------------------------------#
+    #--------------------------------------------------------------------------#
+
+    plt.tight_layout()
+    if(save_fig):
+        plt.savefig(name_fig)
+    
+    plt.show()
+
+
 ################################################################################
 
 def runMEPSA(mepsa_path, ex_pattern_file_path, grb_file_path, nbins, grb_name, sn_level=5):

@@ -318,9 +318,9 @@ averaged_fluxes_rms_real = compute_average_quantities(grb_list=grb_list_real,
 # For the REAL LCs we use the Link+93 formula to compute the autocorrelation,
 # whereas for the simulated LCs instead we use the scipy.signal.correlate()
 # function on the model curve, i.e., the one before adding the Poisson noise.
-N_lim = np.min( [N_grb, len(grb_list_real)] )
+# N_lim = np.min( [N_grb, len(grb_list_real)] )
 steps_real, acf_real = compute_autocorrelation(grb_list=grb_list_real,
-                                               N_lim=N_lim,
+                                               N_lim=len(grb_list_real),
                                                t_max=t_f,
                                                bin_time=bin_time,
                                                mode='link93',
@@ -393,7 +393,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
     # whereas for the simulated LCs instead we use the scipy.signal.correlate
     # function on the model curve, i.e., the one before adding the Poisson noise.
     steps_sim, acf_sim = compute_autocorrelation(grb_list=grb_list_sim,
-                                                 N_lim=N_lim,
+                                                 N_lim=N_grb,
                                                  t_max=t_f,
                                                  bin_time=bin_time,
                                                  mode='scipy',
@@ -593,7 +593,7 @@ if __name__ == '__main__':
             # whereas for the simulated LCs instead we use the scipy.signal.correlate
             # function on the model curve, i.e., the one before adding the Poisson noise.
             steps_sim, acf_sim = compute_autocorrelation(grb_list=grb_list_sim,
-                                                         N_lim=N_lim,
+                                                         N_lim=N_grb,
                                                          t_max=t_f,
                                                          bin_time=bin_time,
                                                          mode='scipy',
