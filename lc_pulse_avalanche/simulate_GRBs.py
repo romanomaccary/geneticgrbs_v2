@@ -3,7 +3,6 @@
 ################################################################################
 import os
 import sys
-#import yaml, h5py
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,14 +14,15 @@ from matplotlib import rc
 #rc('text', usetex=True)
 
 ### Increase the recursion limit to avoid: "RecursionError: maximum recursion depth exceeded in comparison"
-rec_lim=50000
+rec_lim = 50000
 if sys.getrecursionlimit()<rec_lim:
     sys.setrecursionlimit(rec_lim)
 
 #seed=42
 #np.random.seed(SEED)
 
-# set the username for the path of the files:
+### Set the username for the path of the files:
+#user='random_user'
 user='LB'
 #user='AF'
 #user='bach'
@@ -47,6 +47,11 @@ elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/statistical_test')
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
     export_path='C:/Users/lisaf/Desktop/'
+elif user=='random_user':
+    pass
+    #sys.path.append('')
+    #sys.path.append('')
+    #export_path=''
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
@@ -66,6 +71,126 @@ from avalanche import LC
 # delta2  = 0
 # tau_min = 0.02
 # tau_max = 26
+
+# The 7 values obtained from BATSE v33 optimization are
+# (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
+# corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value
+# MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+mu      = 1.09
+mu0     = 0.96
+alpha   = 2.10
+delta1  = -1.27
+delta2  = 0.24
+tau_min = 0.02
+tau_max = 41.2
+
+# The 7 values obtained from Swift v34 optimization are
+# (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
+# corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value
+# MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+# mu      = 
+# mu0     = 
+# alpha   = 
+# delta1  = 
+# delta2  = 
+# tau_min = 
+# tau_max = 
+
+#------------------------------------------------------------------------------#
+
+t_i=0   # [s]
+t_f=150 # [s]
+
+N_grb=5000
+
+instrument = 'batse'
+#instrument = 'swift'
+#instrument = 'sax'
+#instrument = 'sax_lr'
+#instrument = 'fermi'
+
+if instrument=='batse':
+    res           = instr_batse['res']
+    eff_area      = instr_batse['eff_area']
+    bg_level      = instr_batse['bg_level']
+    t90_threshold = instr_batse['t90_threshold']
+    sn_threshold  = instr_batse['sn_threshold']
+elif instrument=='swift':
+    res           = instr_swift['res']
+    eff_area      = instr_swift['eff_area']
+    bg_level      = instr_swift['bg_level']
+    t90_threshold = instr_swift['t90_threshold']
+    sn_threshold  = instr_swift['sn_threshold']
+elif instrument=='sax':
+    res           = instr_sax['res']
+    eff_area      = instr_sax['eff_area']
+    bg_level      = instr_sax['bg_level']
+    t90_threshold = instr_sax['t90_threshold']
+    sn_threshold  = instr_sax['sn_threshold']
+    t_f           = 50 # s
+elif instrument=='sax_lr':
+    res           = instr_sax_lr['res']
+    eff_area      = instr_sax_lr['eff_area']
+    bg_level      = instr_sax_lr['bg_level']
+    t90_threshold = instr_sax_lr['t90_threshold']
+    sn_threshold  = instr_sax_lr['sn_threshold']
+elif instrument=='fermi':
+    res           = instr_fermi['res']
+    eff_area      = instr_fermi['eff_area']
+    bg_level      = instr_fermi['bg_level']
+    t90_threshold = instr_fermi['t90_threshold']
+    sn_threshold  = instr_fermi['sn_threshold']
+    t_f           = 50 # s
+else:
+    raise NameError('Variable "instrument" not defined properly; choose between: "batse" or "swift".')
+
+
+################################################################################
+################################################################################
+from datetime import datetime
+start = datetime.now()
+
+test_pulse_distr = False # True
+test  = generate_GRBs(# number of simulated GRBs to produce
+                      N_grb=N_grb,
+                      # 7 parameters
+                      mu=mu,
+                      mu0=mu0,
+                      alpha=alpha,
+                      delta1=delta1,
+                      delta2=delta2,
+                      tau_min=tau_min,
+                      tau_max=tau_max,
+                      # instrument parameters
+                      instrument=instrument,
+                      bin_time=res,
+                      eff_area=eff_area,
+                      bg_level=bg_level,
+                      # constraint parameters
+                      t90_threshold=t90_threshold,
+                      sn_threshold=sn_threshold,
+                      t_f=t_f,
+                      filter=True,
+                      # other parameters
+                      export_files=True,
+                      export_path=export_path,
+                      n_cut=2500,
+                      with_bg=False,
+                      test_pulse_distr=test_pulse_distr)
+
+if test_pulse_distr:
+    pulse_out_file=open('./n_of_pulses.txt', 'w')
+    for grb in test:
+        pulse_out_file.write('{0}\n'.format(grb.num_of_sig_pulses))
+    pulse_out_file.close()
+
+if test_pulse_distr:
+    n_of_pulses = [ grb.num_of_sig_pulses for grb in test ]
+
+print('Time elapsed: ', (datetime.now() - start).seconds)
+
+################################################################################
+################################################################################
 
 # The 7 values obtained from v1 optimization are
 # (3 loss)
@@ -331,111 +456,17 @@ from avalanche import LC
 # tau_min = 0.02
 # tau_max = 34.8
 
-
 # The 7 values obtained from Swift v32 optimization are
 # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
 # corrected sampling of the individual peaks), corrected T90 estimate 
 # MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
-mu      = 1.26
-mu0     = 1.17
-alpha   = 2.96
-delta1  = -0.69
-delta2  = 0.26
-tau_min = 0.02
-tau_max = 47.8
+# mu      = 1.26
+# mu0     = 1.17
+# alpha   = 2.96
+# delta1  = -0.69
+# delta2  = 0.26
+# tau_min = 0.02
+# tau_max = 47.8
 
-#------------------------------------------------------------------------------#
-
-t_i=0   # [s]
-t_f=150 # [s]
-
-#N_grb=1
-N_grb=5000
-
-#instrument = 'batse'
-instrument = 'swift'
-#instrument = 'sax'
-#instrument = 'sax_lr'
-#instrument = 'fermi'
-
-if instrument=='batse':
-    res           = instr_batse['res']
-    eff_area      = instr_batse['eff_area']
-    bg_level      = instr_batse['bg_level']
-    t90_threshold = instr_batse['t90_threshold']
-    sn_threshold  = instr_batse['sn_threshold']
-elif instrument=='swift':
-    res           = instr_swift['res']
-    eff_area      = instr_swift['eff_area']
-    bg_level      = instr_swift['bg_level']
-    t90_threshold = instr_swift['t90_threshold']
-    sn_threshold  = instr_swift['sn_threshold']
-elif instrument=='sax':
-    res           = instr_sax['res']
-    eff_area      = instr_sax['eff_area']
-    bg_level      = instr_sax['bg_level']
-    t90_threshold = instr_sax['t90_threshold']
-    sn_threshold  = instr_sax['sn_threshold']
-    t_f           = 50 # s
-elif instrument=='sax_lr':
-    res           = instr_sax_lr['res']
-    eff_area      = instr_sax_lr['eff_area']
-    bg_level      = instr_sax_lr['bg_level']
-    t90_threshold = instr_sax_lr['t90_threshold']
-    sn_threshold  = instr_sax_lr['sn_threshold']
-elif instrument=='fermi':
-    res           = instr_fermi['res']
-    eff_area      = instr_fermi['eff_area']
-    bg_level      = instr_fermi['bg_level']
-    t90_threshold = instr_fermi['t90_threshold']
-    sn_threshold  = instr_fermi['sn_threshold']
-    t_f           = 50 # s
-else:
-    raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax", "sax_lr", "fermi".')
-
-
-################################################################################
-################################################################################
-from datetime import datetime
-start = datetime.now()
-
-test_pulse_distr = False # True
-test  = generate_GRBs(# number of simulated GRBs to produce
-                      N_grb=N_grb,
-                      # 7 parameters
-                      mu=mu,
-                      mu0=mu0,
-                      alpha=alpha,
-                      delta1=delta1,
-                      delta2=delta2,
-                      tau_min=tau_min,
-                      tau_max=tau_max,
-                      # instrument parameters
-                      instrument=instrument,
-                      bin_time=res,
-                      eff_area=eff_area,
-                      bg_level=bg_level,
-                      # constraint parameters
-                      t90_threshold=t90_threshold,
-                      sn_threshold=sn_threshold,
-                      t_f=t_f,
-                      filter=True,
-                      # other parameters
-                      export_files=True,
-                      export_path=export_path,
-                      n_cut=2500,
-                      with_bg=False,
-                      test_pulse_distr=test_pulse_distr)
-
-if test_pulse_distr:
-    pulse_out_file=open('./n_of_pulses.txt', 'w')
-    for grb in test:
-        pulse_out_file.write('{0}\n'.format(grb.num_of_sig_pulses))
-    pulse_out_file.close()
-
-if test_pulse_distr:
-    n_of_pulses = [ grb.num_of_sig_pulses for grb in test ]
-
-print('Time elapsed: ', (datetime.now() - start).seconds)
 ################################################################################
 ################################################################################
