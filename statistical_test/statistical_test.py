@@ -6,6 +6,8 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from pathlib import Path
+import datetime
 import ctypes
 from scipy.signal import savgol_filter
 from scipy import signal
@@ -26,7 +28,8 @@ SEED=None
 
 ################################################################################
 
-user='LB'
+user='external_user'
+#user='LB'
 #user='AF'
 #user='bach'
 #user='gravity'
@@ -40,6 +43,8 @@ elif user=='LB':
     rc('text', usetex=True)
 elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
+elif user=='external_user':
+    sys.path.append('../lc_pulse_avalanche')
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
     
@@ -2623,14 +2628,14 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 
 ################################################################################
 
-def generate_GRBs(N_grb,                                            # number of simulated GRBs to produce
-                  mu, mu0, alpha, delta1, delta2, tau_min, tau_max, # 7 parameters
-                  instrument, bin_time, eff_area, bg_level,         # instrument parameters
-                  sn_threshold, t_f,                                # constraint parameters 
-                  t90_threshold, t90_frac=15, filter=True,          # constraint parameters
-                  export_files=False, export_path='None',           # other parameters
-                  n_cut=2500, with_bg=False, seed=None,             # other parameters
-                  test_pulse_distr=False                            # other parameters
+def generate_GRBs(N_grb,                                               # number of simulated GRBs to produce
+                  mu, mu0, alpha, delta1, delta2, tau_min, tau_max,    # 7 parameters
+                  instrument, bin_time, eff_area, bg_level,            # instrument parameters
+                  sn_threshold, t_f,                                   # constraint parameters 
+                  t90_threshold, t90_frac=15, filter=True,             # constraint parameters
+                  export_files=False, export_path='None',              # other parameters
+                  n_cut=2500, with_bg=False, seed=None,                # other parameters
+                  remove_instrument_path=False, test_pulse_distr=False # other parameters
                   ):
     """
     This function generates a list of GRBs using the pulse-avalanche stochastic
@@ -2671,11 +2676,12 @@ def generate_GRBs(N_grb,                                            # number of 
                         on the number of significative pulses inside that GRB,
                         and we also compute the time distances between all the
                         pulses in that GRB.
+    - remove_instrument_path: if True, remove the instrument name from the name of the path;
     Output:
     -grb_list_sim: list containing N_grb GRB objects, where each light-curve
                    satisfies the imposed constraints.
     """
-    def export_grb(grb, idx, instrument, path='../simulations/'):
+    def export_grb(grb, idx, instrument, remove_instrument_path=False, path='../simulations/'):
         """
         Export the simulated grb in a file with these columns: 
             times, counts, err_counts, T90, num of sig. pulses.
@@ -2683,9 +2689,13 @@ def generate_GRBs(N_grb,                                            # number of 
         - grb: object that contains the GRB;
         - idx: number of the light curve;
         - instrument: string with the name of the instrument;
+        - remove_instrument_path: if True, remove the instrument name from the name of the path;
         - path: path where to store the results of the simulations;
         """
-        outfile      = path+instrument+'/'+'lc'+str(idx)+'.txt'
+        if remove_instrument_path:
+            outfile = path+'/'+'lc'+str(idx)+'.txt'
+        else:
+            outfile = path+instrument+'/'+'lc'+str(idx)+'.txt'
         savefile     = open(outfile, 'w', encoding='utf-8')
         times        = grb.times
         lc           = grb.counts # this are COUNTS, not count rates!
@@ -2701,7 +2711,7 @@ def generate_GRBs(N_grb,                                            # number of 
             savefile.write('{0} {1} {2} {3} {4} {5} {6} {7} {8}\n'.format(times[i], lc[i], err_lc[i], model[i], modelbkg[i], bg, T90, n_sig_pulses, n_pls))
         savefile.close()
 
-    def export_lc_params(LC, idx, instrument, path='../simulations/'):
+    def export_lc_params(LC, idx, instrument, remove_instrument_path=False, path='../simulations/'):
         """
         Export all the values in the `params` dict of the simulated light curves
         in a txt file.
@@ -2709,10 +2719,14 @@ def generate_GRBs(N_grb,                                            # number of 
         - LC: object that contains the light curve;
         - idx: number of the light curve;
         - instrument: string with the name of the instrument;
+        - remove_instrument_path: if True, remove the instrument name from the name of the path;
         - path: path where to store the results of the simulations;
         """
-        outfile           = path+instrument+'/'+'lc'+str(idx)+'_lc_params.txt'
-        savefile          = open(outfile, 'w', encoding='utf-8')
+        if remove_instrument_path:
+            outfile = path+'/'+'lc'+str(idx)+'_lc_params.txt'
+        else:
+            outfile = path+instrument+'/'+'lc'+str(idx)+'_lc_params.txt'
+        savefile    = open(outfile, 'w', encoding='utf-8')
         #
         norm_list         = [pulse['norm']         for pulse in LC._lc_params]
         t_delay_list      = [pulse['t_delay']      for pulse in LC._lc_params]
@@ -3199,12 +3213,14 @@ def generate_GRBs(N_grb,                                            # number of 
                 export_grb(grb=grb, 
                            idx=cnt, 
                            instrument=instrument,
+                           remove_instrument_path=remove_instrument_path,
                            path=export_path)
                 export_grb_parameters=True
                 if export_grb_parameters:
                     export_lc_params(LC=lc, 
                                      idx=cnt, 
                                      instrument=instrument, 
+                                     remove_instrument_path=remove_instrument_path,
                                      path=export_path)
                 # export_lc(LC=lc, 
                 #           idx=cnt, 
@@ -3223,3 +3239,68 @@ def generate_GRBs(N_grb,                                            # number of 
     return grb_list_sim
 
 ################################################################################
+
+def read_values(filename):
+    """Reads variables and their values from a text file, skipping comments 
+    and empty lines. Defines a dictionary with all the stored variables. Cast
+    all the numerical/string variables with the proper type."""
+    variables = {}
+    with open(filename, 'r') as file:
+        for line in file:
+            # Skip comment lines and empty lines
+            if not line.strip().startswith('#') and not line.strip()=='': 
+                # Split the line into variable name and value, stripping whitespace
+                name, value = line.strip().split('=', 1)
+                name  = name.strip()
+                value = value.strip()
+                # If the value is a number, then automatically convert the type
+                # to 'float'; if the conversion fails, keep the value as 'string'
+                try:
+                    value = float(value)
+                except ValueError:
+                    pass
+                variables[name] = value
+        # Check that the variables that must be numbers/str, are so
+        assert isinstance(variables['instrument'], (str))
+        assert isinstance(variables['N_grb'],      (float))
+        assert isinstance(variables['mu'],         (float))
+        assert isinstance(variables['mu0'],        (float))
+        assert isinstance(variables['alpha'],      (float))
+        assert isinstance(variables['delta1'],     (float))
+        assert isinstance(variables['delta2'],     (float))
+        assert isinstance(variables['tau_min'],    (float))
+        assert isinstance(variables['tau_max'],    (float))
+        # Cast 'N_grb' as 'int'
+        variables['N_grb'] = int(variables['N_grb'])
+    # Return the 'dict' containing all the parameters needed for the simulation
+    return variables
+
+###############################################################################
+
+def create_dir(variables, path='../', folder='simulated_LCs'):
+    """Create the directory where to store the simulated GRB LCs, using the
+    date and time of code execution."""
+    base_dir = Path(path)
+    # Create a directory to store all the simulations (if it does not already exist)
+    sim_dir = Path(base_dir/folder)
+    sim_dir.mkdir(parents=True, exist_ok=True)
+    # Generate timestamp for the execution (Year-Month-Day_Hour_Minute_Second)
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # Create a directory to store the LCs
+    lcs_dir = Path(sim_dir/f"{timestamp}") # Path(sim_dir/f"{variables['instrument]+'_'+timestamp}")
+    lcs_dir.mkdir(parents=True, exist_ok=True)
+    return sim_dir, lcs_dir, timestamp
+
+###############################################################################
+
+def save_config(variables, file_name=None):
+    """Print and export the 'config'."""
+    for name, value in variables.items():
+        print(f"{name} = {value}")
+        #print(f"{name} (type={type(value)}) = {value}")
+    if file_name is not None:
+        with open(file_name, 'w') as f:
+            for name, value in variables.items():
+                print(f"{name} = {value}", file=f)
+
+###############################################################################

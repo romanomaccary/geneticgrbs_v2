@@ -71,6 +71,19 @@ tar -xzf swift_errs_1.txt.zip; tar -xzf swift_errs_2.txt.zip; tar -xzf swift_err
 ```
 
 ### Generation of a set of simulated LCs
+
+To generate the LCs, edit the `config.ini` file (`./lc_pulse_avalanche/config.ini`) by choosing the instrument (`instrument = batse` or `instrument = swift`, if you want to simulate BATSE or Swift LCs, respectively), the number of LCs (`N_grb = XXX`), and assign the value to the seven SS96 parameters. Make sure that the variable `user` is set to `user='external_user'` at the beginning of both `simulate_GRBs.py` and `statistical_test.py` files. Then run:
+```bash
+# move to the right directory
+cd ./lc_pulse_avalanche
+# activate the conda env
+conda activate pygad3
+# simulate a set of LCs
+python3 simulate_GRBs.py config.ini
+```
+The code will create a directory (`./simulated_LCs`), and inside, each time you call the code it will create a directory named `Year-Month-Day_Hour_Minute_Second` with all the requested simulated LCs. Moreover, a copy of the config file (`config_Year-Month-Day_Hour_Minute_Second.txt`) will be created in `./simulated_LCs` for later reference.
+
+
 The value of the optimized parameters (see our paper above) are:
 ```
 # BATSE
@@ -92,15 +105,7 @@ tau_min = 0.02
 tau_max = 48.2
 ```
 
-To generate the LCs, change the value of the parameters in the file `./simulate_GRBs.py`, and define the needed variable for the instrument (`instrument = 'batse'` or `instrument = 'swift'`, if you want to simulate BATSE or Swift LCs, respectively), and then run:
-```bash
-# move to the right directory
-cd ./lc_pulse_avalanche
-# activate the conda env
-conda activate pygad3
-# simulate a set of LCs
-python3 simulate_GRBs.py
-```
+
 
 ### Running the GA optimization
 #TODO
