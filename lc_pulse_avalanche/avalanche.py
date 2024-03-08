@@ -490,10 +490,10 @@ class LC(object):
         
         # For Swift, the variable `_plot_lc` contains the COUNTS RATES (and not the counts!)
         elif self._instrument == 'swift':
-            self._model           = self._raw_lc_counts                                 # model COUNTS 
-            self._model_rate      = self._model / self._res                             # model COUNT RATES
-            self._modelbkg        = self._model      # bkg 0 in Swift
-            self._modelbkg_rate   = self._model_rate # bkg 0 in Swift
+            self._model           = self._raw_lc_counts      # model COUNTS 
+            self._model_rate      = self._model / self._res  # model COUNT RATES
+            self._modelbkg        = self._model              # bkg 0 in Swift
+            self._modelbkg_rate   = self._model_rate         # bkg 0 in Swift
             #
             if np.max(self._model_rate)<bins_swift_errs[1]:
                 errs_swift_list = dict_errs_swift['1']
@@ -511,7 +511,7 @@ class LC(object):
                 errs_swift_list = dict_errs_swift['7']
             #
             grb_index             = np.random.randint(len(errs_swift_list))
-            errors_to_apply       = errs_swift_list[grb_index]
+            errors_to_apply       = np.array(errs_swift_list[grb_index])
             max_err_index         = len(errors_to_apply)
             std_bkg               = np.array([errors_to_apply[np.random.randint(0,max_err_index)] for val in self._model_rate])
             self._plot_lc         = np.random.normal(loc=self._model_rate, scale=std_bkg) # total COUNTS RATE (signal+noise) with Gauss

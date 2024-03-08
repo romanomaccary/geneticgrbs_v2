@@ -453,8 +453,8 @@ def load_lc_swift(path):
 
     grb_list_swift = []
     grb_not_found  = []
-    for grb_name in all_grb_list_swift:
     #for grb_name in tqdm(all_grb_list_swift):
+    for grb_name in all_grb_list_swift:
         try:
             times, counts, errs = np.loadtxt(path+grb_name+'/'+'all_3col.out', unpack=True)
         except:
@@ -1057,6 +1057,7 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150,
         if mode=='scipy':
             counts = np.array(grb.model)
             # errs = np.array(grb.errs)
+            # Compute the ACF using the `scipy.signal.correlate` function
             acf   = signal.correlate(in1=counts, in2=counts, method='auto')
             acf   = acf / np.max(acf)  # np.max(acf) is equal to np.sum(counts**2)
             lags  = signal.correlation_lags(in1_len=len(counts), in2_len=len(counts))
@@ -1064,17 +1065,20 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150,
             idx_f = np.where(lags*bin_time<=t_max)[0][-1] # select the index corresponding to t = 150 s
             assert lags[idx_i]==t_min, "ERROR: The left limit of the autocorrelation is not computed correctly..."
             assert np.isclose(lags[idx_f]*bin_time, t_max, atol=1e-1), "ERROR: The right limit of the autocorrelation is not computed correctly..."         
-            acf = acf[idx_i:idx_f] # select only the autocorrelation up to a shift of t_max = 150 s
+            # Select only the autocorrelation up to a shift of t_max = 150 s
+            acf = acf[idx_i:idx_f]
         elif mode=='link93':
             counts = np.array(grb.counts)
             errs   = np.array(grb.errs)
             # errs = 0
+            # Compute the ACF using the `Link93` formula
             acf = [np.sum((np.roll(counts, u) * counts)[u:]) / np.sum(counts**2 - errs**2) for u in range(steps)]
             acf = np.array(acf)
         acf_sum += acf
         if compute_rms:
             acf_sum_square += acf**2
 
+    # Compute the avefarage ACF
     acf = acf_sum/N_lim
     if compute_rms:
         acf_square = acf_sum_square/N_lim
