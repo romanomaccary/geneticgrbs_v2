@@ -79,7 +79,7 @@ cd ./lc_pulse_avalanche
 # activate the conda env
 conda activate pygad3
 # simulate a set of LCs
-python3 simulate_GRBs.py config.ini
+python simulate_GRBs.py config.ini
 ```
 The code will create a directory (`./simulated_LCs`), and inside, each time you call the code it will create a directory named `Year-Month-Day_Hour_Minute_Second` with all the requested simulated LCs. Moreover, a copy of the config file (`config_Year-Month-Day_Hour_Minute_Second.txt`) will be created in `./simulated_LCs` for later reference.
 
@@ -115,7 +115,7 @@ cd ./genetic_algorithm
 # activate the conda env
 conda activate pygad3
 # run the GA
-python3 testGA.py
+python testGA.py
 ```
 
 
