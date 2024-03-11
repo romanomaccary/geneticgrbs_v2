@@ -37,13 +37,13 @@ The GA has been implemented using [`PyGAD`](https://github.com/ahmedfgad/Genetic
 
 The Python code that implements the SS96 stochastic model is also contained in this repo; it was originally forked from [this public repository](https://github.com/anastasia-tsvetkova/lc_pulse_avalanche) by one of the co-authors, but has undergone significant changes.
 
-To identify the peaks in the LCs we have used [`MEPSA`](https://www.fe.infn.it/u/guidorzi/new_guidorzi_files/code.html) ([Guidorzi 2015](https://www.sciencedirect.com/science/article/pii/S2213133715000025)), which is an algorithm aimed at identifying peaks within a uniformly sampled, background subtracted/detrended time series affected by statistical uncorrelated Gaussian noise, conceived specifically for the analysis of GRB LCs. 
+To identify the statistically significant peaks in the LCs we have used [`MEPSA`](https://www.fe.infn.it/u/guidorzi/new_guidorzi_files/code.html) ([Guidorzi 2015](https://www.sciencedirect.com/science/article/pii/S2213133715000025)), an algorithm aimed at identifying peaks within a uniformly sampled, background subtracted/detrended time series affected by statistical uncorrelated Gaussian noise, conceived specifically for the analysis of GRB LCs. 
 
 
 
 ## Installation
 
-To run the code, it is advised to create a self-contained `conda` environment with all the required libraries installed. To create the aformentioned environment, which we called `pygad3`, just run the following four lines of code (or follow the instructions in the file `./conda_pygad3_env.txt`, which contains also the version of all the installed packages):
+To run the code, it is advised to create a self-contained `conda` environment with all the required libraries installed. To create the aformentioned environment (which we called `pygad3`) just run the following four lines of code (or follow the instructions in the file `./conda_pygad3_env.txt`, which contains also the version of _all_ the installed packages):
 ```bash
 # 1. create the conda environment 
 conda create -n pygad3 python=3.10
@@ -115,7 +115,7 @@ cd ./genetic_algorithm
 # activate the conda env
 conda activate pygad3
 # run the GA
-python testGA.py
+python geneticgrbs.py
 ```
 
 

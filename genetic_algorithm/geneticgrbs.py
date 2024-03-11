@@ -206,7 +206,7 @@ range_delta1  = {"low": -1.5,            "high": -0.30-1.e-6}
 range_delta2  = {"low": 0,               "high": 0.30}
 range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)}  # sample `tau_min` uniformly in log    space
 #range_tau_min = {"low": 1.e-2,          "high": bin_time-1.e-6}            # sample `tau_min` uniformly in linear space
-range_tau_max = {"low": 1,               "high": 50}
+range_tau_max = {"low": 1,               "high": 60}
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
 # mu0=1

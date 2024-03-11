@@ -71,6 +71,7 @@ if __name__ == '__main__':
             print("Usage: python simulate_GRBs.py <config_file>")
             sys.exit(1)
 
+        remove_instrument_path = True
         # Read argument from command line, and create the dictionary
         config_file = sys.argv[1]
         variables   = read_values(filename=config_file)
@@ -100,6 +101,7 @@ if __name__ == '__main__':
     # SET PARAMETERS Read params from down below
     #--------------------------------------------------------------------------#
     else:
+        remove_instrument_path = False
         #----------------------------------------------------------------------#
         #instrument = 'batse'
         instrument = 'swift'
@@ -155,26 +157,26 @@ if __name__ == '__main__':
         bg_level      = instr_swift['bg_level']
         t90_threshold = instr_swift['t90_threshold']
         sn_threshold  = instr_swift['sn_threshold']
-    elif instrument=='sax':
-        res           = instr_sax['res']
-        eff_area      = instr_sax['eff_area']
-        bg_level      = instr_sax['bg_level']
-        t90_threshold = instr_sax['t90_threshold']
-        sn_threshold  = instr_sax['sn_threshold']
-        t_f           = 50 # s
-    elif instrument=='sax_lr':
-        res           = instr_sax_lr['res']
-        eff_area      = instr_sax_lr['eff_area']
-        bg_level      = instr_sax_lr['bg_level']
-        t90_threshold = instr_sax_lr['t90_threshold']
-        sn_threshold  = instr_sax_lr['sn_threshold']
-    elif instrument=='fermi':
-        res           = instr_fermi['res']
-        eff_area      = instr_fermi['eff_area']
-        bg_level      = instr_fermi['bg_level']
-        t90_threshold = instr_fermi['t90_threshold']
-        sn_threshold  = instr_fermi['sn_threshold']
-        t_f           = 50 # s
+    # elif instrument=='sax':
+    #     res           = instr_sax['res']
+    #     eff_area      = instr_sax['eff_area']
+    #     bg_level      = instr_sax['bg_level']
+    #     t90_threshold = instr_sax['t90_threshold']
+    #     sn_threshold  = instr_sax['sn_threshold']
+    #     t_f           = 50 # s
+    # elif instrument=='sax_lr':
+    #     res           = instr_sax_lr['res']
+    #     eff_area      = instr_sax_lr['eff_area']
+    #     bg_level      = instr_sax_lr['bg_level']
+    #     t90_threshold = instr_sax_lr['t90_threshold']
+    #     sn_threshold  = instr_sax_lr['sn_threshold']
+    # elif instrument=='fermi':
+    #     res           = instr_fermi['res']
+    #     eff_area      = instr_fermi['eff_area']
+    #     bg_level      = instr_fermi['bg_level']
+    #     t90_threshold = instr_fermi['t90_threshold']
+    #     sn_threshold  = instr_fermi['sn_threshold']
+    #     t_f           = 50 # s
     else:
         raise NameError('Variable "instrument" not defined properly; choose between: "batse" or "swift".')
 
@@ -210,7 +212,7 @@ if __name__ == '__main__':
                           export_path=export_path,
                           n_cut=n_cut,
                           with_bg=False,
-                          remove_instrument_path=True,
+                          remove_instrument_path=remove_instrument_path,
                           test_pulse_distr=test_pulse_distr)
 
     if test_pulse_distr:
