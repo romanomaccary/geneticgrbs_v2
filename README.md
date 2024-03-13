@@ -87,13 +87,13 @@ The code will create a directory (`./simulated_LCs`), and inside, each time you 
 The value of the optimized parameters (see our paper above) are:
 ```
 # BATSE
-mu      = 1.09
-mu0     = 0.96
-alpha   = 2.10
-delta1  = -1.27
-delta2  = 0.24
+mu      = 1.10 
+mu0     = 0.91
+alpha   = 2.57
+delta1  = -1.28
+delta2  = 0.28
 tau_min = 0.02
-tau_max = 41.2
+tau_max = 40.2
 
 # Swift/BAT
 mu      = 1.26

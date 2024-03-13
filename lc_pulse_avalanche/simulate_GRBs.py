@@ -111,18 +111,20 @@ if __name__ == '__main__':
         #----------------------------------------------------------------------#
         N_grb = 5000 # number of simulated GRBs to produce per set of parameters
         #----------------------------------------------------------------------#
-        # The 7 values obtained from BATSE v33 optimization are
-        # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
-        # corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value
+        # The 7 values obtained from BATSE v35 optimization are
+        # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg,  
+        # corrected ACF, corrected sampling of the individual peaks), 
+        # corrected T90 estimate, fixed subcritical value, 30 gen
         # MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
         if instrument=='batse':
-            mu      = 1.09
-            mu0     = 0.96
-            alpha   = 2.10
-            delta1  = -1.27
-            delta2  = 0.24
+            mu      = 1.10 
+            mu0     = 0.91
+            alpha   = 2.57
+            delta1  = -1.28
+            delta2  = 0.28
             tau_min = 0.02
-            tau_max = 41.2
+            tau_max = 40.2
+
         #----------------------------------------------------------------------#
         # The 7 values obtained from Swift v34 optimization are
         # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
@@ -505,5 +507,16 @@ if __name__ == '__main__':
 # tau_min = 0.02
 # tau_max = 47.8
 
+# The 7 values obtained from BATSE v33 optimization are
+# (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
+# corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value
+# MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+# mu      = 1.09
+# mu0     = 0.96
+# alpha   = 2.10
+# delta1  = -1.27
+# delta2  = 0.24
+# tau_min = 0.02
+# tau_max = 41.2
 ################################################################################
 ################################################################################

@@ -28,12 +28,12 @@ def generate_rand_from_pdf(pdf, x_grid, N=1):
 ### Load the pdf of peak count rates of each instrument, with which we
 # will sample the amplitude A of each pulse (we'll not sample A anymore 
 # from U[0,1])
-peak_count_rates_batse  = '../lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt' # LB
+peak_count_rates_batse  = '../lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'                                                # LB, AF, external_user
 #peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt' # bach
-#peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt' # gravity
-peak_count_rates_swift  = '../lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt' # LB
+#peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'                   # gravity
+peak_count_rates_swift  = '../lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'                                                # LB, AF, external_user
 #peak_count_rates_swift = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt' # bach
-#peak_count_rates_swift = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt' # gravity
+#peak_count_rates_swift = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'                   # gravity
 #
 pdf_peak_count_rates_batse = np.loadtxt(peak_count_rates_batse)
 pdf_peak_count_rates_swift = np.loadtxt(peak_count_rates_swift)
