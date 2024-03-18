@@ -17,6 +17,7 @@ from sklearn.neighbors import KernelDensity
 from scipy.stats import anderson_ksamp, ks_2samp
 from scipy.special import expit
 from tqdm import tqdm
+
 import seaborn as sns
 sns.set_style('darkgrid')
 
@@ -135,7 +136,7 @@ instr_batse         = {
 }
 
 #------------------------------------------------------------------------------#
-# BATSE WRONG --> galileo (counts)
+# BATSE WRONG --> Galileo (counts)
 #------------------------------------------------------------------------------#
 # name_batse          = 'batse_old'
 # res_batse           = 0.064

@@ -4,7 +4,7 @@ This repository contains the Python code that implements a Genetic Algorithm (GA
 
 - _Reference Paper_: [Long gamma-ray burst light curves as the result of a common stochastic pulse-avalanche process]().
 
-- _Corresponding Author_: Lorenzo Bazzanini, University of Ferrara ( `bzzlnz  AT  unife  DOT  it` )
+- _Corresponding Author_: Lorenzo Bazzanini, University of Ferrara ( `bzzlnz  [at]  unife  [dot]  it` )
 
 - _Code Contributors_ (in alphabetical order): G. Angora, L. Bazzanini, L. Ferro, C. Guidorzi, and A. Tsvetkova.
 
@@ -96,13 +96,13 @@ tau_min = 0.02
 tau_max = 40.2
 
 # Swift/BAT
-mu      = 1.26
-mu0     = 1.29
-alpha   = 3.18
-delta1  = -0.93
-delta2  = 0.25
-tau_min = 0.02
-tau_max = 48.2
+mu      = 1.34
+mu0     = 1.16
+alpha   = 2.53
+delta1  = -0.75
+delta2  = 0.27
+tau_min = 0.03
+tau_max = 56.8
 ```
 
 
