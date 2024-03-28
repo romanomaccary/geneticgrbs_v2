@@ -1,10 +1,10 @@
 # GeneticGRBs
 
-This repository contains the Python code that implements a Genetic Algorithm (GA) for the optimization of the seven parameters of the [Stern & Svensson (1996)](https://iopscience.iop.org/article/10.1086/310267) (SS96) stochastic pulse avalanche model, for the generation of simulated gamma-ray burst (GRB) light curves (LCs), developed in [this paper]() ([arXiv version]()).
+This repository contains the Python code that implements a Genetic Algorithm (GA) for the optimization of the seven parameters of the [Stern & Svensson (1996)](https://iopscience.iop.org/article/10.1086/310267) (SS96) stochastic pulse avalanche model, for the generation of simulated gamma-ray burst (GRB) light curves (LCs), developed in [this paper]() ([arXiv version](https://arxiv.org/abs/2403.18754)).
 
 - _Reference Paper_: [Long gamma-ray burst light curves as the result of a common stochastic pulse-avalanche process]().
 
-- _Corresponding Author_: Lorenzo Bazzanini, University of Ferrara ( `bzzlnz  [at]  unife  [dot]  it` )
+- _Corresponding Author_: Lorenzo Bazzanini, University of Ferrara ( `bzzlnz[at]unife[dot]it` )
 
 - _Code Contributors_ (in alphabetical order): G. Angora, L. Bazzanini, L. Ferro, C. Guidorzi, and A. Tsvetkova.
 
