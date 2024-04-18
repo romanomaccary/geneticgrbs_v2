@@ -29,9 +29,9 @@ SEED=None
 
 ################################################################################
 
-user='external_user'
+#user='external_user'
 #user='LB'
-#user='AF'
+user='AF'
 #user='bach'
 #user='gravity'
 if user=='bach':

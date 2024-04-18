@@ -25,9 +25,9 @@ if sys.getrecursionlimit()<rec_lim:
 #------------------------------------------------------------------------------#
 # Set the username for the path of the files:
 #------------------------------------------------------------------------------#
-user='external_user'
+#user='external_user'
 #user='LB'
-#user='AF'
+user='AF'
 #user='bach'
 #user='gravity'
 #user='pleiadi'
@@ -103,8 +103,8 @@ if __name__ == '__main__':
     else:
         remove_instrument_path = False
         #----------------------------------------------------------------------#
-        #instrument = 'batse'
-        instrument = 'swift'
+        instrument = 'batse'
+        #instrument = 'swift'
         #instrument = 'sax'
         #instrument = 'sax_lr'
         #instrument = 'fermi'
