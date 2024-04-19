@@ -31,6 +31,7 @@ user='AF'
 #user='bach'
 #user='gravity'
 #user='pleiadi'
+#user = 'MM'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche')
@@ -50,6 +51,11 @@ elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/statistical_test')
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
     export_path='C:/Users/lisaf/Desktop/'
+elif user=='MM':
+    #sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/statistical_test')
+    #sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
+    #export_path='C:/Users/lisaf/Desktop/'
+    pass
 elif user=='external_user':
     sys.path.append('../statistical_test')
     sys.path.append('../lc_pulse_avalanche')

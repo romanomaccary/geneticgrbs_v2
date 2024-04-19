@@ -34,6 +34,7 @@ SEED=None
 user='AF'
 #user='bach'
 #user='gravity'
+#user = 'MM'
 if user=='bach':
     sys.path.append('/home/')
 elif user=='gravity':
@@ -44,6 +45,10 @@ elif user=='LB':
     rc('text', usetex=True)
 elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
+elif user == 'MM':
+    #sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
+    #metti la tua path!
+    pass
 elif user=='external_user':
     sys.path.append('../lc_pulse_avalanche')
 else:
