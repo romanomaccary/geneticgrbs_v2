@@ -1190,13 +1190,28 @@ def loss_AD(p_AD):
 
 ################################################################################
 
+################################################################################
+
+def loss_KS(p_KS):
+    """
+    aaaaaa
+    """
+    perc_cap  = 1.0
+    threshold = 0.999
+    x_ = - np.log((1./threshold)-1)
+    y  = 1-expit(p_KS*(x_/perc_cap))
+    return y
+
+################################################################################
+
 def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
                  averaged_fluxes_cube, averaged_fluxes_cube_sim,
                  acf,                  acf_sim,
                  duration,             duration_sim,
-                 n_of_pulses,          n_of_pulses_sim,   
+                 n_of_pulses,          n_of_pulses_sim,
+                 sn_distrib_real = [], sn_distrib_sim = [],   
                  return_individual_loss=False, test_pulse_distr=False,
-                 log=False, verbose=False):
+                 log=False, test_sn_distr = False, verbose=False):
     """
     Compute the loss to be used for the optimization in the Genetic Algorithm.
     Input:
@@ -1230,32 +1245,59 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
     w2 = 1.
     w3 = 1.
     w4 = 1.
-    w5 = 0
+    w5 = 1.
+    w6 = 0.
 
     l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
     l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
     l2_loss_acf         = np.sqrt( np.sum(np.power((acf-acf_sim),2)) )
     l2_loss_duration    = np.sqrt( np.sum(np.power((duration-duration_sim),2)) )
     l_AD                = 0.
-    if test_pulse_distr:
-        nbin=20
+    l_sn_distr          = 0.
+
+    if test_sn_distr:
+        ## (AF) Ho messo solo l'Anderson-Darling per ora. Poi penseremo a che test fare qui
+
         # Perform the AD 2-populations compatibility test between:
-        # - la distribuzione del numero di impulsi calcolata da MEPSA (su dati reali di BATSE)
-        # - la distribuzione del numero di impulsi calcolato con il nostro codice (sulla simulazione corrente)
-        n_mepsa_real, bins = np.histogram(n_of_pulses,     bins=nbin, density=True)
-        n_peaks_sim,     _ = np.histogram(n_of_pulses_sim, bins=nbin, density=True)
-        p_AD               = AD_2pop_test(distr_1=n_mepsa_real, 
-                                          distr_2=n_peaks_sim)
-        l_AD               = loss_AD(p_AD=p_AD)
+        # - la distribuzione di S2N dei dati reali
+        # - la distribuzione di S2N dei dati simulati
+        p_sn_distr = AD_2pop_test(distr_1=sn_distrib_real, 
+                                  distr_2=sn_distrib_sim)
+        l_sn_distr = loss_AD(p_AD=p_sn_distr)
+
+        #Per ora, ho messo il test della distribuzione degli impulsi DOPO il test della distribuzione della SN, come 
+        #potenziale sesta metrica da mettere in futuro.
+        if test_pulse_distr:
+            #nbin=20
+            # Perform the AD 2-populations compatibility test between:
+            # - la distribuzione del numero di impulsi calcolata da MEPSA (su dati reali di BATSE)
+            # - la distribuzione del numero di impulsi calcolato con il nostro codice (sulla simulazione corrente)
+
+            # Ho commentato la vecchia versione, anche se non la usiamo, perchè comunque è il modo sbagliato di fare questa cosa
+            
+            #n_mepsa_real, bins = np.histogram(n_of_pulses,     bins=nbin, density=True)
+            #n_peaks_sim,     _ = np.histogram(n_of_pulses_sim, bins=nbin, density=True)
+            #p_AD               = AD_2pop_test(distr_1=n_mepsa_real, 
+            #                                  distr_2=n_peaks_sim)
+            
+            p_AD = AD_2pop_test(distr_1=n_of_pulses, 
+                                distr_2=n_of_pulses_sim)
+            l_AD = loss_AD(p_AD=p_AD)
+    
+    
+    
     # total loss
     l2_loss = w1 * l2_loss_fluxes      + \
               w2 * l2_loss_fluxes_cube + \
               w3 * l2_loss_acf         + \
               w4 * l2_loss_duration    + \
-              w5 * l_AD   
+              w5 * l_sn_distr          + \
+              w6 * l_AD
     # divide to obtain the _average_ value of the loss
-    if test_pulse_distr:
+    if test_sn_distr:
         l2_loss *= (1./5)
+    elif test_pulse_distr:
+        l2_loss *= (1./6)
     else:
         l2_loss *= (1./4)
 
@@ -1270,8 +1312,10 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         pass
                           
     if return_individual_loss:
-        if test_pulse_distr:
-            return l2_loss, l2_loss_fluxes, l2_loss_fluxes_cube, l2_loss_acf, l2_loss_duration, l_AD
+        if test_sn_distr and not test_pulse_distr:
+            return l2_loss, l2_loss_fluxes, l2_loss_fluxes_cube, l2_loss_acf, l2_loss_duration, l_sn_distr
+        elif test_pulse_distr:
+            return l2_loss, l2_loss_fluxes, l2_loss_fluxes_cube, l2_loss_acf, l2_loss_duration, l_sn_distr, l_AD
         else:
             return l2_loss, l2_loss_fluxes, l2_loss_fluxes_cube, l2_loss_acf, l2_loss_duration
     else:
