@@ -1173,7 +1173,7 @@ def reject_sampling_fermi(prob_dict):
     
 ################################################################################
 
-def loss_AD(p_AD, alpha = 0.05, smooth = True, rescale_factor = 5):
+def loss_AD(p_AD, alpha = 0.05, smooth = False, rescale_factor = 5):
     """
     Since the p-value of the Anderson-Darling test caps at 25%, then we can 
     rescale the sigmoid in such a way that it reaches the value 0.999 at x=0.25:

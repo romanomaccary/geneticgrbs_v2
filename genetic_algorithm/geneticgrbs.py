@@ -192,7 +192,7 @@ mutation_probability  = 0.04                   # by default is 'None', otherwise
 # Other parameters
 N_grb            = 2000   # number of simulated GRBs to produce per set of parameters
 n_cut            = 2500   # maximum number of pulses to consider in the avalanche model
-test_sn_distr    = False  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
+test_sn_distr    = True  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
 test_pulse_distr = False  # add a sixth metric regarding the distribution of number of pulses per GRB (set False by default)
 
 
@@ -355,7 +355,7 @@ if test_sn_distr:
                                     filter=True)[0] for grb in grb_list_real]
     sn_distr_real = np.array(sn_distr_real)
 else:
-    grb_list_real = []
+    sn_distr_real = []
 
 ################################################################################
 # DEFINE FITNESS FUNCTION OF THE GENETIC ALGORITHM
