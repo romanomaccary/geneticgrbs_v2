@@ -86,15 +86,12 @@ elif user=='AF':
     swift_path = 'E:/grb_to_test/Swift_BAT/'
     sax_path   = 'E:/grb_to_test/BeppoSAX_GRBM/'
 elif user == 'MM':
-    #sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/statistical_test')
-    #sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
+    sys.path.append('/home/manuele/geneticgrbs/geneticgrbs-5metrics/statistical_test')
+    sys.path.append('/home/manuele/geneticgrbs/geneticgrbs-5metrics/lc_pulse_avalanche')
     # real data
-    #batse_path = 'E:/grb_to_test/CGRO_BATSE/'
-    #swift_path = 'E:/grb_to_test/Swift_BAT/'
-    #sax_path   = 'E:/grb_to_test/BeppoSAX_GRBM/'
-
-    #metti la tua path!
-    pass
+    batse_path = '/home/manuele/geneticgrbs/geneticgrbs-5metrics-data/CGRO_BATSE/'
+    swift_path = '/home/manuele/geneticgrbs/geneticgrbs-5metrics-data/Swift_BAT/'
+    sax_path   = '/home/manuele/geneticgrbs/geneticgrbs-5metrics-data/BeppoSAX_GRBM/'
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
