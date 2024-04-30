@@ -192,9 +192,8 @@ mutation_probability  = 0.04                   # by default is 'None', otherwise
 # Other parameters
 N_grb            = 2000   # number of simulated GRBs to produce per set of parameters
 n_cut            = 2500   # maximum number of pulses to consider in the avalanche model
-test_sn_distr    = True  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
+test_sn_distr    = True   # add a fifth metric regarding  the S/N distribution (set True by default)
 test_pulse_distr = False  # add a sixth metric regarding the distribution of number of pulses per GRB (set False by default)
-
 
 # Options for parallelization
 if user=='pleiadi':
@@ -430,7 +429,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
     duration_distr_sim = compute_kde_log_duration(duration_list=duration_sim)
 
     ### TEST 5: S2N distribution
-    if test_sn_distr:
+    if :
         sn_distr_sim = [evaluateGRB_SN(grb.times, 
                                         grb.counts, 
                                         grb.errs, 
@@ -455,10 +454,10 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                            duration_sim=duration_distr_sim,
                            n_of_pulses=n_of_pulses_real,
                            n_of_pulses_sim=n_of_pulses_sim,
-                           sn_distrib_real = sn_distr_real,
-                           sn_distrib_sim = sn_distr_sim,
+                           sn_distrib_real=sn_distr_real,
+                           sn_distrib_sim=sn_distr_sim,
                            test_pulse_distr=test_pulse_distr,
-                           test_sn_distr = test_sn_distr)
+                           test_sn_distr=test_sn_distr)
     fitness = 1.0 / (l2_loss + 1.e-9)
     return fitness
 
@@ -653,7 +652,7 @@ if __name__ == '__main__':
                                                 grb.t90, 
                                                 t90_frac, 
                                                 bin_time,
-                                                filter=True)[0] for grb in grb_list_real]
+                                                filter=True)[0] for grb in grb_list_sim]
                 sn_distr_sim = np.array(sn_distr_sim)
             else:
                 sn_distr_sim = []
