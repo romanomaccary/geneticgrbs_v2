@@ -1266,7 +1266,7 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
     l_sn_distr          = 0.
     l_pulse_distr       = 0.
     
-    ### Compute the loss associated to the difference in S\N distributions (real vs sim)
+    ### Compute the loss associated to the difference in S/N distributions (real vs sim)
     if test_sn_distr:
         # Perform the AD 2-populations compatibility test between:
         # - la distribuzione di S2N dei dati reali
@@ -1277,20 +1277,14 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
 
     ### Compute the loss associated to the difference in number-of-peaks distribution (real vs sim)
     if test_pulse_distr:
+        raise Exception('Being a discrete distribution, we cannot use AD/KS-test for the compatibility!')
+        ### WRONG! We have to use the chi^2!
         # Perform the AD 2-populations compatibility test between:
         # - la distribuzione del numero di impulsi calcolata da MEPSA (su dati reali di BATSE)
-        # - la distribuzione del numero di impulsi calcolato con il nostro codice (sulla simulazione corrente)
-
-        ### AF: Ho commentato la vecchia versione, anche se non la usiamo, perchè comunque è il modo sbagliato di fare questa cosa
-        #nbin=20
-        #n_mepsa_real, bins = np.histogram(n_of_pulses,     bins=nbin, density=True)
-        #n_peaks_sim,     _ = np.histogram(n_of_pulses_sim, bins=nbin, density=True)
-        #l_pulse_distr      = AD_2pop_test(distr_1=n_mepsa_real, 
-        #                                  distr_2=n_peaks_sim)
-        
-        p_pulse_distr = AD_2pop_test(distr_1=n_of_pulses, 
-                                     distr_2=n_of_pulses_sim)
-        l_pulse_distr = loss_AD(p_AD=p_pulse_distr)
+        # - la distribuzione del numero di impulsi calcolato con il nostro codice (sulla simulazione corrente)        
+        # p_pulse_distr = AD_2pop_test(distr_1=n_of_pulses, 
+        #                              distr_2=n_of_pulses_sim)
+        # l_pulse_distr = loss_AD(p_AD=p_pulse_distr)
     
     ### Total loss
     l2_loss = w1 * l2_loss_fluxes      + \
