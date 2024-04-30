@@ -437,7 +437,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                                         grb.t90, 
                                         t90_frac, 
                                         bin_time,
-                                        filter=True)[0] for grb in grb_list_real]
+                                        filter=True)[0] for grb in grb_list_sim]
         sn_distr_sim = np.array(sn_distr_sim)
     else:
         sn_distr_sim = []
