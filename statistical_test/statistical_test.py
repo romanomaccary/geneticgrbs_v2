@@ -1173,17 +1173,22 @@ def reject_sampling_fermi(prob_dict):
     
 ################################################################################
 
-def loss_AD(p_AD, alpha = 0.05, smooth = False, rescale_factor = 5):
+def loss_AD(p_AD, alpha=0.05, smooth=False, rescale_factor=5):
     """
     Since the p-value of the Anderson-Darling test caps at 25%, then we can 
     rescale the sigmoid in such a way that it reaches the value 0.999 at x=0.25:
         y = expit(x) = 1/(1+exp(-x))
         x = - log((1/y)-1),    with y=0.99
 
+    If smooth=False, we set the 0.999 level at x=0.10.
+
     The rescale_factor ensures that, at the beginning of the GA, the value of the 
     AD loss is comparable to the value of the other metrics.
     """
-    perc_cap  = 0.25
+    if smooth:
+        perc_cap = 0.25
+    else:
+        perc_cap = 0.10
     threshold = 0.999
 
     x_ = - np.log((1./threshold)-1)
@@ -1191,6 +1196,7 @@ def loss_AD(p_AD, alpha = 0.05, smooth = False, rescale_factor = 5):
         y = 0 
     else:
         y  = 1-expit(p_AD*(x_/perc_cap))
+        
     return rescale_factor * y
 
 ################################################################################
