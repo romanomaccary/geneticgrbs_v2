@@ -1130,24 +1130,20 @@ def compute_kde_log_duration(duration_list, x_left=-2, x_right=5, h_opt=0.09):
 
 ################################################################################
 
-def AD_2pop_test(distr_1, distr_2):
+def two_pop_test(distr_1, distr_2, mode='AD'):
     """ 
-    Perform AD 2-population statistical tests.
+    Perform a 2-population statistical compatibility test (AD or KS).
     Returns the p-value of the test.
     """
-    res_ad = anderson_ksamp([distr_1,distr_2])
-    #print('AD (p-value): ', res_ad.significance_level)
-    return res_ad.significance_level 
-
-def KS_2pop_test(distr_1, distr_2):
-    """ 
-    Perform KS 2-population statistical tests.
-    Returns the p-value of the test.
-    """
-    res_ks = ks_2samp(distr_1,distr_2)
-    #print('KS (p-value): ', res_ks.pvalue)
-    return res_ks.pvalue 
-
+    if mode=='AD':
+        res_ad = anderson_ksamp([distr_1,distr_2])
+        pvalue = res_ad.significance_level
+        #print('AD (p-value): ', pvalue)
+    elif mode=='KS':
+        res_ks = ks_2samp(distr_1,distr_2)
+        pvalue = res_ks.pvalue
+        #print('KS (p-value): ', pvalue)
+    return pvalue 
     
 def reject_sampling_fermi(prob_dict):
     """ 
@@ -1173,7 +1169,7 @@ def reject_sampling_fermi(prob_dict):
     
 ################################################################################
 
-def loss_AD(p_AD, alpha=0.05, smooth=False, rescale_factor=5):
+def loss_compatibility_test(p, alpha=0.05, smooth=False, rescale_factor=5, mode='AD'):
     """
     Since the p-value of the Anderson-Darling test caps at 25%, then we can 
     rescale the sigmoid in such a way that it reaches the value 0.999 at x=0.25:
@@ -1192,29 +1188,11 @@ def loss_AD(p_AD, alpha=0.05, smooth=False, rescale_factor=5):
     threshold = 0.999
 
     x_ = - np.log((1./threshold)-1)
-    if (not smooth) and p_AD > alpha:
+    if (not smooth) and p > alpha:
         y = 0 
     else:
-        y  = 1-expit(p_AD*(x_/perc_cap))
+        y  = 1-expit(p*(x_/perc_cap))
         
-    return rescale_factor * y
-
-################################################################################
-
-################################################################################
-
-def loss_KS(p_KS, alpha = 0.05, smooth = True, rescale_factor = 5):
-    """
-    aaaaaa
-    """
-    perc_cap  = 1.0
-    threshold = 0.999
-    x_ = - np.log((1./threshold)-1)
-
-    if (not smooth) and p_KS > alpha:
-        y = 0 
-    else:
-        y  = 1-expit(p_KS*(x_/perc_cap))
     return rescale_factor * y
 
 ################################################################################
@@ -1224,9 +1202,9 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
                  acf,                  acf_sim,
                  duration,             duration_sim,
                  n_of_pulses,          n_of_pulses_sim,
-                 sn_distrib_real = [], sn_distrib_sim = [],   
-                 return_individual_loss=False, test_pulse_distr=False,
-                 log=False, test_sn_distr = False, verbose=False):
+                 sn_distrib_real=[],   sn_distrib_sim=[],   
+                 test_sn_distr=False,  test_pulse_distr=False,
+                 return_individual_loss=False, log=False, verbose=False):
     """
     Compute the loss to be used for the optimization in the Genetic Algorithm.
     Input:
@@ -1271,20 +1249,22 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         # Perform the AD 2-populations compatibility test between:
         # - la distribuzione di S2N dei dati reali
         # - la distribuzione di S2N dei dati simulati
-        p_sn_distr = AD_2pop_test(distr_1=sn_distrib_real, 
-                                  distr_2=sn_distrib_sim)
-        l_sn_distr = loss_AD(p_AD=p_sn_distr)
+        p_sn_distr = two_pop_test(distr_1=sn_distrib_real, 
+                                  distr_2=sn_distrib_sim,
+                                  mode='AD')
+        l_sn_distr = loss_compatibility_test(p=p_sn_distr, mode='AD')
 
     ### Compute the loss associated to the difference in number-of-peaks distribution (real vs sim)
     if test_pulse_distr:
-        raise Exception('Being a discrete distribution, we cannot use AD/KS-test for the compatibility!')
-        ### WRONG! We have to use the chi^2!
+        raise Exception('Being a discrete distribution, we cannot use AD/KS-test for the compatibility test (use chi^2 instead!)')
+        ### WRONG! We have to use the !
         # Perform the AD 2-populations compatibility test between:
         # - la distribuzione del numero di impulsi calcolata da MEPSA (su dati reali di BATSE)
         # - la distribuzione del numero di impulsi calcolato con il nostro codice (sulla simulazione corrente)        
-        # p_pulse_distr = AD_2pop_test(distr_1=n_of_pulses, 
-        #                              distr_2=n_of_pulses_sim)
-        # l_pulse_distr = loss_AD(p_AD=p_pulse_distr)
+        # p_pulse_distr = two_pop_test(distr_1=n_of_pulses, 
+        #                              distr_2=n_of_pulses_sim,
+        #                              mode='AD')
+        # l_pulse_distr = loss_compatibility_test(p=p_pulse_distr, mode='AD')
     
     ### Total loss
     l2_loss = w1 * l2_loss_fluxes      + \
