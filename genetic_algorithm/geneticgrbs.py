@@ -40,9 +40,9 @@ print_time=True
 
 ### Set the username for the path of the files:
 #user='LB'
-#user='AF'
+user='AF'
 #user='bach'
-user='gravity'
+#user='gravity'
 #user='pleiadi'
 #user = 'MM'
 if user=='bach':
@@ -82,9 +82,9 @@ elif user=='AF':
     sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/statistical_test')
     sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
     # real data
-    batse_path = 'E:/grb_to_test/CGRO_BATSE/'
-    swift_path = 'E:/grb_to_test/Swift_BAT/'
-    sax_path   = 'E:/grb_to_test/BeppoSAX_GRBM/'
+    batse_path = 'D:/grb_to_test/CGRO_BATSE/'
+    swift_path = 'D:/grb_to_test/Swift_BAT/'
+    sax_path   = 'D:/grb_to_test/BeppoSAX_GRBM/'
 elif user == 'MM':
     sys.path.append('/home/manuele/geneticgrbs/geneticgrbs-5metrics/statistical_test')
     sys.path.append('/home/manuele/geneticgrbs/geneticgrbs-5metrics/lc_pulse_avalanche')
@@ -104,8 +104,8 @@ from avalanche import LC
 ################################################################################
 
 ### Choose the instrument
-#instrument = 'batse'
-instrument = 'swift'
+instrument = 'batse'
+#instrument = 'swift'
 #instrument = 'sax'
 #instrument = 'fermi'
 
@@ -182,15 +182,15 @@ crossover_probability = 1                      # 'None' means couples parent k w
 initial_population    = None                   # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
 crossover_type        = "scattered"
-num_generations       = 15                     # Number of generations.
-sol_per_pop           = 2000                   # Number of solutions in the population (i.e., number of different sets per generation).
+num_generations       = 5#15                     # Number of generations.
+sol_per_pop           = 5#2000                   # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.15*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 # Other parameters
-N_grb            = 2000   # number of simulated GRBs to produce per set of parameters
+N_grb            = 5#2000   # number of simulated GRBs to produce per set of parameters
 n_cut            = 2500   # maximum number of pulses to consider in the avalanche model
 test_sn_distr    = True   # add a fifth metric regarding  the S/N distribution (set True by default)
 test_pulse_distr = False  # add a sixth metric regarding the distribution of number of pulses per GRB (set False by default)
@@ -429,7 +429,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
     duration_distr_sim = compute_kde_log_duration(duration_list=duration_sim)
 
     ### TEST 5: S2N distribution
-    if :
+    if test_sn_distr:
         sn_distr_sim = [evaluateGRB_SN(grb.times, 
                                         grb.counts, 
                                         grb.errs, 

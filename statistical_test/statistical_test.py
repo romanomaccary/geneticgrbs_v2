@@ -1251,8 +1251,8 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         # - la distribuzione di S2N dei dati simulati
         p_sn_distr = two_pop_test(distr_1=sn_distrib_real, 
                                   distr_2=sn_distrib_sim,
-                                  mode='AD')
-        l_sn_distr = loss_compatibility_test(p=p_sn_distr, mode='AD')
+                                  mode='KS')
+        l_sn_distr = loss_compatibility_test(p=p_sn_distr, mode='KS')
 
     ### Compute the loss associated to the difference in number-of-peaks distribution (real vs sim)
     if test_pulse_distr:
