@@ -178,3 +178,8 @@ lc_pulse_avalanche/swift_errs_5.txt
 lc_pulse_avalanche/swift_errs_6.txt
 lc_pulse_avalanche/swift_errs_7.txt
 statistical_test/sn_distr.txt
+genetic_algorithm/best_par_per_epoch.txt
+genetic_algorithm/datafile.txt
+genetic_algorithm/df_all_gen.csv
+genetic_algorithm/simulation_info.txt
+genetic_algorithm/geneticGRB.pkl
