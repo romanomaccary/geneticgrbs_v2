@@ -40,9 +40,9 @@ print_time=True
 
 ### Set the username for the path of the files:
 #user='LB'
-user='AF'
+#user='AF'
 #user='bach'
-#user='gravity'
+user='gravity'
 #user='pleiadi'
 #user = 'MM'
 if user=='bach':
@@ -55,8 +55,8 @@ if user=='bach':
     sax_path   = '/astrodata/guidorzi/BeppoSAX_GRBM/'
 elif user=='gravity':
     # library paths
-    sys.path.append('/home/bazzanini/PYTHON/genetic3/statistical_test')
-    sys.path.append('/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche')
+    sys.path.append('/home/bazzanini/PYTHON/genetic3_5metrics/statistical_test')
+    sys.path.append('/home/bazzanini/PYTHON/genetic3_5metrics/lc_pulse_avalanche')
     # real data
     batse_path = '/astrodata/guidorzi/CGRO_BATSE/'
     swift_path = '/astrodata/guidorzi/Swift_BAT/'
@@ -190,7 +190,7 @@ keep_elitism          = 0                      # keep in the next generation the
 mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 # Other parameters
-N_grb            = 30#2000   # number of simulated GRBs to produce per set of parameters
+N_grb            = 2000   # number of simulated GRBs to produce per set of parameters
 n_cut            = 2500   # maximum number of pulses to consider in the avalanche model
 test_sn_distr    = True   # add a fifth metric regarding  the S/N distribution (set True by default)
 test_pulse_distr = False  # add a sixth metric regarding the distribution of number of pulses per GRB (set False by default)

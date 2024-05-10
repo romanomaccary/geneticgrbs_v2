@@ -31,9 +31,9 @@ SEED=None
 
 #user='external_user'
 #user='LB'
-user='AF'
+#user='AF'
 #user='bach'
-#user='gravity'
+user='gravity'
 #user = 'MM'
 if user=='bach':
     sys.path.append('/home/')
