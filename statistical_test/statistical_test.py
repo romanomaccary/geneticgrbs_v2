@@ -1169,31 +1169,46 @@ def reject_sampling_fermi(prob_dict):
     
 ################################################################################
 
-def loss_compatibility_test(p, alpha=0.05, smooth=False, rescale_factor=5, mode='AD'):
+def loss_compatibility_test(p, alpha=0.05, rescale_factor=3):
     """
-    Since the p-value of the Anderson-Darling test caps at 25%, then we can 
-    rescale the sigmoid in such a way that it reaches the value 0.999 at x=0.25:
-        y = expit(x) = 1/(1+exp(-x))
-        x = - log((1/y)-1),    with y=0.99
-
-    If smooth=False, we set the 0.999 level at x=0.10.
-
-    The rescale_factor ensures that, at the beginning of the GA, the value of the 
-    AD loss is comparable to the value of the other metrics.
+    Calculate the loss for a compatibility test based on a p-value.
+    
+    Parameters:
+    p (float): The p-value of the compatibility test.
+    rescale_factor (float, optional): A rescaling factor for the loss. Default is 3.
+    alpha (float, optional): The significance level for the compatibility test. Default is 0.05.
+    
+    Returns:
+    The calculated loss.
     """
-    if smooth:
-        perc_cap = 0.25
+    if p >= alpha:
+        loss = 0
+    elif p <= 1e-9:
+        loss = 1 - np.log10(1e-9)
     else:
-        perc_cap = 0.10
-    threshold = 0.999
+        loss = 1 - np.log10(p)
 
-    x_ = - np.log((1./threshold)-1)
-    if (not smooth) and p > alpha:
-        y = 0 
-    else:
-        y  = 1-expit(p*(x_/perc_cap))
-        
-    return rescale_factor * y
+    return loss / rescale_factor
+
+# Run this to see a plot of the behaviour of this function
+if False:
+    # Generate x values in log space
+    x = np.logspace(-10, 0, 10000)
+    # Compute corresponding y values
+    y = np.array([loss_compatibility_test(xi) for xi in x])
+    # Plot the points
+    plt.figure(figsize=(8, 6))
+    plt.plot(x, y, color='k', label='Loss function')
+    plt.axvline(1e-9,  color='r', linestyle='--', label=r'$p=10^{-9}$')
+    plt.axvline(0.05,  color='g', linestyle='--', label=r'$p=0.05$')
+    plt.axvline(1,     color='b', linestyle='--', label=r'$p=1$')
+    plt.xlabel(r'$p$-value', size=14)
+    plt.ylabel(r'Loss', rotation=90, size=14)
+    plt.title('Loss S/N distribution', size=16)
+    plt.xscale('log')  # Set x-axis to logarithmic scale
+    plt.grid(True)
+    plt.legend(fontsize=12)
+    plt.show()
 
 ################################################################################
 
@@ -1252,7 +1267,7 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         p_sn_distr = two_pop_test(distr_1=sn_distrib_real, 
                                   distr_2=sn_distrib_sim,
                                   mode='KS')
-        l_sn_distr = loss_compatibility_test(p=p_sn_distr, mode='KS')
+        l_sn_distr = loss_compatibility_test(p=p_sn_distr)
 
     ### Compute the loss associated to the difference in number-of-peaks distribution (real vs sim)
     if test_pulse_distr:
@@ -1264,7 +1279,7 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         # p_pulse_distr = two_pop_test(distr_1=n_of_pulses, 
         #                              distr_2=n_of_pulses_sim,
         #                              mode='AD')
-        # l_pulse_distr = loss_compatibility_test(p=p_pulse_distr, mode='AD')
+        # l_pulse_distr = loss_compatibility_test(p=p_pulse_distr)
     
     ### Total loss
     l2_loss = w1 * l2_loss_fluxes      + \
