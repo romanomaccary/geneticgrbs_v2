@@ -182,7 +182,7 @@ crossover_probability = 1                      # 'None' means couples parent k w
 initial_population    = None                   # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
 crossover_type        = "scattered"
-num_generations       = 15                     # Number of generations.
+num_generations       = 30                     # Number of generations.
 sol_per_pop           = 2000                   # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.15*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
@@ -215,7 +215,7 @@ range_delta1  = {"low": -1.5,            "high": -0.30-1.e-6}
 range_delta2  = {"low": 0,               "high": 0.30}
 range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)}  # sample `tau_min` uniformly in log    space
 #range_tau_min = {"low": 1.e-2,          "high": bin_time-1.e-6}            # sample `tau_min` uniformly in linear space
-range_tau_max = {"low": 1,               "high": 60}
+range_tau_max = {"low": 1,               "high": 65}
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
 # mu0=1
