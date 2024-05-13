@@ -30,10 +30,10 @@ SEED=None
 ################################################################################
 
 #user='external_user'
-#user='LB'
+user='LB'
 #user='AF'
 #user='bach'
-user='gravity'
+#user='gravity'
 #user = 'MM'
 if user=='bach':
     sys.path.append('/home/')
@@ -1169,7 +1169,7 @@ def reject_sampling_fermi(prob_dict):
     
 ################################################################################
 
-def loss_compatibility_test(p, alpha=0.05, rescale_factor=3):
+def loss_compatibility_test(p, alpha=0.05, rescale_factor=2):
     """
     Calculate the loss for a compatibility test based on a p-value.
     
@@ -3351,5 +3351,48 @@ def save_config(variables, file_name=None):
         with open(file_name, 'w') as f:
             for name, value in variables.items():
                 print(f"{name} = {value}", file=f)
+
+###############################################################################
+
+def rebin_histogram(bin_edges, data, n_min=20):
+    """
+    Rebins the histogram so that each bin contains at least 20 data points.
+    We start with a predefined set of bins (e.g., we decide the have nbins=15
+    bins, so that bin_edges will be: 
+        bin_edges = np.linspace(min(data), max(data), nbins+1)
+    Every time in a predefined bin there are less than n_min=20 counts, we 
+    extend the right endpoint of the current bin towards the next bin. We do
+    this iteratively until the current (enlarged) bin has >= n_min=20 points.
+    The last points on the right that do not form a complete bin of n_min is
+    included in the bin immediately before (which then becomes the last one).
+    Args:
+        - bin_edges: A list of the bin endpoints;
+        - data: The data to be rebinned;
+    Returns:
+        - new_bin_edges: A list of the new bin edges;
+        - new_bin_counts: A list of the new bin counts;
+    """
+  
+    data      = np.array(data)
+    bin_edges = np.array(bin_edges)
+    new_bin_counts = []
+    new_bin_edges  = []
+    new_bin_edges.append(bin_edges[0])
+    for i in range(len(bin_edges)-1):
+        bin_count = len( data[(new_bin_edges[-1]<=data) & (data<bin_edges[i+1])] )
+        if (bin_count >= n_min):
+            new_bin_edges.append(bin_edges[i+1])
+            new_bin_counts.append(bin_count)
+
+    if (np.sum(new_bin_counts)!=len(data)):
+        # if the last data did not form a bin with len>20, 
+        # then we incorporate in the last complete (n>20) bin
+        new_bin_counts[-1] += len(data[data>=new_bin_edges[-1]])
+        new_bin_edges[-1]   = bin_edges[-1]
+    new_bin_counts = np.array(new_bin_counts).astype('int')
+
+    assert np.sum(new_bin_counts)==len(data), "The number of counts in the rebinned histogram is different from the initial one!" 
+    
+    return new_bin_edges, new_bin_counts
 
 ###############################################################################

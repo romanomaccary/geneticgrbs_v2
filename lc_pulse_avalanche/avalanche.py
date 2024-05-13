@@ -28,12 +28,12 @@ def generate_rand_from_pdf(pdf, x_grid, N=1):
 ### Load the pdf of peak count rates of each instrument, with which we
 # will sample the amplitude A of each pulse (we'll not sample A anymore 
 # from U[0,1])
-#peak_count_rates_batse  = '../lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'                                               # LB, AF, external_user
+peak_count_rates_batse  = '../lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'                                               # LB, AF, external_user
 #peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt' # bach
-peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'                    # gravity
-#peak_count_rates_swift  = '../lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'                                               # LB, AF, external_user
+#peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'                    # gravity
+peak_count_rates_swift  = '../lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'                                               # LB, AF, external_user
 #peak_count_rates_swift = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt' # bach
-peak_count_rates_swift = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'                    # gravity
+#peak_count_rates_swift = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'                    # gravity
 #
 pdf_peak_count_rates_batse = np.loadtxt(peak_count_rates_batse)
 pdf_peak_count_rates_swift = np.loadtxt(peak_count_rates_swift)
@@ -49,9 +49,9 @@ peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift
 
 
 ### Load the (gaussian) errors of the Swift GRBs
-#path_swift_errs = '../lc_pulse_avalanche/'                                                # LB
+path_swift_errs = '../lc_pulse_avalanche/'                                                # LB
 #path_swift_errs = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/' # bach
-path_swift_errs = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/'                    # gravity
+#path_swift_errs = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/'                    # gravity
 #
 # bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10. , 21.5443469 , 46.41588834, 100. ])
 bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10.])
