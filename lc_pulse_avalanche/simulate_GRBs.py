@@ -117,17 +117,19 @@ if __name__ == '__main__':
         N_grb = 5000 # number of simulated GRBs to produce per set of parameters
         #----------------------------------------------------------------------#
         # BATSE v37
+        #----------------------------------------------------------------------#
         if instrument=='batse':
-            mu      = 1.05
-            mu0     = 1.01
-            alpha   = 2.51
-            delta1  = -1.28
-            delta2  = 0.29
-            tau_min = 0.03
-            tau_max = 39.05
+            mu      =  0.52  
+            mu0     =  0.95  
+            alpha   =  18.34 
+            delta1  =  -1.2  
+            delta2  =  0.13  
+            tau_min =  0.03  
+            tau_max =  15.25 
 
         #----------------------------------------------------------------------#
         # Swift v36
+        #----------------------------------------------------------------------#
         elif instrument=='swift':
             mu      = 1.34
             mu0     = 1.16
@@ -559,13 +561,13 @@ if __name__ == '__main__':
 # corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value
 # 5 metrics (sn_distr)
 # MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
-# mu      = 1.05
-# mu0     = 1.01
-# alpha   = 2.51
-# delta1  = -1.28
-# delta2  = 0.29
+# mu      = 0.81
+# mu0     = 0.82
+# alpha   = 1.30
+# delta1  = -1.45
+# delta2  = 0.04
 # tau_min = 0.03
-# tau_max = 39.05
+# tau_max = 25.53
 
 ################################################################################
 ################################################################################
