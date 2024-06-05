@@ -108,8 +108,8 @@ if __name__ == '__main__':
     else:
         remove_instrument_path = False
         #----------------------------------------------------------------------#
-        instrument = 'batse'
-        #instrument = 'swift'
+        #instrument = 'batse'
+        instrument = 'swift'
         #instrument = 'sax'
         #instrument = 'sax_lr'
         #instrument = 'fermi'
@@ -128,16 +128,16 @@ if __name__ == '__main__':
             tau_max =  15.25 
 
         #----------------------------------------------------------------------#
-        # Swift v36
+        # Swift v38
         #----------------------------------------------------------------------#
         elif instrument=='swift':
-            mu      = 1.34
-            mu0     = 1.16
-            alpha   = 2.53
-            delta1  = -0.75
-            delta2  = 0.27
-            tau_min = 0.03
-            tau_max = 56.8
+            mu      = 0.8  
+            mu0     = 1.62 
+            alpha   = 16.99
+            delta1  = -1.05
+            delta2  = 0.21 
+            tau_min = 0.04 
+            tau_max = 17.15
 
         #----------------------------------------------------------------------#
         else:
@@ -561,13 +561,27 @@ if __name__ == '__main__':
 # corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value
 # 5 metrics (sn_distr)
 # MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
-# mu      = 0.81
-# mu0     = 0.82
-# alpha   = 1.30
-# delta1  = -1.45
-# delta2  = 0.04
-# tau_min = 0.03
-# tau_max = 25.53
+# mu      =  0.52  
+# mu0     =  0.95  
+# alpha   =  18.34 
+# delta1  =  -1.2  
+# delta2  =  0.13  
+# tau_min =  0.03  
+# tau_max =  15.25 
+    
+# The 7 values obtained from Swift v38 optimization are
+# (5 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
+# corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value
+# 5 metrics (sn_distr)
+# MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+# mu      = 0.8  
+# mu0     = 1.62 
+# alpha   = 16.99
+# delta1  = -1.05
+# delta2  = 0.21 
+# tau_min = 0.04 
+# tau_max = 17.15
+    
 
 ################################################################################
 ################################################################################

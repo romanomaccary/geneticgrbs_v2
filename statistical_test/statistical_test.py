@@ -1169,13 +1169,13 @@ def reject_sampling_fermi(prob_dict):
     
 ################################################################################
 
-def loss_compatibility_test(p, alpha=0.05, rescale_factor=2):
+def loss_compatibility_test(p, alpha=0.05, rescale_factor=1):
     """
     Calculate the loss for a compatibility test based on a p-value.
     
     Parameters:
     p (float): The p-value of the compatibility test.
-    rescale_factor (float, optional): A rescaling factor for the loss. Default is 3.
+    rescale_factor (float, optional): A rescaling factor for the loss. Default is 1.
     alpha (float, optional): The significance level for the compatibility test. Default is 0.05.
     
     Returns:
