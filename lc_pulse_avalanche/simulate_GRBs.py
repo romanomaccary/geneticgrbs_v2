@@ -52,9 +52,9 @@ elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
     export_path='C:/Users/lisaf/Desktop/'
 elif user=='MM':
-    sys.path.append('/home/manuele/geneticgrbs/geneticgrbs-5metrics/statistical_test')
-    sys.path.append('/home/manuele/geneticgrbs/geneticgrbs-5metrics/lc_pulse_avalanche')
-    export_path='/home/manuele/geneticgrbs/geneticgrbs-5metrics-simulations/'
+    sys.path.append('/home/manuele/Documents/university/grbs/geneticgrbs/statistical_test')
+    sys.path.append('/home/manuele/Documents/university/grbs/geneticgrbs/lc_pulse_avalanche')
+    export_path='/home/manuele/Documents/university/grbs/geneticgrbs_simulations/'
 elif user=='external_user':
     sys.path.append('../statistical_test')
     sys.path.append('../lc_pulse_avalanche')

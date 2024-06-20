@@ -46,7 +46,7 @@ elif user=='LB':
 elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
 elif user == 'MM':
-    sys.path.append('/home/manuele/geneticgrbs/geneticgrbs-5metrics/lc_pulse_avalanche')
+    sys.path.append('/home/manuele/Documents/university/grbs/geneticgrbs/lc_pulse_avalanche')
 elif user=='external_user':
     sys.path.append('../lc_pulse_avalanche')
 else:
