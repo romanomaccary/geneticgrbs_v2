@@ -341,7 +341,7 @@ def evaluateDuration20(times, counts, t90=None, t90_frac=15, bin_time=None, filt
 
 ################################################################################
 
-def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter):
+def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter, return_cnts=False):
     """
     Compute the S/N ratio between the total signal from a GRB and the background
     in a time interval equal to the GRB duration, as defined in Stern+96, i.e.,
@@ -357,9 +357,11 @@ def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter):
      - t90: T90 of the GRB;
      - bin_time: temporal bin size of the instrument [s];
      - filter: if True, apply savgol filter;
+     - return_cnts: if True, return also the total counts inside the T20% interval;
     Output:
      - s2n: signal to noise ratio;
      - T20: duration of the GRB at 20% level;
+     - sum_grb_counts: total counts inside the T20% interval;
     """
     T20, tstart, tstop = evaluateDuration20(times=times, 
                                             counts=counts,
@@ -372,8 +374,10 @@ def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter):
     sum_grb_counts   = np.sum( counts[event_times_mask] )
     sum_errs         = np.sqrt( np.sum(errs[event_times_mask]**2) )
     s2n              = np.abs( sum_grb_counts/sum_errs )
-    return s2n, T20
-
+    if not(return_cnts):
+        return s2n, T20
+    else:
+        return s2n, T20, sum_grb_counts
 
 def evaluateGRB_SN_peak(counts, errs):
     """
@@ -396,6 +400,7 @@ def load_lc_batse(path):
     Load the BATSE light curves, and put each of them in an object inside
     a list. Since in the analysis we consider only the long GRBs, we load 
     only the light curves listed in the 'alltrig_long.list' file.
+    N.B. BATSE LC are already in counts.
     Input:
     - path: path to the folder that contains a file for each BATSE GRB and the
             file containing all the T90s;
@@ -442,6 +447,8 @@ def load_lc_swift(path):
     a list. Since in the analysis we consider only the _long_ GRBs, we load 
     only the light curves listed in the 'merged_lien16-GCN_long_noshortEE_t90.dat'
     file.
+    N.B. Swift LC are in counts/s, so we need to multiply them by the resolution
+    to get the counts.
     Input:
     - path: path to the folder that contains a folder for each Swift GRB named
             with the name of the GRB, and the file containing all the T90s;
@@ -460,6 +467,9 @@ def load_lc_swift(path):
             all_grb_list_swift.append(grb_name)
             t90_dic[grb_name] = np.float32(t90)
 
+    # bin time of Swift
+    res = instr_swift['res']
+
     grb_list_swift = []
     grb_not_found  = []
     #for grb_name in tqdm(all_grb_list_swift):
@@ -472,8 +482,8 @@ def load_lc_swift(path):
             continue
         t90    = t90_dic[grb_name]
         times  = np.float32(times)
-        counts = np.float32(counts)
-        errs   = np.float32(errs)
+        counts = np.float32(counts) * res # convert from counts/s to counts
+        errs   = np.float32(errs)   * res # convert from counts/s to counts
         t90    = np.float32(t90)
         grb    = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs, 
                      t90=t90, grb_data_file_path=path+grb_name+'/'+'all_3col.out')
@@ -817,8 +827,9 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
     - sn_threshold;
     - bin_time: temporal bin size of the instrument [s];
     - t_f: time after the peak that we need the signal to last [s];
-    - sn_distr: if True, returns and export also the distribution of the s2n of  
-                _only_ the GRBs that have passed the constraint selection;
+    - sn_distr: if True, returns and export also the distribution of the s2n 
+                (and the total counts inside the T20%) of _only_ the GRBs that 
+                have passed the constraint selection;
     - filter: if True, is applies a savgol filter before computing the S2N;
     Output:
     - good_grb_list: list of GRB objects, where each one is a GRB that satisfies
@@ -828,6 +839,7 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
     """
     good_grb_list = []
     sn_levels     = {}
+    total_cnts    = {}
     grb_with_neg_t20 = 0
     for grb in grb_list:
         times   = np.float32(grb.times)
@@ -836,13 +848,14 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
         t90     = np.float32(grb.t90)
         i_c_max = np.argmax(counts)
         try:
-            s_n, T20 = evaluateGRB_SN(times=times, 
-                                      counts=counts, 
-                                      errs=errs, 
-                                      t90=t90,
-                                      t90_frac=t90_frac,
-                                      bin_time=bin_time,
-                                      filter=filter)
+            s_n, T20, sum_grb_counts = evaluateGRB_SN(times=times, 
+                                                      counts=counts, 
+                                                      errs=errs, 
+                                                      t90=t90,
+                                                      t90_frac=t90_frac,
+                                                      bin_time=bin_time,
+                                                      filter=filter,
+                                                      return_cnts=True)
         except AssertionError:
             #remove GRB if the t20% is negative
             grb_with_neg_t20 += 1
@@ -858,7 +871,8 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
             grb.t20 = T20
             good_grb_list.append(grb)
             if sn_distr:
-                sn_levels[grb.name] = s_n
+                sn_levels[grb.name]  = s_n
+                total_cnts[grb.name] = sum_grb_counts
 
     if verbose:
         print("Total number of input GRBs: ", len(grb_list))
@@ -868,9 +882,9 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
     # Export the s2n distribution of the GRBs that passed the constraints
     if sn_distr:
         with open('./sn_distr.txt', 'w') as f:
-            print("# grb_name    s2n", file=f)
-            for name, value in sn_levels.items():
-                print(f"{name}    {value}", file=f)
+            print("# grb_name    s2n    total_cnts", file=f)
+            for key in sn_levels:
+                print(f"{key}    {sn_levels[key]}    {total_cnts[key]}", file=f)
 
     if sn_distr:
         return good_grb_list, sn_levels
