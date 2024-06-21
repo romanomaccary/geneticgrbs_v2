@@ -444,9 +444,9 @@ class LC(object):
 
         # To obtain the lc from the avalanche, we sum the lc of the parents 
         # (self._parent_counts) with the lc of the child (self._child_counts). 
-        # - `self._raw_lc`        has units: cnt/cm2/s
-        # - `self._raw_lc_counts` has units: cnt/cm2
-        # self._raw_lc        = self._sp_pulse      + self._rates      # count RATES (do not use this!)
+        # `self._raw_lc`        has units: cnt/cm2/s
+        # `self._raw_lc_counts` has units: cnt/cm2
+        # self._raw_lc        = self._sp_pulse      + self._rates        # count RATES (do not use this!)
         self._raw_lc_counts = self._parent_counts + self._child_counts # COUNTS
 
         # self._max_raw_pcr = self._raw_lc.max()
