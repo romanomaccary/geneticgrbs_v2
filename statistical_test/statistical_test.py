@@ -412,6 +412,12 @@ def load_lc_batse(path):
     all_grb_list_batse = [grb_num.rstrip('\n') for grb_num in open(path+long_list_file).readlines()]
     # load T90s
     t90data = np.loadtxt(path+'T90_full.dat')
+    # Bad GRBs
+    GRBs_to_mask = {"01742": (   0, 250),
+                    "02344": (-100, 245),
+                    "02898": ( -50, 450),
+                    "05474": (-100, 200)
+                    }
 
     grb_list_batse = []
     grb_not_found  = []
@@ -425,10 +431,19 @@ def load_lc_batse(path):
             # print(grb_name, ' not found!')
             grb_not_found.append(grb_name)
             continue
+        
+        if grb_name in GRBs_to_mask.keys():
+            start      = GRBs_to_mask[grb_name][0]
+            stop       = GRBs_to_mask[grb_name][1]
+            times_mask = np.logical_and(times >= start, times <= stop)
+            times      = np.float32(times[times_mask])
+            counts     = np.float32(counts[times_mask])
+            errs       = np.float32(errs[times_mask]) 
+        else: 
+            times  = np.float32(times)
+            counts = np.float32(counts)
+            errs   = np.float32(errs)
         t90    = t90data[t90data[:,0] == float(grb_name),1]
-        times  = np.float32(times)
-        counts = np.float32(counts)
-        errs   = np.float32(errs)
         t90    = np.float32(t90)
         grb    = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs,
                      t90=t90, grb_data_file_path=path+grb_name+'_all_bs.out')
