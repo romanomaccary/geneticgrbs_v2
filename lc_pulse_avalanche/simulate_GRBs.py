@@ -26,8 +26,8 @@ if sys.getrecursionlimit()<rec_lim:
 # Set the username for the path of the files:
 #------------------------------------------------------------------------------#
 #user='external_user'
-user='LB'
-#user='AF'
+#user='LB'
+user='AF'
 #user='bach'
 #user='gravity'
 #user='pleiadi'
@@ -101,6 +101,13 @@ if __name__ == '__main__':
         save_config_path = str(sim_dir)+'/config_'+timestamp+'.txt'
         save_config(variables=variables, file_name=save_config_path)
         print('==============================================')
+        #NB!!!!!!!!!!!!! TO BE CHANGED!!!!!!!!!!!!!!!!!!!!
+        alpha_bpl = 0.5
+        beta_bpl  = 1.5
+        F_break   = 1e-6
+        F_min     = 1e-10
+        F_max     = 1e-1
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 
     #--------------------------------------------------------------------------#
     # SET PARAMETERS Read params from down below
@@ -119,25 +126,37 @@ if __name__ == '__main__':
         # BATSE v37
         #----------------------------------------------------------------------#
         if instrument=='batse':
-            mu      =  0.52  
-            mu0     =  0.95  
-            alpha   =  18.34 
-            delta1  =  -1.2  
-            delta2  =  0.13  
-            tau_min =  0.03  
-            tau_max =  15.25 
+            mu        =  0.52  
+            mu0       =  0.95  
+            alpha     =  18.34 
+            delta1    =  -1.2  
+            delta2    =  0.13  
+            tau_min   =  0.03  
+            tau_max   =  15.25
+            #5 BPL parameters. NB: not optimised!
+            alpha_bpl = 0.5
+            beta_bpl  = 1.5
+            F_break   = 1e-6
+            F_min     = 1e-10
+            F_max     = 1e-1 
 
         #----------------------------------------------------------------------#
         # Swift v38
         #----------------------------------------------------------------------#
         elif instrument=='swift':
-            mu      = 0.8  
-            mu0     = 1.62 
-            alpha   = 16.99
-            delta1  = -1.05
-            delta2  = 0.21 
-            tau_min = 0.04 
-            tau_max = 17.15
+            mu        = 0.8  
+            mu0       = 1.62 
+            alpha     = 16.99
+            delta1    = -1.05
+            delta2    = 0.21 
+            tau_min   = 0.04 
+            tau_max   = 17.15
+            #5 BPL parameters. NB: not optimised!
+            alpha_bpl = 0.5
+            beta_bpl  = 1.5
+            F_break   = 1e-6
+            F_min     = 1e-10
+            F_max     = 1e-1 
 
         #----------------------------------------------------------------------#
         else:
@@ -216,7 +235,14 @@ if __name__ == '__main__':
                           n_cut=n_cut,
                           with_bg=False,
                           remove_instrument_path=remove_instrument_path,
-                          test_pulse_distr=test_pulse_distr)
+                          test_pulse_distr=test_pulse_distr,
+                          ### 5 parameters of BPL
+                          alpha_bpl=alpha_bpl,
+                          beta_bpl=beta_bpl,
+                          F_break=F_break,
+                          F_min=F_min,
+                          F_max=F_max
+                          )
 
     if test_pulse_distr:
         pulse_out_file=open('./n_of_pulses.txt', 'w')

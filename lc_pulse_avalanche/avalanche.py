@@ -12,6 +12,28 @@ SEED=None
 #==============================================================================#
 #==============================================================================#
 
+def simulate_bpl(p, alpha, beta, F_break, F_min, F_max):
+    N         = 1/(F_break*( (1 - (F_min/F_break)**(1-alpha))/(1-alpha) + ((F_max/F_break)**(1-beta) - 1)/(1-beta)))
+    p0        = N*F_break*(1 - (F_min/F_break)**(1-alpha))/(1-alpha)
+    bpl_value = np.piecewise(p, [p < p0, p >= p0], [lambda p: F_break*(p*(1-alpha)/(N*F_break)    + (F_min/F_break)**(1-alpha))**(1/(1-alpha)), 
+                                                    lambda p: F_break*((p-1)*(1-beta)/(N*F_break) + (F_max/F_break)**(1-beta))**(1/(1-beta))])
+    return bpl_value
+
+def generate_peak_counts(alpha, beta, F_break, F_min, F_max, k_values):
+    generated_fluence = simulate_bpl(np.random.rand(), alpha, beta, F_break, F_min, F_max)
+    k_sampled         = np.random.choice(k_values)
+    cnts              = (10.**(-k_sampled))*generated_fluence
+    return cnts 
+
+path_k_values_file_batse = "../lc_pulse_avalanche/log10_fluence_over_counts_CGRO_BATSE.txt"
+k_values_batse = np.loadtxt(path_k_values_file_batse, unpack = True)
+
+path_k_values_file_swift = "../lc_pulse_avalanche/log10_fluence_over_counts_Swift_BAT.txt"
+k_values_swift = np.loadtxt(path_k_values_file_swift, unpack = True)
+
+#==============================================================================#
+#==============================================================================#
+
 ### See `statistical_tests.ipynb`
 def generate_rand_from_pdf(pdf, x_grid, N=1):
     """
@@ -107,7 +129,8 @@ class LC(object):
                  tau_min=0.2, tau_max=26, t_min=-10, t_max=1000, res=0.256, 
                  eff_area=3600, bg_level=10.67, with_bg=True, use_poisson=True,
                  min_photon_rate=1.3, max_photon_rate=1300, sigma=5, 
-                 n_cut=None, instrument='batse', verbose=False):
+                 n_cut=None, instrument='batse', verbose=False,
+                 alpha_bpl=0.5, beta_bpl=1.5, F_break=1e-6, F_min=1e-10, F_max=1e-1): #New parameters of the BPL count distrib
         
         self._mu      = mu # mu~1 --> critical runaway regime
         self._mu0     = mu0 
@@ -146,8 +169,12 @@ class LC(object):
 
         if self._instrument == 'batse':
             self._peak_count_rate_sample = peak_count_rate_batse_sample
+            self.k_values_path           = path_k_values_file_batse
+            self.k_values                = k_values_batse
         elif self._instrument == 'swift':
             self._peak_count_rate_sample = peak_count_rate_swift_sample
+            self.k_values_path           = path_k_values_file_swift
+            self.k_values                = k_values_swift
         elif self._instrument == 'sax_lr':
             pass
             #self._peak_count_rate_sample = peak_count_rate_sax_lr_sample
@@ -159,6 +186,12 @@ class LC(object):
             #self._peak_count_rate_sample = peak_count_rate_fermi_sample
         else:
             raise ValueError("Instrument not recognized...")
+        
+        self.alpha_bpl = alpha_bpl
+        self.beta_bpl  = beta_bpl
+        self.F_break   = F_break
+        self.F_min     = F_min
+        self.F_max     = F_max
         
         # if self._verbose:
         #     print("Time resolution: ", self._step)
@@ -363,7 +396,19 @@ class LC(object):
         # RATES of each instrument. A_max is the same for a given GRB (and it is
         # drawn here below), and each pulse composing the LC has an amplitude 
         # sampled in U[0,A_max].
-        self._A_max = np.random.choice(self._peak_count_rate_sample, size=1)[0]
+
+        if self._verbose:
+            print("Pulse flux broken powerlaw distribution parameters:")
+            print("alpha_bpl: ", self.alpha_bpl)
+            print("beta_bpl: " , self.beta_bpl)
+            print("F_break: "  , self.F_break)
+            print("F_min: "    , self.F_min)
+            print("F_max: "    , self.F_max)
+            print('\n')
+            print('K-value parameter file path:', self.k_values_path)
+            print("--------------------------------------------------------------------------")
+
+        #self._A_max = np.random.choice(self._peak_count_rate_sample, size=1)[0]
         
         # For each of the mu_s _parent_ pulse, generate his child pulses
         for i in range(mu_s):
@@ -386,7 +431,8 @@ class LC(object):
             #     p1(A) = 1, in [0, 1]
             # norm = uniform(low=0.0, high=1) 
             # Each pulse composing the LB has an amplitude sampled in U[0,A_max].
-            norm_A = uniform(low=0.0, high=self._A_max)
+            #norm_A = uniform(low=0.0, high=self._A_max)
+            norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.F_max, self.k_values)
             norm_A = np.float64(norm_A)
             
             if self._verbose:
@@ -398,7 +444,8 @@ class LC(object):
             
             # Generate the pulse (count rates), and sum it into the array 'self._sp_pulse'
             # self._sp_pulse += self.norris_pulse(norm, t_delay, tau0, tau_r)  # WRONG
-            # self._n_pulses -= 1 # since we're calling `norris_pulse` twice the times, we're counting the same pulse twice
+            # self._n_pulses -= 1 # since we're calling `norris_pulse` twice the times, 
+            # we're counting the same pulse twice
             # LB: this is not correct! Indeed, when tau is smaller than the bin_time,
             # then we cannot obtain the counts just by multiplying the count rate
             # times the bin time. In this case, we should integrate the count rate
