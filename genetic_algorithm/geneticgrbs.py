@@ -39,8 +39,8 @@ print_time=True
 ################################################################################
 
 ### Set the username for the path of the files:
-user='LB'
-#user='AF'
+#user='LB'
+user='AF'
 #user='bach'
 #user='gravity'
 #user='pleiadi'
@@ -225,15 +225,29 @@ range_tau_max = {"low": 1,               "high": 65}
 # tau_min=0.02
 # tau_max=26
 
+#Range of the 5 parameters of the BPL model of the pulse counts distribution
+range_alpha_bpl = {"low": 0,               "high": 1}
+range_beta_bpl  = {"low": 1,               "high": 2} 
+range_F_break   = {"low": np.log10(1e-8),  "high": np.log10(1e-5)} # sample `F_break` uniformly in log space
+range_F_min     = {"low": np.log10(1e-12), "high": np.log10(1e-8)} # sample `F_min` uniformly in log space
+#range_F_max     = {"low": np.log10(1e-7),  "high": np.log10(1e-1)} # sample `F_max` uniformly in log space
+F_max = np.inf # The value of the F_max parameter is fixed and is not optimised
+
 range_constraints = [range_mu, 
                      range_mu0,
                      range_alpha,
                      range_delta1, 
                      range_delta2, 
                      range_tau_min, 
-                     range_tau_max]
+                     range_tau_max,
+                     range_alpha_bpl,
+                     range_beta_bpl,
+                     range_F_break,
+                     range_F_min#,
+                     #range_F_max
+                     ]
 
-num_genes = len(range_constraints) # 7
+num_genes = len(range_constraints) # 12
 
 save_model = True
 
@@ -393,7 +407,15 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                                  export_files=False,
                                  n_cut=n_cut,
                                  with_bg=False,
-                                 test_pulse_distr=test_pulse_distr)
+                                 test_pulse_distr=test_pulse_distr,
+                                 ### 5 parameters of BPL
+                                 alpha_bpl=solution[7],
+                                 beta_bpl=solution[8],
+                                 F_break=10**solution[9], # sample `F_break` uniformly in log space
+                                 F_min=10**solution[10],  # sample `F_min` uniformly in log space
+                                 #F_max=10**solution[11]   # sample `F_max` uniformly in log space
+                                 F_max = F_max
+                                 )
     if test_pulse_distr:
         n_of_pulses_sim = [ grb.num_of_sig_pulses for grb in grb_list_sim ]
     else:
@@ -476,14 +498,19 @@ def write_best_par_per_epoch(solution, filename='best_par_per_epoch.txt'):
     - filename: The name of the file to open in append mode. Default is 'output.txt'.
     """
     with open(filename, 'a') as file:
-        file.write("mu      = {solution}".format(solution=solution[0])+'\n')
-        file.write("mu0     = {solution}".format(solution=solution[1])+'\n')
-        file.write("alpha   = {solution}".format(solution=solution[2])+'\n')
-        file.write("delta1  = {solution}".format(solution=solution[3])+'\n')
-        file.write("delta2  = {solution}".format(solution=solution[4])+'\n')
-        file.write("tau_min = {solution}".format(solution=10**(solution[5]))+'\n') # sample `tau_min` uniformly in log    space
+        file.write("mu        = {solution}".format(solution=solution[0])+'\n')
+        file.write("mu0       = {solution}".format(solution=solution[1])+'\n')
+        file.write("alpha     = {solution}".format(solution=solution[2])+'\n')
+        file.write("delta1    = {solution}".format(solution=solution[3])+'\n')
+        file.write("delta2    = {solution}".format(solution=solution[4])+'\n')
+        file.write("tau_min   = {solution}".format(solution=10**(solution[5]))+'\n') # sample `tau_min` uniformly in log    space
         #file.write("tau_min = {solution}".format(solution=solution[5])+'\n')      # sample `tau_min` uniformly in linear space
-        file.write("tau_max = {solution}".format(solution=solution[6])+'\n')
+        file.write("tau_max   = {solution}".format(solution=solution[6])+'\n')
+        file.write("alpha_bpl = {solution}".format(solution=solution[7])+'\n')
+        file.write("beta_bpl  = {solution}".format(solution=solution[8])+'\n')
+        file.write("F_break   = {solution}".format(solution=10**solution[9])+'\n')
+        file.write("F_min     = {solution}".format(solution=10**solution[10])+'\n')
+        #file.write("F_max     = {solution}".format(solution=10**solution[11])+'\n')
         file.write('\n')
 
 
@@ -507,14 +534,19 @@ def on_generation(ga_instance):
     solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
     # Print the best solution of the current generation on TERMINAL
     print("Parameters of the best solution in the current generation:")
-    print("    - mu      = {solution}".format(solution=solution[0]))
-    print("    - mu0     = {solution}".format(solution=solution[1]))
-    print("    - alpha   = {solution}".format(solution=solution[2]))
-    print("    - delta1  = {solution}".format(solution=solution[3]))
-    print("    - delta2  = {solution}".format(solution=solution[4]))
-    print("    - tau_min = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log    space
+    print("    - mu        = {solution}".format(solution=solution[0]))
+    print("    - mu0       = {solution}".format(solution=solution[1]))
+    print("    - alpha     = {solution}".format(solution=solution[2]))
+    print("    - delta1    = {solution}".format(solution=solution[3]))
+    print("    - delta2    = {solution}".format(solution=solution[4]))
+    print("    - tau_min   = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log    space
     #print("    - tau_min = {solution}".format(solution=solution[5]))      # sample `tau_min` uniformly in linear space
-    print("    - tau_max = {solution}".format(solution=solution[6]))      
+    print("    - tau_max   = {solution}".format(solution=solution[6]))
+    print("    - alpha_bpl = {solution}".format(solution=solution[7]))
+    print("    - beta_bpl  = {solution}".format(solution=solution[8]))
+    print("    - F_break   = {solution}".format(solution=10**solution[9]))  # sample `F_break` uniformly in log    space
+    print("    - F_min     = {solution}".format(solution=10**solution[10])) # sample `F_min` uniformly in log    space
+    #print("    - F_max     = {solution}".format(solution=10**solution[11])) # sample `F_max` uniformly in log    space      
     # Print the best solution of the current generation on FILE
     write_best_par_per_epoch(solution)
 
@@ -609,7 +641,15 @@ if __name__ == '__main__':
                                          export_files=False,
                                          n_cut=n_cut,
                                          with_bg=False,
-                                         test_pulse_distr=test_pulse_distr)
+                                         test_pulse_distr=test_pulse_distr,
+                                         ### 5 parameters of BPL
+                                         alpha_bpl=solution[7],
+                                         beta_bpl=solution[8],
+                                         F_break=10**solution[9], # sample `F_break` uniformly in log space
+                                         F_min=10**solution[10],  # sample `F_min` uniformly in log space
+                                         #F_max=10**solution[11]   # sample `F_max` uniformly in log space
+                                         F_max = F_max
+                                         )
             if test_pulse_distr:
                 n_of_pulses_sim = [ grb.num_of_sig_pulses for grb in grb_list_sim ]
             else:
@@ -717,14 +757,20 @@ if __name__ == '__main__':
     print('\n################################################################################')
     print('################################################################################')
     print("* Parameters of the BEST solution:")
-    print("    - mu      = {solution}".format(solution=solution[0]))
-    print("    - mu0     = {solution}".format(solution=solution[1]))
-    print("    - alpha   = {solution}".format(solution=solution[2]))
-    print("    - delta1  = {solution}".format(solution=solution[3]))
-    print("    - delta2  = {solution}".format(solution=solution[4]))
-    print("    - tau_min = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log    space
+    print("    - mu        = {solution}".format(solution=solution[0]))
+    print("    - mu0       = {solution}".format(solution=solution[1]))
+    print("    - alpha     = {solution}".format(solution=solution[2]))
+    print("    - delta1    = {solution}".format(solution=solution[3]))
+    print("    - delta2    = {solution}".format(solution=solution[4]))
+    print("    - tau_min   = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log    space
     #print("    - tau_min = {solution}".format(solution=solution[5]))      # sample `tau_min` uniformly in linear space
-    print("    - tau_max = {solution}".format(solution=solution[6]))
+    print("    - tau_max   = {solution}".format(solution=solution[6]))
+    print("    - alpha_bpl = {solution}".format(solution=solution[7]))
+    print("    - beta_bpl  = {solution}".format(solution=solution[8]))
+    print("    - F_break   = {solution}".format(solution=10**solution[9]))  # sample `F_break` uniformly in log    space
+    print("    - F_min     = {solution}".format(solution=10**solution[10])) # sample `F_min` uniformly in log    space
+    #print("    - F_max     = {solution}".format(solution=10**solution[11])) # sample `F_max` uniformly in log    space   
+
     print("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
     print("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))
     #print("Index of the best solution          : {solution_idx}".format(solution_idx=solution_idx))
@@ -772,6 +818,16 @@ if __name__ == '__main__':
     file.write('\n')
     file.write('range_tau_max        = {}'.format(range_tau_max))
     file.write('\n')
+    file.write('alpha_bpl            = {}'.format(range_alpha_bpl))
+    file.write('\n')
+    file.write('beta_bpl             = {}'.format(range_beta_bpl))
+    file.write('\n')
+    file.write('F_break              = {}'.format(range_F_break))  
+    file.write('\n')
+    file.write('F_min                = {}'.format(range_F_min)) 
+    #file.write('\n')
+    #file.write('F_max                = {}'.format(range_F_max)) 
+    #file.write('\n')
     file.write('\n')
     file.write('################################################################################')
     file.write('\n')
@@ -797,6 +853,16 @@ if __name__ == '__main__':
     file.write('\n')
     file.write("    - tau_max = {solution}".format(solution=solution[6]))
     file.write('\n')
+    file.write("    - alpha_bpl = {solution}".format(solution=solution[7]))
+    file.write('\n')
+    file.write("    - beta_bpl  = {solution}".format(solution=solution[8]))
+    file.write('\n')
+    file.write("    - F_break   = {solution}".format(solution=10**solution[9]))  # sample `F_break` uniformly in log    space
+    file.write('\n')
+    file.write("    - F_min     = {solution}".format(solution=10**solution[10])) # sample `F_min` uniformly in log    space
+    #file.write('\n')
+    #file.write("    - F_max     = {solution}".format(solution=10**solution[11])) # sample `F_max` uniformly in log    space 
+    #file.write('\n')
     file.write("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
     file.write('\n')
     file.write("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))
@@ -919,25 +985,36 @@ if __name__ == '__main__':
     all_gen_fitness = np.array(ga_GRB.solutions_fitness[:])
 
     # all solutions in the ALL epochs:
-    all_gen_sol     = np.array(ga_GRB.solutions[:])
-    all_gen_mu      = np.array(all_gen_sol[:,0])       # array with all the mu      of the ALL generations 
-    all_gen_mu0     = np.array(all_gen_sol[:,1])       # array with all the mu0     of the ALL generations
-    all_gen_alpha   = np.array(all_gen_sol[:,2])       # array with all the alpha   of the ALL generations
-    all_gen_delta1  = np.array(all_gen_sol[:,3])       # array with all the delta1  of the ALL generations
-    all_gen_delta2  = np.array(all_gen_sol[:,4])       # array with all the delta1  of the ALL generations
-    all_gen_tau_min = 10**(np.array(all_gen_sol[:,5])) # array with all the tau_min of the ALL generations  # sample `tau_min` uniformly in log    space
+    all_gen_sol       = np.array(ga_GRB.solutions[:])
+    all_gen_mu        = np.array(all_gen_sol[:,0])       # array with all the mu      of the ALL generations 
+    all_gen_mu0       = np.array(all_gen_sol[:,1])       # array with all the mu0     of the ALL generations
+    all_gen_alpha     = np.array(all_gen_sol[:,2])       # array with all the alpha   of the ALL generations
+    all_gen_delta1    = np.array(all_gen_sol[:,3])       # array with all the delta1  of the ALL generations
+    all_gen_delta2    = np.array(all_gen_sol[:,4])       # array with all the delta1  of the ALL generations
+    all_gen_tau_min   = 10**(np.array(all_gen_sol[:,5])) # array with all the tau_min of the ALL generations  # sample `tau_min` uniformly in log    space
     #all_gen_tau_min = np.array(all_gen_sol[:,5])      # array with all the tau_min of the ALL generations  # sample `tau_min` uniformly in linear space
-    all_gen_tau_max = np.array(all_gen_sol[:,6])       # array with all the tau_max of the ALL generations
+    all_gen_tau_max   = np.array(all_gen_sol[:,6])       # array with all the tau_max of the ALL generations
+
+    all_gen_alpha_bpl = np.array(all_gen_sol[:,7])       # array with all the alpha_bpl of the ALL generations
+    all_gen_beta_bpl  = np.array(all_gen_sol[:,8])       # array with all the beta_bpl of the ALL generations
+    all_gen_F_break   = 10**np.array(all_gen_sol[:,9])   # array with all the F_break of the ALL generations
+    all_gen_F_min     = 10**np.array(all_gen_sol[:,10])  # array with all the F_min of the ALL generations
+    #all_gen_F_max     = 10**np.array(all_gen_sol[:,11])  # array with all the F_max of the ALL generations
 
     data_all_gen = {
-        'mu':      all_gen_mu,
-        'mu0':     all_gen_mu0,
-        'alpha':   all_gen_alpha,
-        'delta1':  all_gen_delta1,
-        'delta2':  all_gen_delta2,
-        'tau_min': all_gen_tau_min,
-        'tau_max': all_gen_tau_max,
-        'fitness': all_gen_fitness
+        'mu':        all_gen_mu,
+        'mu0':       all_gen_mu0,
+        'alpha':     all_gen_alpha,
+        'delta1':    all_gen_delta1,
+        'delta2':    all_gen_delta2,
+        'tau_min':   all_gen_tau_min,
+        'tau_max':   all_gen_tau_max,
+        'alpha_bpl': all_gen_alpha_bpl,
+        'beta_bpl':  all_gen_beta_bpl,
+        'F_break':   all_gen_F_break,
+        'F_min':     all_gen_F_min,
+        #'F_max':     all_gen_F_max,
+        'fitness':   all_gen_fitness
     }
     df_all_gen = pd.DataFrame(data_all_gen)
     df_all_gen.to_csv('./df_all_gen.csv', index=False)    
