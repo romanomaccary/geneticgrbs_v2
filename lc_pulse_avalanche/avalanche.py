@@ -12,12 +12,13 @@ SEED=None
 #==============================================================================#
 #==============================================================================#
 
-def simulate_bpl(p, alpha, beta, F_break, F_min, F_max):
-    N         = 1/(F_break*( (1 - (F_min/F_break)**(1-alpha))/(1-alpha) + ((F_max/F_break)**(1-beta) - 1)/(1-beta)))
-    p0        = N*F_break*(1 - (F_min/F_break)**(1-alpha))/(1-alpha)
-    bpl_value = np.piecewise(p, [p < p0, p >= p0], [lambda p: F_break*(p*(1-alpha)/(N*F_break)    + (F_min/F_break)**(1-alpha))**(1/(1-alpha)), 
-                                                    lambda p: F_break*((p-1)*(1-beta)/(N*F_break) + (F_max/F_break)**(1-beta))**(1/(1-beta))])
-    return bpl_value
+def simulate_bpl(y,alpha,beta,F_break,F_min, F_max = np.inf):
+
+    N = (F_break/F_min)**(-alpha)
+    y_break = 1 - N
+
+    return np.piecewise(y, [y < y_break, y >= y_break], [lambda y: F_break * ((1 - y)/N)**(-1/alpha),   
+                                                         lambda y: F_break * ((1 - y)/N)**(-1/beta)])
 
 def generate_peak_counts(alpha, beta, F_break, F_min, F_max, k_values):
     generated_fluence = simulate_bpl(np.random.rand(), alpha, beta, F_break, F_min, F_max)
