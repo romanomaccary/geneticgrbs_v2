@@ -294,9 +294,11 @@ class LC(object):
             # The amplitude (A) of each pulse is given by:
             #     p1(A) = 1, in [0, 1]
             # norm = uniform(low=0.0, high=1.0)
-            # Each pulse (count-rate) composing the LC has an amplitude sampled in U[0,A_max]
-            norm_A = uniform(low=0.0, high=self._A_max)
-            
+            # 
+            #norm_A = uniform(low=0.0, high=self._A_max)
+            norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.F_max, self.k_values)
+            norm_A = np.float64(norm_A)
+
             # self._rates    += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
             # self._n_pulses -= 1 # since we're calling `norris_pulse` twice the times, we're counting the same pulse twice
             # LB: this is not correct! Indeed, when tau is smaller than the bin_time,

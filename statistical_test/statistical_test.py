@@ -3194,8 +3194,10 @@ def generate_GRBs(N_grb,                                                        
     cnt=0
     grb_list_sim         = []
     pulse_time_distances = []
+    #generated = 0
 
     while (cnt<N_grb):
+        #generated += 1
 
         if instrument == 'fermi':
             eff_area_lc = eff_area * reject_sampling_fermi(fermi_prob_dict)
@@ -3326,7 +3328,7 @@ def generate_GRBs(N_grb,                                                        
             grb_list_sim.append(grb)
             cnt+=1
         del(lc)
-
+    #print('Total Generated: ', generated)
     return grb_list_sim
 
 ################################################################################

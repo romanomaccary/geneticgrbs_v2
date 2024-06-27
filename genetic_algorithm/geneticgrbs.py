@@ -162,7 +162,6 @@ elif instrument=='fermi':
     bin_time      = instr_fermi['res']           # 0.064 # [s] temporal bins for Fermi
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
 # elif instrument=='batse_old': # it is actually for 'galileo'
-#     t_i           = 0     # [s]
 #     t_f           = 150   # [s]
 #     eff_area      = 3600  # effective area of instrument [cm2]
 #     bg_level      = 10.67 # background level [cnt/cm2/s]
@@ -182,15 +181,15 @@ crossover_probability = 1                      # 'None' means couples parent k w
 initial_population    = None                   # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
 crossover_type        = "scattered"
-num_generations       = 30                     # Number of generations.
-sol_per_pop           = 2000                   # Number of solutions in the population (i.e., number of different sets per generation).
+num_generations       = 1#30                     # Number of generations.
+sol_per_pop           = 10#2000                   # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.15*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 # Other parameters
-N_grb            = 2000   # number of simulated GRBs to produce per set of parameters
+N_grb            = 10#2000   # number of simulated GRBs to produce per set of parameters
 n_cut            = 2500   # maximum number of pulses to consider in the avalanche model
 test_sn_distr    = True   # add a fifth metric regarding  the S/N distribution (set True by default)
 test_pulse_distr = False  # add a sixth metric regarding the distribution of number of pulses per GRB (set False by default)
@@ -199,7 +198,7 @@ test_pulse_distr = False  # add a sixth metric regarding the distribution of num
 if user=='pleiadi':
     n_processes = int(os.environ['OMP_NUM_THREADS'])
 else:
-    n_processes = 100
+    n_processes = 1#100
 parallel_processing  = ["process", n_processes]  # USE THIS ONE!  
 #parallel_processing = ["thread", n_processes]   # this is slower
 #parallel_processing = None                      # single thread
@@ -226,8 +225,8 @@ range_tau_max = {"low": 1,               "high": 65}
 # tau_max=26
 
 #Range of the 5 parameters of the BPL model of the pulse counts distribution
-range_alpha_bpl = {"low": 0,               "high": 1}
-range_beta_bpl  = {"low": 1,               "high": 2} 
+range_alpha_bpl = {"low": 0.0000001,       "high": 0.999999999}
+range_beta_bpl  = {"low": 1.0000001,       "high": 2} 
 range_F_break   = {"low": np.log10(1e-8),  "high": np.log10(1e-5)} # sample `F_break` uniformly in log space
 range_F_min     = {"low": np.log10(1e-12), "high": np.log10(1e-8)} # sample `F_min` uniformly in log space
 #range_F_max     = {"low": np.log10(1e-7),  "high": np.log10(1e-1)} # sample `F_max` uniformly in log space
@@ -247,7 +246,7 @@ range_constraints = [range_mu,
                      #range_F_max
                      ]
 
-num_genes = len(range_constraints) # 12
+num_genes = len(range_constraints) #11
 
 save_model = True
 

@@ -106,7 +106,7 @@ if __name__ == '__main__':
         beta_bpl  = 1.5
         F_break   = 1e-6
         F_min     = 1e-10
-        F_max     = 1e-1
+        F_max     = np.inf
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 
     #--------------------------------------------------------------------------#
@@ -115,13 +115,13 @@ if __name__ == '__main__':
     else:
         remove_instrument_path = False
         #----------------------------------------------------------------------#
-        #instrument = 'batse'
-        instrument = 'swift'
+        instrument = 'batse'
+        #instrument = 'swift'
         #instrument = 'sax'
         #instrument = 'sax_lr'
         #instrument = 'fermi'
         #----------------------------------------------------------------------#
-        N_grb = 5000 # number of simulated GRBs to produce per set of parameters
+        N_grb = 100 # number of simulated GRBs to produce per set of parameters
         #----------------------------------------------------------------------#
         # BATSE v37
         #----------------------------------------------------------------------#
@@ -137,8 +137,8 @@ if __name__ == '__main__':
             alpha_bpl = 0.5
             beta_bpl  = 1.5
             F_break   = 1e-6
-            F_min     = 1e-10
-            F_max     = 1e-1 
+            F_min     = 1e-9
+            F_max     = np.inf
 
         #----------------------------------------------------------------------#
         # Swift v38
@@ -155,8 +155,8 @@ if __name__ == '__main__':
             alpha_bpl = 0.5
             beta_bpl  = 1.5
             F_break   = 1e-6
-            F_min     = 1e-10
-            F_max     = 1e-1 
+            F_min     = 1e-9
+            F_max     = np.inf
 
         #----------------------------------------------------------------------#
         else:
