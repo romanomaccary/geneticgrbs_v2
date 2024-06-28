@@ -132,11 +132,11 @@ if __name__ == '__main__':
             delta2    =  0.13  
             tau_min   =  0.03  
             tau_max   =  15.25
-            #5 BPL parameters. NB: not optimised!
+            #4 BPL parameters. NB: not optimised!
             alpha_bpl = 0.5
             beta_bpl  = 1.5
             F_break   = 1e-6
-            F_min     = 1e-9
+            F_min     = 1e-8
 
         #----------------------------------------------------------------------#
         # Swift v38
