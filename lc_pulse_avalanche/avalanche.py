@@ -4,6 +4,7 @@ import numpy as np
 from numpy.random import exponential, lognormal, normal, uniform
 from scipy.stats import poisson
 import os, h5py
+from functools import partial
 
 SEED=None
 #SEED=42
@@ -20,8 +21,18 @@ def simulate_bpl(y,alpha,beta,F_break,F_min):
     return np.piecewise(y, [y < y_break, y >= y_break], [lambda y: F_break * ((1 - y)/N)**(-1/alpha),   
                                                          lambda y: F_break * ((1 - y)/N)**(-1/beta)])
 
-def generate_peak_counts(alpha, beta, F_break, F_min, k_values):
-    generated_fluence = simulate_bpl(np.random.rand(), alpha, beta, F_break, F_min)
+def simulate_pl(y, alpha, F_min):
+    # N = 1
+    return F_min * ((1 - y))**(-1/alpha)
+
+# def generate_peak_counts(alpha, beta, F_break, F_min, k_values):
+#     generated_fluence = simulate_bpl(np.random.rand(), alpha, beta, F_break, F_min)
+#     k_sampled         = np.random.choice(k_values)
+#     cnts              = (10.**(-k_sampled))*generated_fluence
+#     return cnts 
+
+def generate_peak_counts(pulse_fluxes_pdf, k_values):
+    generated_fluence = pulse_fluxes_pdf(np.random.rand())
     k_sampled         = np.random.choice(k_values)
     cnts              = (10.**(-k_sampled))*generated_fluence
     return cnts 
@@ -192,6 +203,12 @@ class LC(object):
         self.beta_bpl  = beta_bpl
         self.F_break   = F_break
         self.F_min     = F_min
+
+        if F_break > F_min:
+            self.pulse_fluxes_pdf = partial(simulate_bpl, alpha = alpha_bpl, beta = beta_bpl, F_break = F_break, F_min = F_min)
+        else:
+            self.pulse_fluxes_pdf = partial(simulate_pl, alpha = alpha, F_min = F_min)
+
         
         # if self._verbose:
         #     print("Time resolution: ", self._step)
@@ -295,7 +312,8 @@ class LC(object):
             # norm = uniform(low=0.0, high=1.0)
             # 
             #norm_A = uniform(low=0.0, high=self._A_max)
-            norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.k_values)
+            #norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.k_values)
+            norm_A = generate_peak_counts(self.pulse_fluxes_pdf, self.k_values)
             norm_A = np.float64(norm_A)
 
             # self._rates    += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
@@ -433,7 +451,8 @@ class LC(object):
             # norm = uniform(low=0.0, high=1) 
             # Each pulse composing the LB has an amplitude sampled in U[0,A_max].
             #norm_A = uniform(low=0.0, high=self._A_max)
-            norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.k_values)
+            #norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.k_values)
+            norm_A = generate_peak_counts(self.pulse_fluxes_pdf, self.k_values)
             norm_A = np.float64(norm_A)
             
             if self._verbose:
