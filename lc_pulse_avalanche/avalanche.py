@@ -12,7 +12,7 @@ SEED=None
 #==============================================================================#
 #==============================================================================#
 
-def simulate_bpl(y,alpha,beta,F_break,F_min, F_max = np.inf):
+def simulate_bpl(y,alpha,beta,F_break,F_min):
 
     N = (F_break/F_min)**(-alpha)
     y_break = 1 - N
@@ -20,8 +20,8 @@ def simulate_bpl(y,alpha,beta,F_break,F_min, F_max = np.inf):
     return np.piecewise(y, [y < y_break, y >= y_break], [lambda y: F_break * ((1 - y)/N)**(-1/alpha),   
                                                          lambda y: F_break * ((1 - y)/N)**(-1/beta)])
 
-def generate_peak_counts(alpha, beta, F_break, F_min, F_max, k_values):
-    generated_fluence = simulate_bpl(np.random.rand(), alpha, beta, F_break, F_min, F_max)
+def generate_peak_counts(alpha, beta, F_break, F_min, k_values):
+    generated_fluence = simulate_bpl(np.random.rand(), alpha, beta, F_break, F_min)
     k_sampled         = np.random.choice(k_values)
     cnts              = (10.**(-k_sampled))*generated_fluence
     return cnts 
@@ -131,7 +131,7 @@ class LC(object):
                  eff_area=3600, bg_level=10.67, with_bg=True, use_poisson=True,
                  min_photon_rate=1.3, max_photon_rate=1300, sigma=5, 
                  n_cut=None, instrument='batse', verbose=False,
-                 alpha_bpl=0.5, beta_bpl=1.5, F_break=1e-6, F_min=1e-10, F_max=1e-1): #New parameters of the BPL count distrib
+                 alpha_bpl=0.5, beta_bpl=1.5, F_break=1e-6, F_min=1e-10): #New parameters of the BPL count distrib
         
         self._mu      = mu # mu~1 --> critical runaway regime
         self._mu0     = mu0 
@@ -192,7 +192,6 @@ class LC(object):
         self.beta_bpl  = beta_bpl
         self.F_break   = F_break
         self.F_min     = F_min
-        self.F_max     = F_max
         
         # if self._verbose:
         #     print("Time resolution: ", self._step)
@@ -296,7 +295,7 @@ class LC(object):
             # norm = uniform(low=0.0, high=1.0)
             # 
             #norm_A = uniform(low=0.0, high=self._A_max)
-            norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.F_max, self.k_values)
+            norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.k_values)
             norm_A = np.float64(norm_A)
 
             # self._rates    += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
@@ -406,7 +405,6 @@ class LC(object):
             print("beta_bpl: " , self.beta_bpl)
             print("F_break: "  , self.F_break)
             print("F_min: "    , self.F_min)
-            print("F_max: "    , self.F_max)
             print('\n')
             print('K-value parameter file path:', self.k_values_path)
             print("--------------------------------------------------------------------------")
@@ -435,7 +433,7 @@ class LC(object):
             # norm = uniform(low=0.0, high=1) 
             # Each pulse composing the LB has an amplitude sampled in U[0,A_max].
             #norm_A = uniform(low=0.0, high=self._A_max)
-            norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.F_max, self.k_values)
+            norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.k_values)
             norm_A = np.float64(norm_A)
             
             if self._verbose:

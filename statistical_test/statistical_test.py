@@ -2714,7 +2714,7 @@ def generate_GRBs(N_grb,                                                        
                   export_files=False, export_path='None',                             # other parameters
                   n_cut=2500, with_bg=False, seed=None,                               # other parameters
                   remove_instrument_path=False, test_pulse_distr=False,               # other parameters
-                  alpha_bpl=0.5, beta_bpl=1.5, F_break=1e-6, F_min=1e-10, F_max=1e-1  # 5 parameters of the BPL
+                  alpha_bpl=0.5, beta_bpl=1.5, F_break=1e-6, F_min=1e-10              # 5 parameters of the BPL
                   ):
     """
     This function generates a list of GRBs using the pulse-avalanche stochastic
@@ -2738,7 +2738,6 @@ def generate_GRBs(N_grb,                                                        
     - beta_bpl:
     - F_break:
     - F_min:
-    - F_max:
     ### instrument parameters
     - instrument:
     - res:
@@ -3217,7 +3216,6 @@ def generate_GRBs(N_grb,                                                        
                 beta_bpl=beta_bpl,
                 F_break=F_break,
                 F_min=F_min,
-                F_max=F_max,
                 ### instrument parameters:
                 res=bin_time,
                 eff_area=eff_area_lc,

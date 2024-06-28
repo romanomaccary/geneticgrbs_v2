@@ -106,7 +106,6 @@ if __name__ == '__main__':
         beta_bpl  = 1.5
         F_break   = 1e-6
         F_min     = 1e-10
-        F_max     = np.inf
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 
     #--------------------------------------------------------------------------#
@@ -138,7 +137,6 @@ if __name__ == '__main__':
             beta_bpl  = 1.5
             F_break   = 1e-6
             F_min     = 1e-9
-            F_max     = np.inf
 
         #----------------------------------------------------------------------#
         # Swift v38
@@ -156,7 +154,6 @@ if __name__ == '__main__':
             beta_bpl  = 1.5
             F_break   = 1e-6
             F_min     = 1e-9
-            F_max     = np.inf
 
         #----------------------------------------------------------------------#
         else:
@@ -240,8 +237,7 @@ if __name__ == '__main__':
                           alpha_bpl=alpha_bpl,
                           beta_bpl=beta_bpl,
                           F_break=F_break,
-                          F_min=F_min,
-                          F_max=F_max
+                          F_min=F_min
                           )
 
     if test_pulse_distr:
