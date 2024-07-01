@@ -57,6 +57,8 @@ elif user=='gravity':
     # library paths
     sys.path.append('/home/bazzanini/PYTHON/genetic3_5metrics/statistical_test')
     sys.path.append('/home/bazzanini/PYTHON/genetic3_5metrics/lc_pulse_avalanche')
+    sys.path.append('/home/ferro/lc_pulse_avalance/statistical_test')
+    sys.path.append('/home/ferro/lc_pulse_avalance/lc_pulse_avalanche')
     # real data
     batse_path = '/astrodata/guidorzi/CGRO_BATSE/'
     swift_path = '/astrodata/guidorzi/Swift_BAT/'
@@ -199,9 +201,9 @@ if user=='pleiadi':
     n_processes = int(os.environ['OMP_NUM_THREADS'])
 else:
     n_processes = 100
-#parallel_processing  = ["process", n_processes]  # USE THIS ONE!  
+parallel_processing  = ["process", n_processes]  # USE THIS ONE!  
 #parallel_processing = ["thread", n_processes]   # this is slower
-parallel_processing = None                      # single thread
+#parallel_processing = None                      # single thread
 
 # Name of the pkl file where to save the GA instance at the end of the run
 filename_model = 'geneticGRB'
