@@ -229,10 +229,10 @@ range_tau_max = {"low": 1,               "high": 65}
 # tau_max=26
 
 #Range of the 5 parameters of the BPL model of the pulse counts distribution
-range_alpha_bpl = {"low": 0+1.e-6,       "high": 1-1.e-6}
-range_beta_bpl  = {"low": 1+1.e-6,       "high": 2} 
-range_F_break   = {"low": np.log10(1e-8),  "high": np.log10(1e-5)} # sample `F_break` uniformly in log space
-range_F_min     = {"low": np.log10(1e-9), "high": np.log10(1e-7)} # sample `F_min` uniformly in log space
+range_alpha_bpl = {"low": 0+1.e-6,        "high": 1-1.e-6}
+range_beta_bpl  = {"low": 1+1.e-6,        "high": 2} 
+range_F_break   = {"low": np.log10(1e-8), "high": np.log10(1e-5)} # sample `F_break` uniformly in log space
+range_F_min     = {"low": np.log10(1e-9), "high": np.log10(1e-7)} # sample `F_min`   uniformly in log space
 
 range_constraints = [range_mu, 
                      range_mu0,
@@ -274,7 +274,8 @@ if instrument=='batse':
                                       t90_threshold=t90_threshold,
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold,
-                                      t_f=t_f)
+                                      t_f=t_f,
+                                      zero_padding=True)
     # Load MEPSA results on BATSE (ONLY those that satisfy the constraint!)
     mepsa_out_file_list_temp = []
     for i in range(len(grb_list_real)):
@@ -300,7 +301,8 @@ elif instrument=='swift':
                                       t90_threshold=t90_threshold,
                                       t90_frac=t90_frac, 
                                       sn_threshold=sn_threshold, 
-                                      t_f=t_f)
+                                      t_f=t_f,
+                                      zero_padding=True)
     n_of_pulses_real = None
 
 ### Load the BeppoSAX GRBs
@@ -313,7 +315,8 @@ elif instrument=='sax':
                                       t90_threshold=t90_threshold, 
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold, 
-                                      t_f=t_f)
+                                      t_f=t_f, 
+                                      zero_padding=True)
     n_of_pulses_real = None
 
 else:
