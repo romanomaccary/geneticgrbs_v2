@@ -341,7 +341,8 @@ def evaluateDuration20(times, counts, t90=None, t90_frac=15, bin_time=None, filt
 
 ################################################################################
 
-def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter, return_cnts=False):
+def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter, 
+                   return_cnts=False):
     """
     Compute the S/N ratio between the total signal from a GRB and the background
     in a time interval equal to the GRB duration, as defined in Stern+96, i.e.,
@@ -361,6 +362,8 @@ def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter, return_
     Output:
      - s2n: signal to noise ratio;
      - T20: duration of the GRB at 20% level;
+     - T20_start: start time of the T20% interval;
+     - T20_stop: stop time of the T20% interval; 
      - sum_grb_counts: total counts inside the T20% interval;
     """
     T20, tstart, tstop = evaluateDuration20(times=times, 
@@ -375,9 +378,9 @@ def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter, return_
     sum_errs         = np.sqrt( np.sum(errs[event_times_mask]**2) )
     s2n              = np.abs( sum_grb_counts/sum_errs )
     if not(return_cnts):
-        return s2n, T20
+        return s2n, T20, tstart, tstop
     else:
-        return s2n, T20, sum_grb_counts
+        return s2n, T20, tstart, tstop, sum_grb_counts
 
 def evaluateGRB_SN_peak(counts, errs):
     """
@@ -830,7 +833,8 @@ def load_lc_sim(path):
 ################################################################################
 
 def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, 
-                      t90_frac=15, sn_distr=False, filter=True, verbose=True):
+                      t90_frac=15, sn_distr=False, filter=True, 
+                      zero_padding=False, t_cut=200., verbose=True):
     """
     Given as input a list of GBR objects, the function outputs a list containing
     only the GRBs that satisfy the following constraint:
@@ -845,7 +849,9 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
     - sn_distr: if True, returns and export also the distribution of the s2n 
                 (and the total counts inside the T20%) of _only_ the GRBs that 
                 have passed the constraint selection;
-    - filter: if True, is applies a savgol filter before computing the S2N;
+    - filter: if True, it applies a savgol filter before computing the S2N;
+    - zero_padding: if True, pads to zero outside the 5/3 of the T20% interval;
+    - t_cut: time after the peak at which the zero padding stops.
     Output:
     - good_grb_list: list of GRB objects, where each one is a GRB that satisfies
                      the 3 constraints described above;
@@ -863,20 +869,37 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
         t90     = np.float32(grb.t90)
         i_c_max = np.argmax(counts)
         try:
-            s_n, T20, sum_grb_counts = evaluateGRB_SN(times=times, 
-                                                      counts=counts, 
-                                                      errs=errs, 
-                                                      t90=t90,
-                                                      t90_frac=t90_frac,
-                                                      bin_time=bin_time,
-                                                      filter=filter,
-                                                      return_cnts=True)
+            s_n, T20, T20_start, T20_stop, sum_grb_counts = evaluateGRB_SN(times=times, 
+                                                                           counts=counts, 
+                                                                           errs=errs, 
+                                                                           t90=t90,
+                                                                           t90_frac=t90_frac,
+                                                                           bin_time=bin_time,
+                                                                           filter=filter,
+                                                                           return_cnts=True)
         except AssertionError:
             #remove GRB if the t20% is negative
             grb_with_neg_t20 += 1
             s_n = 0
         # if sn_distr:
         #     sn_levels[grb.name] = s_n
+        
+        if (zero_padding):
+            padding_mask         = np.logical_or(times<T20_start-T20/3., 
+                                                 times>T20_stop +T20/3.)
+            counts[padding_mask] = 0.
+            errs[padding_mask]   = 0.
+            t_max                = np.max(times)
+            if(t_max<=t_cut):
+                missing_bins = np.zeros(int((t_cut-t_max)/bin_time)+1)
+                counts       = np.concatenate([counts, missing_bins])
+                errs         = np.concatenate([errs,   missing_bins])
+                times        = np.linspace(min(times), t_cut, len(counts))
+                
+                # re-define times, counts, and errors after the padding 
+                grb.times  = times
+                grb.counts = counts
+                grb.errs   = errs         
 
         cond_1 = t90>t90_threshold
         cond_2 = s_n>sn_threshold
