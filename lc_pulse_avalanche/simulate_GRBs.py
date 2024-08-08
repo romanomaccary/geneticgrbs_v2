@@ -120,7 +120,7 @@ if __name__ == '__main__':
         #instrument = 'sax_lr'
         #instrument = 'fermi'
         #----------------------------------------------------------------------#
-        N_grb = 100 # number of simulated GRBs to produce per set of parameters
+        N_grb = 2000 # number of simulated GRBs to produce per set of parameters
         #----------------------------------------------------------------------#
         # BATSE v37
         #----------------------------------------------------------------------#
@@ -132,11 +132,11 @@ if __name__ == '__main__':
             delta2    =  0.13  
             tau_min   =  0.03  
             tau_max   =  15.25
-            #4 BPL parameters. NB: not optimised!
-            alpha_bpl = 0.5
-            beta_bpl  = 1.5
-            F_break   = 1e-6
-            F_min     = 1e-8
+            #4 BPL parameters.
+            alpha_bpl = 0.9695826
+            beta_bpl  = 1.0168259
+            F_break   = 1.072224e-6
+            F_min     = 2.662218e-8
 
         #----------------------------------------------------------------------#
         # Swift v38
