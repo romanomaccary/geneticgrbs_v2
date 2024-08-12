@@ -120,7 +120,7 @@ if __name__ == '__main__':
         #instrument = 'sax_lr'
         #instrument = 'fermi'
         #----------------------------------------------------------------------#
-        N_grb = 2000 # number of simulated GRBs to produce per set of parameters
+        N_grb = 200 # number of simulated GRBs to produce per set of parameters
         #----------------------------------------------------------------------#
         # BATSE v37
         #----------------------------------------------------------------------#
@@ -133,10 +133,16 @@ if __name__ == '__main__':
             tau_min   =  0.03  
             tau_max   =  15.25
             #4 BPL parameters.
+            #FIRST OPTMISATION
+            #alpha_bpl = 0.9695826
+            #beta_bpl  = 1.0168259
+            #F_break   = 1.072224e-6
+            #F_min     = 2.662218e-8
+            #TEST
             alpha_bpl = 0.9695826
             beta_bpl  = 1.0168259
-            F_break   = 1.072224e-6
-            F_min     = 2.662218e-8
+            F_break   = 1e-8
+            F_min     = 1e-7
 
         #----------------------------------------------------------------------#
         # Swift v38
@@ -153,7 +159,7 @@ if __name__ == '__main__':
             alpha_bpl = 0.5
             beta_bpl  = 1.5
             F_break   = 1e-6
-            F_min     = 1e-9
+            F_min     = 1e-8
 
         #----------------------------------------------------------------------#
         else:
@@ -249,7 +255,7 @@ if __name__ == '__main__':
     if test_pulse_distr:
         n_of_pulses = [ grb.num_of_sig_pulses for grb in test ]
 
-    print('Time elapsed: ', (datetime.now() - start).seconds)
+    print('Time elapsed: ', (datetime.now() - start))
 
 ################################################################################
 ################################################################################
