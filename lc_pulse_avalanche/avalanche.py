@@ -203,11 +203,13 @@ class LC(object):
         self.beta_bpl  = beta_bpl
         self.F_break   = F_break
         self.F_min     = F_min
-
-        if F_break > F_min:
-            self.pulse_fluxes_pdf = partial(simulate_bpl, alpha = alpha_bpl, beta = beta_bpl, F_break = F_break, F_min = F_min)
-        else:
-            self.pulse_fluxes_pdf = partial(simulate_pl, alpha = alpha, F_min = F_min)
+        self.pulse_fluxes_pdf = partial(simulate_bpl, alpha = alpha_bpl, 
+                                        beta = beta_bpl, F_break = F_break, 
+                                        F_min = F_min)
+        #if F_break > F_min:
+        #    self.pulse_fluxes_pdf = partial(simulate_bpl, alpha = alpha_bpl, beta = beta_bpl, F_break = F_break, F_min = F_min)
+        #else:
+        #    self.pulse_fluxes_pdf = partial(simulate_pl, alpha = alpha, F_min = F_min)
 
         
         # if self._verbose:
