@@ -120,29 +120,39 @@ if __name__ == '__main__':
         #instrument = 'sax_lr'
         #instrument = 'fermi'
         #----------------------------------------------------------------------#
-        N_grb = 200 # number of simulated GRBs to produce per set of parameters
+        N_grb = 5000 # number of simulated GRBs to produce per set of parameters
         #----------------------------------------------------------------------#
         # BATSE v37
         #----------------------------------------------------------------------#
         if instrument=='batse':
-            mu        =  0.52  
-            mu0       =  0.95  
-            alpha     =  18.34 
-            delta1    =  -1.2  
-            delta2    =  0.13  
-            tau_min   =  0.03  
-            tau_max   =  15.25
+            #mu        =  0.52  
+            #mu0       =  0.95  
+            #alpha     =  18.34 
+            #delta1    =  -1.2  
+            #delta2    =  0.13  
+            #tau_min   =  0.03  
+            #tau_max   =  15.25
             #4 BPL parameters.
-            #FIRST OPTMISATION
             #alpha_bpl = 0.9695826
             #beta_bpl  = 1.0168259
             #F_break   = 1.072224e-6
             #F_min     = 2.662218e-8
-            #TEST
-            alpha_bpl = 0.9695826
-            beta_bpl  = 1.0168259
-            F_break   = 1e-8
-            F_min     = 1e-7
+
+            mu        =  0.9523816521027724  
+            mu0       =  0.9616094669410027
+            alpha     =  4.349030063628309
+            delta1    =  -1.1305211417477739
+            delta2    =  0.10058120798985805 
+            tau_min   =  0.010126594137917869 
+            tau_max   =  29.07656948708962
+            #4 BPL parameters.
+            alpha_bpl = 0.6668871504178671
+            beta_bpl  = 1.4744056983592801
+            F_break   = 5.720842519776897e-07
+            F_min     = 4.9985254341089906e-08
+
+
+
 
         #----------------------------------------------------------------------#
         # Swift v38
