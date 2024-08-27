@@ -128,7 +128,8 @@ res_batse           = 0.064
 eff_area_batse      = 2025
 bg_level_batse      = 2.8 # see `statistical_test.ipynb` for the computation
 t90_threshold_batse = 2
-sn_threshold_batse  = 70
+#sn_threshold_batse  = 70 # Old version
+sn_threshold_batse  = 15
 instr_batse         = {
     "name"         : name_batse,
     "res"          : res_batse,
@@ -171,7 +172,8 @@ res_swift           = 0.064
 eff_area_swift      = 1400
 bg_level_swift      = (10000/eff_area_swift)
 t90_threshold_swift = 2
-sn_threshold_swift  = 15
+#sn_threshold_swift  = 15 # Old version
+sn_threshold_swift  = 5
 instr_swift         = {
     "name"         : name_swift,
     "res"          : res_swift,
