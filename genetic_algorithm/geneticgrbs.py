@@ -853,6 +853,7 @@ if __name__ == '__main__':
     file.write("    - F_break   = {solution}".format(solution=10**solution[9]))  # sample `F_break` uniformly in log    space
     file.write('\n')
     file.write("    - F_min     = {solution}".format(solution=10**solution[10])) # sample `F_min` uniformly in log    space
+    file.write('\n')
     file.write("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
     file.write('\n')
     file.write("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))

@@ -27,11 +27,11 @@ if sys.getrecursionlimit()<rec_lim:
 #------------------------------------------------------------------------------#
 #user='external_user'
 #user='LB'
-user='AF'
+#user='AF'
 #user='bach'
 #user='gravity'
 #user='pleiadi'
-#user = 'MM'
+user = 'MM'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche')
@@ -100,13 +100,7 @@ if __name__ == '__main__':
         print('==============================================')
         save_config_path = str(sim_dir)+'/config_'+timestamp+'.txt'
         save_config(variables=variables, file_name=save_config_path)
-        print('==============================================')
-        #NB!!!!!!!!!!!!! TO BE CHANGED!!!!!!!!!!!!!!!!!!!!
-        alpha_bpl = 0.5
-        beta_bpl  = 1.5
-        F_break   = 1e-6
-        F_min     = 1e-10
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+        print('==============================================') 
 
     #--------------------------------------------------------------------------#
     # SET PARAMETERS Read params from down below
@@ -154,18 +148,32 @@ if __name__ == '__main__':
             # F_min     = 4.9985254341089906e-08
 
             # Optimisation 3
-            mu        =  0.98 
-            mu0       =  1.05
-            alpha     =  5.28
-            delta1    =  -1.16
-            delta2    =  0.1
-            tau_min   =  0.02
-            tau_max   =  32.35
-            #4 BPL parameters.
-            alpha_bpl = 0.74
-            beta_bpl  = 1.42
-            F_break   = 6e-07
-            F_min     = 2.51e-08
+            #mu        =  0.98 
+            #mu0       =  1.05
+            #alpha     =  5.28
+            #delta1    =  -1.16
+            #delta2    =  0.1
+            #tau_min   =  0.02
+            #tau_max   =  32.35
+            #4 BPL parameters
+            #alpha_bpl = 0.74
+            #beta_bpl  = 1.42
+            #F_break   = 6e-07
+            #F_min     = 2.51e-08
+            
+            # Optimisation 4
+            mu        =  0.97 
+            mu0       =  1.29
+            alpha     =  4.42
+            delta1    =  -1.36
+            delta2    =  0.05
+            tau_min   =  0.03
+            tau_max   =  28.99
+            #4 BPL parameters
+            alpha_bpl = 0.82
+            beta_bpl  = 1.49
+            F_break   = 8.7e-07
+            F_min     = 5.4e-08
 
 
         #----------------------------------------------------------------------#
@@ -263,7 +271,7 @@ if __name__ == '__main__':
                           with_bg=False,
                           remove_instrument_path=remove_instrument_path,
                           test_pulse_distr=test_pulse_distr,
-                          ### 5 parameters of BPL
+                          ### 4 parameters of BPL
                           alpha_bpl=alpha_bpl,
                           beta_bpl=beta_bpl,
                           F_break=F_break,
