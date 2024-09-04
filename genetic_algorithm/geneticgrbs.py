@@ -40,9 +40,9 @@ print_time=True
 
 ### Set the username for the path of the files:
 #user='LB'
-user='AF'
+#user='AF'
 #user='bach'
-#user='gravity'
+user='gravity'
 #user='pleiadi'
 #user = 'MM'
 if user=='bach':
@@ -108,8 +108,8 @@ from avalanche import LC
 ################################################################################
 
 ### Choose the instrument
-instrument = 'batse'
-#instrument = 'swift'
+#instrument = 'batse'
+instrument = 'swift'
 #instrument = 'sax'
 #instrument = 'fermi'
 
@@ -186,14 +186,14 @@ initial_population    = None                   # if 'None', the initial populati
 mutation_type         = "random"
 crossover_type        = "scattered"
 num_generations       = 5                      # Number of generations.
-sol_per_pop           = 200                    # Number of solutions in the population (i.e., number of different sets per generation).
+sol_per_pop           = 2000                   # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.15*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 # Other parameters
-N_grb            = 200    # number of simulated GRBs to produce per set of parameters
+N_grb            = 2000   # number of simulated GRBs to produce per set of parameters
 n_cut            = 2500   # maximum number of pulses to consider in the avalanche model
 test_sn_distr    = True   # add a fifth metric regarding  the S/N distribution (set True by default)
 test_pulse_distr = False  # add a sixth metric regarding the distribution of number of pulses per GRB (set False by default)
@@ -231,7 +231,7 @@ range_tau_max = {"low": 1,               "high": 65}
 #Range of the 5 parameters of the BPL model of the pulse counts distribution
 range_alpha_bpl = {"low": 0+1.e-6,                     "high": 1-1.e-6}
 range_beta_bpl  = {"low": 1+1.e-6,                     "high": 2} 
-range_F_break   = {"low": np.log10(1.e-7*(1 + 1.e-5)), "high": np.log10(1e-5)} # sample `F_break` uniformly in log space
+range_F_break   = {"low": np.log10(1.e-7*(1 + 1.e-5)), "high": np.log10(1e-5)}              # sample `F_break` uniformly in log space
 range_F_min     = {"low": np.log10(1e-8),              "high": np.log10(1.e-7*(1 - 1.e-5))} # sample `F_min`   uniformly in log space
 
 range_constraints = [range_mu, 
@@ -244,8 +244,7 @@ range_constraints = [range_mu,
                      range_alpha_bpl,
                      range_beta_bpl,
                      range_F_break,
-                     range_F_min
-                     ]
+                     range_F_min]
 
 num_genes = len(range_constraints) #11
 
@@ -415,7 +414,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                                  alpha_bpl=solution[7],
                                  beta_bpl=solution[8],
                                  F_break=10**solution[9], # sample `F_break` uniformly in log space
-                                 F_min=10**solution[10]  # sample `F_min` uniformly in log space
+                                 F_min=10**solution[10]   # sample `F_min`   uniformly in log space
                                  )
     if test_pulse_distr:
         n_of_pulses_sim = [ grb.num_of_sig_pulses for grb in grb_list_sim ]
@@ -505,7 +504,7 @@ def write_best_par_per_epoch(solution, filename='best_par_per_epoch.txt'):
         file.write("delta1    = {solution}".format(solution=solution[3])+'\n')
         file.write("delta2    = {solution}".format(solution=solution[4])+'\n')
         file.write("tau_min   = {solution}".format(solution=10**(solution[5]))+'\n') # sample `tau_min` uniformly in log    space
-        #file.write("tau_min = {solution}".format(solution=solution[5])+'\n')      # sample `tau_min` uniformly in linear space
+        #file.write("tau_min = {solution}".format(solution=solution[5])+'\n')        # sample `tau_min` uniformly in linear space
         file.write("tau_max   = {solution}".format(solution=solution[6])+'\n')
         file.write("alpha_bpl = {solution}".format(solution=solution[7])+'\n')
         file.write("beta_bpl  = {solution}".format(solution=solution[8])+'\n')
@@ -539,13 +538,13 @@ def on_generation(ga_instance):
     print("    - alpha     = {solution}".format(solution=solution[2]))
     print("    - delta1    = {solution}".format(solution=solution[3]))
     print("    - delta2    = {solution}".format(solution=solution[4]))
-    print("    - tau_min   = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log    space
+    print("    - tau_min   = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log space
     #print("    - tau_min = {solution}".format(solution=solution[5]))      # sample `tau_min` uniformly in linear space
     print("    - tau_max   = {solution}".format(solution=solution[6]))
     print("    - alpha_bpl = {solution}".format(solution=solution[7]))
     print("    - beta_bpl  = {solution}".format(solution=solution[8]))
-    print("    - F_break   = {solution}".format(solution=10**solution[9]))  # sample `F_break` uniformly in log    space
-    print("    - F_min     = {solution}".format(solution=10**solution[10])) # sample `F_min` uniformly in log    space   
+    print("    - F_break   = {solution}".format(solution=10**solution[9]))  # sample `F_break` uniformly in log space
+    print("    - F_min     = {solution}".format(solution=10**solution[10])) # sample `F_min`   uniformly in log space   
     # Print the best solution of the current generation on FILE
     write_best_par_per_epoch(solution)
 
@@ -850,9 +849,9 @@ if __name__ == '__main__':
     file.write('\n')
     file.write("    - beta_bpl  = {solution}".format(solution=solution[8]))
     file.write('\n')
-    file.write("    - F_break   = {solution}".format(solution=10**solution[9]))  # sample `F_break` uniformly in log    space
+    file.write("    - F_break   = {solution}".format(solution=10**solution[9]))  # sample `F_break` uniformly in log space
     file.write('\n')
-    file.write("    - F_min     = {solution}".format(solution=10**solution[10])) # sample `F_min` uniformly in log    space
+    file.write("    - F_min     = {solution}".format(solution=10**solution[10])) # sample `F_min`   uniformly in log space
     file.write('\n')
     file.write("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
     file.write('\n')

@@ -1,5 +1,6 @@
 # To Do
-- [ ] Controllare se il T20% delle curve di luce reali e' calcolato bene. Escludere i GRB problematici.
+- [ ] Confrontare la distribuzione dei singoli impulsi di BATSE con la logN-logS del catalogo ufficiale.
+- [ ] Lanciare l'algoritmo su Swift.
 
 # Done
 - [ ] (2024-MM-DD)

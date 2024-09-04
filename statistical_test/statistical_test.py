@@ -33,8 +33,8 @@ SEED=None
 #user='LB'
 #user='AF'
 #user='bach'
-#user='gravity'
-user = 'MM'
+user='gravity'
+#user = 'MM'
 if user=='bach':
     sys.path.append('/home/')
 elif user=='gravity':
@@ -3480,7 +3480,7 @@ def rebin_histogram(bin_edges, data, n_min=20):
         new_bin_edges[-1]   = bin_edges[-1]
     new_bin_counts = np.array(new_bin_counts).astype('int')
 
-    assert np.sum(new_bin_counts)==len(data), "The number of counts in the rebinned histogram is different from the initial one!" 
+    assert np.sum(new_bin_counts)!=len(data), "The number of counts in the rebinned histogram is different from the initial one!" 
     
     return new_bin_edges, new_bin_counts
 
