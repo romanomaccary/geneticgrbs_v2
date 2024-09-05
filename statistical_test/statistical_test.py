@@ -33,8 +33,8 @@ SEED=None
 #user='LB'
 #user='AF'
 #user='bach'
-user='gravity'
-#user = 'MM'
+#user='gravity'
+user = 'MM'
 if user=='bach':
     sys.path.append('/home/')
 elif user=='gravity':
