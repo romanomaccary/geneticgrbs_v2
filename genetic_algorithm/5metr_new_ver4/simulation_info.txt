@@ -36,7 +36,8 @@ OUTPUT
     - alpha_bpl = 0.804282622521624
     - beta_bpl  = 1.7287127558584765
     - F_break   = 7.468485565277555e-07
-    - F_min     = 3.4844428611151445e-08* Loss value of the best solution    : 0.36778790692063285
+    - F_min     = 3.4844428611151445e-08
+* Loss value of the best solution    : 0.36778790692063285
 * Fitness value of the best solution : 2.7189583485021873
 * Best fitness value reached after N = 29 generations.
 

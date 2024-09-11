@@ -108,8 +108,8 @@ if __name__ == '__main__':
     else:
         remove_instrument_path = False
         #----------------------------------------------------------------------#
-        instrument = 'batse'
-        #instrument = 'swift'
+        #instrument = 'batse'
+        instrument = 'swift'
         #instrument = 'sax'
         #instrument = 'sax_lr'
         #instrument = 'fermi'
@@ -180,18 +180,27 @@ if __name__ == '__main__':
         # Swift v38
         #----------------------------------------------------------------------#
         elif instrument=='swift':
-            mu        = 0.8  
-            mu0       = 1.62 
-            alpha     = 16.99
-            delta1    = -1.05
-            delta2    = 0.21 
-            tau_min   = 0.04 
-            tau_max   = 17.15
-            #5 BPL parameters. NB: not optimised!
-            alpha_bpl = 0.5
-            beta_bpl  = 1.5
-            F_break   = 1e-6
-            F_min     = 1e-8
+            #mu        = 0.8  
+            #mu0       = 1.62 
+            #alpha     = 16.99
+            #delta1    = -1.05
+            #delta2    = 0.21 
+            #tau_min   = 0.04 
+            #tau_max   = 17.15
+            
+            # Optimization 2
+            mu        = 0.94  
+            mu0       = 1.69 
+            alpha     = 4.86
+            delta1    = -1.33
+            delta2    = 0.14 
+            tau_min   = 0.06
+            tau_max   = 63.55
+            #4 BPL parameters
+            alpha_bpl = 0.99
+            beta_bpl  = 1.75
+            F_break   = 1.98e-07
+            F_min     = 8.45e-09
 
         #----------------------------------------------------------------------#
         else:

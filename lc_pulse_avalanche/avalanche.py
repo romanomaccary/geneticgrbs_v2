@@ -13,29 +13,52 @@ SEED=None
 #==============================================================================#
 #==============================================================================#
 
-def simulate_bpl(y,alpha,beta,F_break,F_min):
+def generate_fluence(p, alpha, beta, F_break, F_min):
+    """This function returns a fluence value F from the broken-power-law (BPL)
+    distribution: 
+    
+    p(F) = (F_break/F_min)**(-alpha) * (F/F_break)**(-alpha) if F <  F_break;
+           (F_break/F_min)**(-alpha) * (F/F_break)**(-beta)  if F >= F_break;
+    
+    where alpha and beta are BPL indices, F_break is the break fluence, and 
+    F_min is minimum fluence. p(F) is the so-called "survival function" (SF), 
+    which is the analogous of the log(N)-log(S) of the GRBs but for individual
+    pulses. 
+    The idea is sampling the SF, whose values are found between 0 and 1 by 
+    definition, and turn them into the corresponding fluence values.
 
-    N = (F_break/F_min)**(-alpha)
-    y_break = 1 - N
+    Args:
+        p       (float): sampled value from the SF;
+        alpha   (float): first BPL index;
+        beta    (float): second BPL index;
+        F_break (float): break fluence;
+        F_min   (float): minimum fluence.
 
-    return np.piecewise(y, [y < y_break, y >= y_break], [lambda y: F_break * ((1 - y)/N)**(-1/alpha),   
-                                                         lambda y: F_break * ((1 - y)/N)**(-1/beta)])
+    Returns:
+        float: the corresponding fluence value F.
+    """
+    p_break = (F_break/F_min)**(-alpha)
+    return np.piecewise(p, [p < p_break, p >= p_break], [lambda y: F_break * p_break**(1/beta)  * y**(-1/beta),   
+                                                         lambda y: F_break * p_break**(1/alpha) * y**(-1/alpha)])
 
-def simulate_pl(y, alpha, F_min):
-    # N = 1
-    return F_min * ((1 - y))**(-1/alpha)
+def generate_peak_counts(generated_fluence, k_values):
+    """This function turn fluence into peak counts through a conversion factor
+    that depends on the selected instrument. Each time, the function randomly 
+    pick a value from the list of conversion factors in order to take into
+    account the spectral diversity of the GRBs.
 
-# def generate_peak_counts(alpha, beta, F_break, F_min, k_values):
-#     generated_fluence = simulate_bpl(np.random.rand(), alpha, beta, F_break, F_min)
-#     k_sampled         = np.random.choice(k_values)
-#     cnts              = (10.**(-k_sampled))*generated_fluence
-#     return cnts 
+    Args:
+        generated_fluence (float): fluence value generated through the function
+                                   generate_fluence;
+        k_values          (float): list of conversion factors.
 
-def generate_peak_counts(pulse_fluxes_pdf, k_values):
-    generated_fluence = pulse_fluxes_pdf(np.random.rand())
-    k_sampled         = np.random.choice(k_values)
-    cnts              = (10.**(-k_sampled))*generated_fluence
-    return cnts 
+    Returns:
+        float: the corresponding peak counts.
+    """
+    fluence   = generated_fluence(np.random.rand())
+    k_sampled = np.random.choice(k_values)
+    counts    = (10.**(-k_sampled))*fluence
+    return counts 
 
 path_k_values_file_batse = "../lc_pulse_avalanche/log10_fluence_over_counts_CGRO_BATSE.txt"
 k_values_batse = np.loadtxt(path_k_values_file_batse, unpack = True)
@@ -203,14 +226,9 @@ class LC(object):
         self.beta_bpl  = beta_bpl
         self.F_break   = F_break
         self.F_min     = F_min
-        self.pulse_fluxes_pdf = partial(simulate_bpl, alpha = alpha_bpl, 
+        self.generated_fluence = partial(generate_fluence, alpha = alpha_bpl, 
                                         beta = beta_bpl, F_break = F_break, 
                                         F_min = F_min)
-        #if F_break > F_min:
-        #    self.pulse_fluxes_pdf = partial(simulate_bpl, alpha = alpha_bpl, beta = beta_bpl, F_break = F_break, F_min = F_min)
-        #else:
-        #    self.pulse_fluxes_pdf = partial(simulate_pl, alpha = alpha, F_min = F_min)
-
         
         # if self._verbose:
         #     print("Time resolution: ", self._step)
@@ -315,7 +333,7 @@ class LC(object):
             # 
             #norm_A = uniform(low=0.0, high=self._A_max)
             #norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.k_values)
-            norm_A = generate_peak_counts(self.pulse_fluxes_pdf, self.k_values)
+            norm_A = generate_peak_counts(self.generated_fluence, self.k_values)
             norm_A = np.float64(norm_A)
 
             # self._rates    += self.norris_pulse(norm, delta_t, tau, tau_r)  # WRONG
@@ -454,7 +472,7 @@ class LC(object):
             # Each pulse composing the LB has an amplitude sampled in U[0,A_max].
             #norm_A = uniform(low=0.0, high=self._A_max)
             #norm_A = generate_peak_counts(self.alpha_bpl, self.beta_bpl, self.F_break, self.F_min, self.k_values)
-            norm_A = generate_peak_counts(self.pulse_fluxes_pdf, self.k_values)
+            norm_A = generate_peak_counts(self.generated_fluence, self.k_values)
             norm_A = np.float64(norm_A)
             
             if self._verbose:
