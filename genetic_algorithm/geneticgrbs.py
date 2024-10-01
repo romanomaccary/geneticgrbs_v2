@@ -228,11 +228,11 @@ range_tau_max = {"low": 1,               "high": 75}
 # tau_min=0.02
 # tau_max=26
 
-#Range of the 5 parameters of the BPL model of the pulse counts distribution
-range_alpha_bpl = {"low": 1.e-6,                  "high": 1.2-1.e-6}
-range_beta_bpl  = {"low": 1.2+1.e-6,              "high": 2.3} 
-range_F_break   = {"low": np.log10(1.e-7+1.e-13), "high": np.log10(1.e-5)}        # sample `F_break` uniformly in log space
-range_F_min     = {"low": np.log10(7.e-9),        "high": np.log10(1.e-7-1.e-13)} # sample `F_min`   uniformly in log space
+#Range of the 5 parameters of the SBPL model of the pulse counts distribution
+range_alpha_bpl = {"low": 1.e-6,           "high": 1.2-1.e-6}
+range_beta_bpl  = {"low": 1.2+1.e-6,       "high": 2.3} 
+range_F_break   = {"low": np.log10(1.e-8), "high": np.log10(1.e-5)} # sample `F_break` uniformly in log space
+range_F_min     = {"low": np.log10(1.e-8), "high": np.log10(1.e-6)} # sample `F_min`   uniformly in log space
 
 range_constraints = [range_mu, 
                      range_mu0,

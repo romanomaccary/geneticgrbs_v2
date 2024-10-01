@@ -13,7 +13,7 @@ SEED=None
 #==============================================================================#
 #==============================================================================#
 
-def generate_fluence(p, alpha, beta, F_break, F_min):
+def generate_fluence_bpl(p, alpha, beta, F_break, F_min):
     """This function returns a fluence value F from the broken-power-law (BPL)
     distribution: 
     
@@ -42,27 +42,53 @@ def generate_fluence(p, alpha, beta, F_break, F_min):
                                                          lambda y: F_break * p_break**(1/alpha) * y**(-1/alpha)])
 
     
-def generate_fluence_rej_sampling(p, alpha, beta, F_break, F_min):
+def generate_fluence_sbpl(p, alpha, beta, F_break, F_min):
+    """This function returns a fluence value F from the smoothly 
+    broken-power-law (SBPL) distribution: 
+    
+    p(F) = {[(F_min / F_break)**(alpha * s) + (F_min / F_break)**(beta * s)]/
+            [(F     / F_break)**(alpha * s) + (F     / F_break)**(beta * s)]}**(1 / s)
+    
+    where alpha and beta are SBPL indices, F_break is the break fluence, and 
+    F_min is minimum fluence. p(F) is the so-called "survival function" (SF), 
+    which is the analogous of the log(N)-log(S) of the GRBs but for individual
+    pulses. 
 
-    def smooth_bpl(x, alpha, beta, F_break, F_min):
-        smoothing_factor = 5
-        return (((F_min/F_break)**(alpha*smoothing_factor) + (F_min/F_break)**(beta*smoothing_factor))/
-            ((x/F_break)**(alpha*smoothing_factor) + (x/F_break)**(beta*smoothing_factor)))**(1/smoothing_factor)
+    Args:
+        p       (float): not used;
+        alpha   (float): first SBPL index;
+        beta    (float): second SBPL index;
+        F_break (float): break fluence;
+        F_min   (float): minimum fluence.
 
+    Returns:
+        float: the corresponding fluence value F.
+    """
+
+    def sbpl(F, alpha, beta, F_break, F_min):
+        """The Smoothly Broken Power Law"""
+        # Smoothing_factor 
+        s = 5
+        return (((F_min / F_break)**(alpha * s) + (F_min / F_break)**(beta * s))/
+                ((F     / F_break)**(alpha * s) + (F     / F_break)**(beta * s)))**(1 / s)
+    
+    # Maximum fluence
     F_max = 1e-3
-    f_sample = np.logspace(np.log10(F_min), np.log10(F_max), 100000)
-    #sampled_y = np.logspace()
+    
+    # Fluence sample
+    F_sample = np.logspace(np.log10(F_min), np.log10(F_max), 1000000)
 
+    # Generate the fluence
     sample_p = 1
     sbpl_val = 0
-    random_f = 0
+    random_F = 0
     while sample_p > sbpl_val:
-        random_f = np.random.choice(f_sample)
-        sbpl_val = smooth_bpl(random_f, alpha, beta, F_break, F_min)
-
-        sample_p = np.random.rand()
+        random_F = np.random.choice(F_sample)                   # Pick a random fluence from the sample
+        sbpl_val = sbpl(random_F, alpha, beta, F_break, F_min)  # Compute the corresponding probability
+        sample_p = np.random.rand()                             # Pick a random probability between [0, 1]
     
-    return random_f
+    # If sample_p <= sbpl_val:
+    return random_F
 
 def generate_peak_counts(generated_fluence, k_values):
     """This function turn fluence into peak counts through a conversion factor
@@ -249,7 +275,7 @@ class LC(object):
         self.beta_bpl  = beta_bpl
         self.F_break   = F_break
         self.F_min     = F_min
-        self.generated_fluence = partial(generate_fluence_rej_sampling, alpha = alpha_bpl, 
+        self.generated_fluence = partial(generate_fluence_sbpl, alpha = alpha_bpl, 
                                         beta = beta_bpl, F_break = F_break, 
                                         F_min = F_min)
         
