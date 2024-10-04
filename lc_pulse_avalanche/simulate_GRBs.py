@@ -27,11 +27,11 @@ if sys.getrecursionlimit()<rec_lim:
 #------------------------------------------------------------------------------#
 #user='external_user'
 #user='LB'
-#user='AF'
+user='AF'
 #user='bach'
 #user='gravity'
 #user='pleiadi'
-user = 'MM'
+#user = 'MM'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche')
@@ -108,13 +108,13 @@ if __name__ == '__main__':
     else:
         remove_instrument_path = False
         #----------------------------------------------------------------------#
-        #instrument = 'batse'
-        instrument = 'swift'
+        instrument = 'batse'
+        #instrument = 'swift'
         #instrument = 'sax'
         #instrument = 'sax_lr'
         #instrument = 'fermi'
         #----------------------------------------------------------------------#
-        N_grb = 5000 # number of simulated GRBs to produce per set of parameters
+        N_grb = 100#5000 # number of simulated GRBs to produce per set of parameters
         #----------------------------------------------------------------------#
         # BATSE v37
         #----------------------------------------------------------------------#
@@ -162,6 +162,20 @@ if __name__ == '__main__':
             #F_min     = 2.51e-08
             
             # Optimisation 4
+            #mu        =  0.97 
+            #mu0       =  1.29
+            #alpha     =  4.42
+            #delta1    =  -1.36
+            #delta2    =  0.05
+            #tau_min   =  0.03
+            #tau_max   =  28.99
+            #4 BPL parameters
+            #alpha_bpl = 0.82
+            #beta_bpl  = 1.49
+            #F_break   = 8.7e-07
+            #F_min     = 5.4e-08
+
+            # Optimisation 4
             mu        =  0.97 
             mu0       =  1.29
             alpha     =  4.42
@@ -172,8 +186,8 @@ if __name__ == '__main__':
             #4 BPL parameters
             alpha_bpl = 0.82
             beta_bpl  = 1.49
-            F_break   = 8.7e-07
-            F_min     = 5.4e-08
+            F_break   = 1e-8
+            F_min     = 1e-8
 
 
         #----------------------------------------------------------------------#
@@ -299,7 +313,11 @@ if __name__ == '__main__':
     print('Time elapsed: ', (datetime.now() - start))
 
 ################################################################################
-################################################################################
+############################################
+# 
+# 
+# 
+# ####################################
 
 # The 7 values obtained from v1 optimization are
 # (3 loss)

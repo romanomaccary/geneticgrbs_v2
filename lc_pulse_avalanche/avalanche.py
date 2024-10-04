@@ -5,6 +5,7 @@ from numpy.random import exponential, lognormal, normal, uniform
 from scipy.stats import poisson
 import os, h5py
 from functools import partial
+from scipy import stats
 
 SEED=None
 #SEED=42
@@ -12,6 +13,30 @@ SEED=None
 
 #==============================================================================#
 #==============================================================================#
+
+class SmoothlyBrokenPowerLaw(stats.rv_continuous):
+    
+    def __init__(self, alpha = 0.5, beta = 1.5, F_break = 1e-5, F_min=1e-8):
+        lower_bound = F_min / F_break
+        upper_bound = 1e-3  / F_break
+        super().__init__(a=lower_bound, b=upper_bound)
+
+        self.alpha   = alpha
+        self.beta    = beta
+        self.F_break = F_break
+        self.F_min   = F_min
+        self.x_min   = lower_bound
+        self.s       = 5
+        self.a_s     = self.alpha * self.s
+        self.b_s     = self.beta * self.s 
+
+    def _cdf(self, x):
+        #sbpl = (((self.F_min / self.F_break)**(self.alpha * self.s) + (self.F_min / self.F_break)**(self.beta * self.s))/
+        #        ((F          / self.F_break)**(self.alpha * self.s) + (F          / self.F_break)**(self.beta * self.s)))**(1 / self.s)
+        sbpl = ((self.x_min **self.a_s + self.x_min **self.b_s)/
+                (x**self.a_s + x**self.b_s))**(1 / self.s)
+        #return 1 - sbpl
+        return 1 - sbpl
 
 def generate_fluence_bpl(p, alpha, beta, F_break, F_min):
     """This function returns a fluence value F from the broken-power-law (BPL)
@@ -65,30 +90,9 @@ def generate_fluence_sbpl(p, alpha, beta, F_break, F_min):
         float: the corresponding fluence value F.
     """
 
-    def sbpl(F, alpha, beta, F_break, F_min):
-        """The Smoothly Broken Power Law"""
-        # Smoothing_factor 
-        s = 5
-        return (((F_min / F_break)**(alpha * s) + (F_min / F_break)**(beta * s))/
-                ((F     / F_break)**(alpha * s) + (F     / F_break)**(beta * s)))**(1 / s)
-    
-    # Maximum fluence
-    F_max = 1e-3
-    
-    # Fluence sample
-    F_sample = np.logspace(np.log10(F_min), np.log10(F_max), 1000000)
-
-    # Generate the fluence
-    sample_p = 1
-    sbpl_val = 0
-    random_F = 0
-    while sample_p > sbpl_val:
-        random_F = np.random.choice(F_sample)                   # Pick a random fluence from the sample
-        sbpl_val = sbpl(random_F, alpha, beta, F_break, F_min)  # Compute the corresponding probability
-        sample_p = np.random.rand()                             # Pick a random probability between [0, 1]
-    
-    # If sample_p <= sbpl_val:
-    return random_F
+    sbpl = SmoothlyBrokenPowerLaw(alpha = alpha, beta = beta, F_break = F_break, F_min = F_min)
+    sampled_value = sbpl.rvs() * sbpl.F_break
+    return sampled_value
 
 def generate_peak_counts(generated_fluence, k_values):
     """This function turn fluence into peak counts through a conversion factor
