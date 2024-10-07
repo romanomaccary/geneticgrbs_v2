@@ -14,31 +14,36 @@ SEED=None
 #==============================================================================#
 #==============================================================================#
 
-class SmoothlyBrokenPowerLaw(stats.rv_continuous):
+# class SmoothlyBrokenPowerLaw(stats.rv_continuous):
     
-    def __init__(self, alpha = 0.5, beta = 1.5, F_break = 1e-5, F_min=1e-8):
-        lower_bound = F_min / F_break
-        upper_bound = 1e-3  / F_break
-        super().__init__(a=lower_bound, b=upper_bound)
+#     def __init__(self, alpha = 0.5, beta = 1.5, F_break = 1e-5, F_min=1e-8):
+#         lower_bound = F_min / F_break
+#         upper_bound = 1e-3  / F_break
+#         super().__init__(a=lower_bound, b=upper_bound)
 
-        self.alpha   = alpha
-        self.beta    = beta
-        self.F_break = F_break
-        self.F_min   = F_min
-        self.x_min   = lower_bound
-        self.s       = 5
-        self.a_s     = self.alpha * self.s
-        self.b_s     = self.beta * self.s 
+#         self.alpha   = alpha
+#         self.beta    = beta
+#         self.F_break = F_break
+#         self.F_min   = F_min
+#         self.x_min   = lower_bound
+#         self.s       = 5
+#         self.a_s     = self.alpha * self.s
+#         self.b_s     = self.beta * self.s 
 
-    def _cdf(self, x):
-        #sbpl = (((self.F_min / self.F_break)**(self.alpha * self.s) + (self.F_min / self.F_break)**(self.beta * self.s))/
-        #        ((F          / self.F_break)**(self.alpha * self.s) + (F          / self.F_break)**(self.beta * self.s)))**(1 / self.s)
-        sbpl = ((self.x_min **self.a_s + self.x_min **self.b_s)/
-                (x**self.a_s + x**self.b_s))**(1 / self.s)
-        #return 1 - sbpl
-        return 1 - sbpl
+#     def _cdf(self, x):
+#         #sbpl = (((self.F_min / self.F_break)**(self.alpha * self.s) + (self.F_min / self.F_break)**(self.beta * self.s))/
+#         #        ((F          / self.F_break)**(self.alpha * self.s) + (F          / self.F_break)**(self.beta * self.s)))**(1 / self.s)
+#         sbpl = ((self.x_min **self.a_s + self.x_min **self.b_s)/
+#                 (x**self.a_s + x**self.b_s))**(1 / self.s)
+#         #return 1 - sbpl
+#         return 1 - sbpl
 
-def generate_fluence_bpl(p, alpha, beta, F_break, F_min):
+#def generate_fluence_bpl(p, alpha, beta, F_break, F_min):
+    #p_break = (F_break/F_min)**(-alpha)
+    #return np.piecewise(p, [p < p_break, p >= p_break], [lambda y: F_break * p_break**(1/beta)  * y**(-1/beta),   
+    #                                                     lambda y: F_break * p_break**(1/alpha) * y**(-1/alpha)])
+
+def generate_broken_power_law(p, alpha, beta, x_0, x_min, x_max=1e-03):
     """This function returns a fluence value F from the broken-power-law (BPL)
     distribution: 
     
@@ -62,9 +67,12 @@ def generate_fluence_bpl(p, alpha, beta, F_break, F_min):
     Returns:
         float: the corresponding fluence value F.
     """
-    p_break = (F_break/F_min)**(-alpha)
-    return np.piecewise(p, [p < p_break, p >= p_break], [lambda y: F_break * p_break**(1/beta)  * y**(-1/beta),   
-                                                         lambda y: F_break * p_break**(1/alpha) * y**(-1/alpha)])
+    y_min = x_min/x_0
+    y_max = x_max/x_0
+    f_0   = (x_0*((1-y_min**(1-alpha))/(1-alpha)-(1-y_max**(1-beta))/(1-beta)))**(-1)
+    p_0   = f_0*x_0*(1-y_min(1-alpha))/(1-alpha)
+    return np.piecewise(p, [p < p_0, p >= p_0], [lambda p: x_0*(p*(1-alpha)/(f_0*x_0)+y_min**(1-alpha))(1/(1-alpha)), 
+                                                 lambda p: x_0*((p-1)*(1-beta)/(f_0*x_0)+y_max(1-beta))**(1/(1-beta))])
 
     
 def generate_fluence_sbpl(p, alpha, beta, F_break, F_min):
