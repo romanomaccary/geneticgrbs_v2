@@ -14,36 +14,7 @@ SEED=None
 #==============================================================================#
 #==============================================================================#
 
-# class SmoothlyBrokenPowerLaw(stats.rv_continuous):
-    
-#     def __init__(self, alpha = 0.5, beta = 1.5, F_break = 1e-5, F_min=1e-8):
-#         lower_bound = F_min / F_break
-#         upper_bound = 1e-3  / F_break
-#         super().__init__(a=lower_bound, b=upper_bound)
-
-#         self.alpha   = alpha
-#         self.beta    = beta
-#         self.F_break = F_break
-#         self.F_min   = F_min
-#         self.x_min   = lower_bound
-#         self.s       = 5
-#         self.a_s     = self.alpha * self.s
-#         self.b_s     = self.beta * self.s 
-
-#     def _cdf(self, x):
-#         #sbpl = (((self.F_min / self.F_break)**(self.alpha * self.s) + (self.F_min / self.F_break)**(self.beta * self.s))/
-#         #        ((F          / self.F_break)**(self.alpha * self.s) + (F          / self.F_break)**(self.beta * self.s)))**(1 / self.s)
-#         sbpl = ((self.x_min **self.a_s + self.x_min **self.b_s)/
-#                 (x**self.a_s + x**self.b_s))**(1 / self.s)
-#         #return 1 - sbpl
-#         return 1 - sbpl
-
-#def generate_fluence_bpl(p, alpha, beta, F_break, F_min):
-    #p_break = (F_break/F_min)**(-alpha)
-    #return np.piecewise(p, [p < p_break, p >= p_break], [lambda y: F_break * p_break**(1/beta)  * y**(-1/beta),   
-    #                                                     lambda y: F_break * p_break**(1/alpha) * y**(-1/alpha)])
-
-def generate_broken_power_law(p, alpha, beta, x_0, x_min, x_max=1e-03):
+def generate_fluence(p, alpha, beta, F_break, F_min):
     """This function returns a fluence value F from the broken-power-law (BPL)
     distribution: 
     
@@ -67,40 +38,14 @@ def generate_broken_power_law(p, alpha, beta, x_0, x_min, x_max=1e-03):
     Returns:
         float: the corresponding fluence value F.
     """
-    y_min = x_min/x_0
-    y_max = x_max/x_0
-    f_0   = (x_0*((1-y_min**(1-alpha))/(1-alpha)-(1-y_max**(1-beta))/(1-beta)))**(-1)
-    p_0   = f_0*x_0*(1-y_min(1-alpha))/(1-alpha)
-    return np.piecewise(p, [p < p_0, p >= p_0], [lambda p: x_0*(p*(1-alpha)/(f_0*x_0)+y_min**(1-alpha))(1/(1-alpha)), 
-                                                 lambda p: x_0*((p-1)*(1-beta)/(f_0*x_0)+y_max(1-beta))**(1/(1-beta))])
-
-    
-def generate_fluence_sbpl(p, alpha, beta, F_break, F_min):
-    """This function returns a fluence value F from the smoothly 
-    broken-power-law (SBPL) distribution: 
-    
-    p(F) = {[(F_min / F_break)**(alpha * s) + (F_min / F_break)**(beta * s)]/
-            [(F     / F_break)**(alpha * s) + (F     / F_break)**(beta * s)]}**(1 / s)
-    
-    where alpha and beta are SBPL indices, F_break is the break fluence, and 
-    F_min is minimum fluence. p(F) is the so-called "survival function" (SF), 
-    which is the analogous of the log(N)-log(S) of the GRBs but for individual
-    pulses. 
-
-    Args:
-        p       (float): not used;
-        alpha   (float): first SBPL index;
-        beta    (float): second SBPL index;
-        F_break (float): break fluence;
-        F_min   (float): minimum fluence.
-
-    Returns:
-        float: the corresponding fluence value F.
-    """
-
-    sbpl = SmoothlyBrokenPowerLaw(alpha = alpha, beta = beta, F_break = F_break, F_min = F_min)
-    sampled_value = sbpl.rvs() * sbpl.F_break
-    return sampled_value
+    # p_break = (F_break/F_min)**(-alpha)
+    # return np.piecewise(p, [p < p_break, p >= p_break], [lambda y: F_break * p_break**(1/beta)  * y**(-1/beta),   
+    #                                                      lambda y: F_break * p_break**(1/alpha) * y**(-1/alpha)])
+    R_min = F_min/F_break
+    f_0   = (F_break*((1-R_min**(1-alpha))/(1-alpha)-1/(1-beta)))**(-1)
+    p_0   = f_0*F_break*(1-R_min**(1-alpha))/(1-alpha)
+    return np.piecewise(p, [p < p_0, p >= p_0], [lambda p: F_break*(p*(1-alpha)/(f_0*F_break)+R_min**(1-alpha))**(1/(1-alpha)), 
+                                                 lambda p: F_break*((p-1)*(1-beta)/(f_0*F_break))**(1/(1-beta))])
 
 def generate_peak_counts(generated_fluence, k_values):
     """This function turn fluence into peak counts through a conversion factor
@@ -287,7 +232,7 @@ class LC(object):
         self.beta_bpl  = beta_bpl
         self.F_break   = F_break
         self.F_min     = F_min
-        self.generated_fluence = partial(generate_fluence_sbpl, alpha = alpha_bpl, 
+        self.generated_fluence = partial(generate_fluence, alpha = alpha_bpl, 
                                         beta = beta_bpl, F_break = F_break, 
                                         F_min = F_min)
         
