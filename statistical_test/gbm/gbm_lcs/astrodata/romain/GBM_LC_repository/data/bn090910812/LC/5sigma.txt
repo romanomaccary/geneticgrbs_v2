@@ -1,0 +1,7 @@
+# Fixed sigma threshold: 5
+# Max rebin factor: 128
+# Max bintime: 8.192
+# Total number of bins: 3420
+#                t         Bint          RebF    Phase   sig_thr   sig_excess
+T_START:    -2.016	   0.384	   6	   0	   5.000	   5.076
+T_STOP :    74.464	   0.320	   5	   2	   5.000	   5.153
