@@ -18,18 +18,16 @@ def generate_fluence(p, alpha, beta, F_break, F_min):
     """This function returns a fluence value F from the broken-power-law (BPL)
     distribution: 
     
-    p(F) = (F_break/F_min)**(-alpha) * (F/F_break)**(-alpha) if F <  F_break;
-           (F_break/F_min)**(-alpha) * (F/F_break)**(-beta)  if F >= F_break;
+    f(F) = N * (F/F_break)**(-alpha) if F <  F_break;
+           N * (F/F_break)**(-beta)  if F >= F_break;
     
     where alpha and beta are BPL indices, F_break is the break fluence, and 
-    F_min is minimum fluence. p(F) is the so-called "survival function" (SF), 
-    which is the analogous of the log(N)-log(S) of the GRBs but for individual
-    pulses. 
-    The idea is sampling the SF, whose values are found between 0 and 1 by 
+    F_min is minimum fluence. 
+    The idea is sampling the CDF, whose values are found between 0 and 1 by 
     definition, and turn them into the corresponding fluence values.
 
     Args:
-        p       (float): sampled value from the SF;
+        p       (float): sampled value from the CDF;
         alpha   (float): first BPL index;
         beta    (float): second BPL index;
         F_break (float): break fluence;
@@ -38,14 +36,34 @@ def generate_fluence(p, alpha, beta, F_break, F_min):
     Returns:
         float: the corresponding fluence value F.
     """
-    # p_break = (F_break/F_min)**(-alpha)
-    # return np.piecewise(p, [p < p_break, p >= p_break], [lambda y: F_break * p_break**(1/beta)  * y**(-1/beta),   
-    #                                                      lambda y: F_break * p_break**(1/alpha) * y**(-1/alpha)])
     R_min = F_min/F_break
     f_0   = (F_break*((1-R_min**(1-alpha))/(1-alpha)-1/(1-beta)))**(-1)
     p_0   = f_0*F_break*(1-R_min**(1-alpha))/(1-alpha)
     return np.piecewise(p, [p < p_0, p >= p_0], [lambda p: F_break*(p*(1-alpha)/(f_0*F_break)+R_min**(1-alpha))**(1/(1-alpha)), 
                                                  lambda p: F_break*((p-1)*(1-beta)/(f_0*F_break))**(1/(1-beta))])
+    
+# def generate_fluence(p, alpha, F_min):
+#     """This function returns a fluence value F from the power-law (PL)
+#     distribution: 
+    
+#     f(F) = N * (F/F_min)**(-alpha) if F >= F_break;
+    
+#     where alpha is the PL index, and F_min is minimum fluence. 
+#     The idea is sampling the CDF, whose values are found between 0 and 1 by 
+#     definition, and turn them into the corresponding fluence values.
+
+#     Args:
+#         p       (float): sampled value from the CDF;
+#         alpha   (float): first BPL index;
+#         beta    (float): second BPL index;
+#         F_break (float): break fluence;
+#         F_min   (float): minimum fluence.
+
+#     Returns:
+#         float: the corresponding fluence value F.
+#     """
+#     f_0 = (alpha-1)/F_min
+#     return F_min*((p*(1-alpha))/(f_0*F_min)+1)**(1/(1-alpha))
 
 def generate_peak_counts(generated_fluence, k_values):
     """This function turn fluence into peak counts through a conversion factor

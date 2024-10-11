@@ -185,15 +185,15 @@ crossover_probability = 1                      # 'None' means couples parent k w
 initial_population    = None                   # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
 crossover_type        = "scattered"
-num_generations       = 5                     # Number of generations.
-sol_per_pop           = 20                   # Number of solutions in the population (i.e., number of different sets per generation).
+num_generations       = 2                     # Number of generations.
+sol_per_pop           = 2000                   # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.15*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 
 # Other parameters
-N_grb            = 20   # number of simulated GRBs to produce per set of parameters
+N_grb            = 2000   # number of simulated GRBs to produce per set of parameters
 n_cut            = 2500   # maximum number of pulses to consider in the avalanche model
 test_sn_distr    = True   # add a fifth metric regarding  the S/N distribution (set True by default)
 test_pulse_distr = False  # add a sixth metric regarding the distribution of number of pulses per GRB (set False by default)
@@ -210,15 +210,15 @@ parallel_processing  = ["process", n_processes]  # USE THIS ONE!
 # Name of the pkl file where to save the GA instance at the end of the run
 filename_model = 'geneticGRB'
 
-# We impose constraints on the range of values that the 7 parameter can assume
-range_mu      = {"low": 0.70,            "high": 1.5}
-range_mu0     = {"low": 0.70,            "high": 1.5} 
+epsilon = 1.e-6
+range_mu      = {"low": 0.80,            "high": 1.7}
+range_mu0     = {"low": 0.80,            "high": 1.7} 
 range_alpha   = {"low": 1,               "high": 15} 
-range_delta1  = {"low": -1.5,            "high": -0.30-1.e-6} 
+range_delta1  = {"low": -1.5,            "high": -0.30-epsilon} 
 range_delta2  = {"low": 0,               "high": 0.30}
-range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)}  # sample `tau_min` uniformly in log    space
-#range_tau_min = {"low": 1.e-2,          "high": bin_time-1.e-6}            # sample `tau_min` uniformly in linear space
-range_tau_max = {"low": 1,               "high": 75}
+range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-epsilon)}  # sample `tau_min` uniformly in log    space
+#range_tau_min = {"low": 1.e-2,          "high": bin_time-epsilon}            # sample `tau_min` uniformly in linear space
+range_tau_max = {"low": 1,               "high": 65}
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
 # mu0=1
@@ -228,11 +228,11 @@ range_tau_max = {"low": 1,               "high": 75}
 # tau_min=0.02
 # tau_max=26
 
-#Range of the 5 parameters of the SBPL model of the pulse counts distribution
-range_alpha_bpl = {"low": 1.e-6,           "high": 1.2-1.e-6}
-range_beta_bpl  = {"low": 1.2+1.e-6,       "high": 2.3} 
-range_F_break   = {"low": np.log10(1.e-8), "high": np.log10(1.e-5)} # sample `F_break` uniformly in log space
-range_F_min     = {"low": np.log10(1.e-8), "high": np.log10(1.e-6)} # sample `F_min`   uniformly in log space
+#Range of the 5 parameters of the BPL model of the pulse counts distribution
+range_alpha_bpl = {"low": 1.+epsilon,                  "high": 2.-epsilon}
+range_beta_bpl  = {"low": 2.+epsilon,                  "high": 3.} 
+range_F_break   = {"low": np.log10(1.e-7*(1+epsilon)), "high": np.log10(1.e-5)}             # sample `F_break` uniformly in log space
+range_F_min     = {"low": np.log10(1.e-8),             "high": np.log10(1.e-7*(1-epsilon))} # sample `F_min`   uniformly in log space
 
 range_constraints = [range_mu, 
                      range_mu0,
