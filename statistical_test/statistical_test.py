@@ -768,6 +768,7 @@ def load_lc_fermi(path):
     data_path = path+'/data'
     grb_dir_list = [ name for name in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, name)) ]
     fermi_grb_list = []
+    grb_with_no_bs = 0
 
     #TROVARE IL FILE CON I T90 NUOVI!!!
     #t90_info, grb_trig_name = np.genfromtxt(path+'fermi_grb_infos.txt', usecols = (5,8), comments='#', delimiter='|', unpack = True, dtype='str')
@@ -776,17 +777,34 @@ def load_lc_fermi(path):
     #good_grbs = np.genfromtxt('../lc_pulse_avalanche/fermi_grbs_path_list.txt', dtype='str')
     vk_grbs, t90_info = np.genfromtxt('../lc_pulse_avalanche/vk_catalog_list.txt', unpack=True)
 
-    for grb_dir in grb_dir_list:
+    for (grb_dir, t90) in zip(grb_dir_list, t90_info):
         if grb_dir in vk_grbs:
-            data_files = os.listdir(path+'/data/'+grb_dir+'/LC')
-
+            #data_files = os.listdir(path+'/data/'+grb_dir+'/LC')
             try:
-                lc_file_name = data_files[['_bs' in fpath for fpath in data_files].index(True)]
-            except ValueError:
+                path_to_selected_units = path  +'/data/'+grb_dir+'/LC/selected_units.txt'
+                selected_units = np.loadtxt(path_to_selected_units, dtype=str, ndmin=1)
+                path_to_lc = path + '/data/' + grb_dir + '/LC/' + grb_dir + '_LC_64ms_'
+                for unit in selected_units:
+                    path_to_lc += unit + '_'
+                path_to_lc += 'bs.txt'
+            except:
                 grb_with_no_bs += 1
                 continue
 
-            lc_file_path = path+'/data/'+grb_dir+'/LC/'+lc_file_name
+        #path_to_selected_units = './astrodata/romain/GBM_LC_repository/data/' + fermi_id + '/LC/selected_units.txt'
+        #selected_units = np.loadtxt(path_to_selected_units, dtype=str, ndmin=1)
+        # print(selected_units)
+        #path_to_lc = './astrodata/romain/GBM_LC_repository/data/' + fermi_id + '/LC/' + fermi_id + '_LC_64ms_'
+        #for unit in selected_units:
+        #    path_to_lc += unit + '_'
+        #path_to_lc += 'bs.txt'
+        #    try:
+        #        lc_file_name = data_files[['_bs' in fpath for fpath in data_files].index(True)]
+        #    except ValueError:
+        #        grb_with_no_bs += 1
+        #        continue
+
+            lc_file_path = path_to_lc#path+'/data/'+grb_dir+'/LC/'+lc_file_name
             
             #if lc_file_path in good_grbs:
             times, counts, errs = np.loadtxt(lc_file_path, unpack = True)
