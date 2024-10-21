@@ -765,32 +765,35 @@ def load_lc_sax_lr(path):
 ################################################################################
 
 def load_lc_fermi(path):
-    grb_dir_list = os.listdir(path+'/data')
+    data_path = path+'/data'
+    grb_dir_list = [ name for name in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, name)) ]
     fermi_grb_list = []
 
-    #TROVARE IL FILE CON I T90 NUOVO!!!
-    t90_info, grb_trig_name = np.genfromtxt(path+'fermi_grb_infos.txt', usecols = (5,8), comments='#', delimiter='|', unpack = True, dtype='str')
-    t90_info = t90_info.astype('float64')
-    grb_with_no_bs = 0
-    good_grbs = np.genfromtxt('../lc_pulse_avalanche/fermi_grbs_path_list.txt', dtype='str')
+    #TROVARE IL FILE CON I T90 NUOVI!!!
+    #t90_info, grb_trig_name = np.genfromtxt(path+'fermi_grb_infos.txt', usecols = (5,8), comments='#', delimiter='|', unpack = True, dtype='str')
+    #t90_info = t90_info.astype('float64')
+    #grb_with_no_bs = 0
+    #good_grbs = np.genfromtxt('../lc_pulse_avalanche/fermi_grbs_path_list.txt', dtype='str')
+    vk_grbs, t90_info = np.genfromtxt('../lc_pulse_avalanche/vk_catalog_list.txt', unpack=True)
 
     for grb_dir in grb_dir_list:
-        data_files = os.listdir(path+'/data/'+grb_dir+'/LC')
+        if grb_dir in vk_grbs:
+            data_files = os.listdir(path+'/data/'+grb_dir+'/LC')
 
-        try:
-            lc_file_name = data_files[['_bs' in fpath for fpath in data_files].index(True)]
-        except ValueError:
-            grb_with_no_bs += 1
-            continue
+            try:
+                lc_file_name = data_files[['_bs' in fpath for fpath in data_files].index(True)]
+            except ValueError:
+                grb_with_no_bs += 1
+                continue
 
-        lc_file_path = path+'/data/'+grb_dir+'/LC/'+lc_file_name
-        
-        if lc_file_path in good_grbs:
+            lc_file_path = path+'/data/'+grb_dir+'/LC/'+lc_file_name
+            
+            #if lc_file_path in good_grbs:
             times, counts, errs = np.loadtxt(lc_file_path, unpack = True)
             grb_name            = grb_dir
             grb_data_file_path  = lc_file_path
 
-            t90 = t90_info[np.where(grb_trig_name == grb_name)[0][0]]
+            #t90 = t90_info[np.where(grb_trig_name == grb_name)[0][0]]
             grb = GRB(grb_name=grb_name, 
                     times=times, 
                     counts=counts, 
@@ -3388,7 +3391,7 @@ def rebin_histogram(bin_edges, data, n_min=20):
         new_bin_edges[-1]   = bin_edges[-1]
     new_bin_counts = np.array(new_bin_counts).astype('int')
 
-    assert np.sum(new_bin_counts)!=len(data), "The number of counts in the rebinned histogram is different from the initial one!" 
+    assert np.sum(new_bin_counts) == len(data), "The number of counts in the rebinned histogram is different from the initial one!" 
     
     return new_bin_edges, new_bin_counts
 
