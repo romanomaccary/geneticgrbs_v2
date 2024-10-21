@@ -65,6 +65,7 @@ elif user=='gravity':
     batse_path = '/astrodata/guidorzi/CGRO_BATSE/'
     swift_path = '/astrodata/guidorzi/Swift_BAT/'
     sax_path   = '/astrodata/guidorzi/BeppoSAX_GRBM/'
+    fermi_path = '/astrodata/romain/GBM_LC_repository/' 
 elif user=='pleiadi':
     # library paths
     sys.path.append('/beegfs/mbulla/genetic_grbs/genetic/lc_pulse_avalanche/statistical_test')
@@ -108,10 +109,10 @@ from avalanche import LC
 ################################################################################
 
 ### Choose the instrument
-instrument = 'batse'
+#instrument = 'batse'
 #instrument = 'swift'
 #instrument = 'sax'
-#instrument = 'fermi'
+instrument = 'fermi'
 
 #------------------------------------------------------------------------------#
 
@@ -317,6 +318,21 @@ elif instrument=='sax':
                                       t_f=t_f, 
                                       zero_padding=True)
     n_of_pulses_real = None
+
+### Load the Fermi/GBM GRBs
+elif instrument=='fermi':
+    # load all data
+    grb_list_real = load_lc_fermi(path=fermi_path)
+    # apply constraints
+    grb_list_real = apply_constraints(grb_list=grb_list_real, 
+                                      bin_time=bin_time, 
+                                      t90_threshold=t90_threshold, 
+                                      t90_frac=t90_frac,
+                                      sn_threshold=sn_threshold, 
+                                      t_f=t_f, 
+                                      zero_padding=True)
+    n_of_pulses_real = None
+    
 
 else:
     raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')

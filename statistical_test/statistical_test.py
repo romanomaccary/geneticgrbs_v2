@@ -765,14 +765,17 @@ def load_lc_sax_lr(path):
 ################################################################################
 
 def load_lc_fermi(path):
-    grb_dir_list = os.listdir(path+'/DATA')
+    grb_dir_list = os.listdir(path+'/data')
     fermi_grb_list = []
+
+    #TROVARE IL FILE CON I T90 NUOVO!!!
     t90_info, grb_trig_name = np.genfromtxt(path+'fermi_grb_infos.txt', usecols = (5,8), comments='#', delimiter='|', unpack = True, dtype='str')
     t90_info = t90_info.astype('float64')
     grb_with_no_bs = 0
+    good_grbs = np.genfromtxt('../lc_pulse_avalanche/fermi_grbs_path_list.txt', dtype='str')
 
     for grb_dir in grb_dir_list:
-        data_files = os.listdir(path+'/DATA/'+grb_dir+'/LC')
+        data_files = os.listdir(path+'/data/'+grb_dir+'/LC')
 
         try:
             lc_file_name = data_files[['_bs' in fpath for fpath in data_files].index(True)]
@@ -780,20 +783,21 @@ def load_lc_fermi(path):
             grb_with_no_bs += 1
             continue
 
-        lc_file_path = path+'/DATA/'+grb_dir+'/LC/'+lc_file_name
+        lc_file_path = path+'/data/'+grb_dir+'/LC/'+lc_file_name
+        
+        if lc_file_path in good_grbs:
+            times, counts, errs = np.loadtxt(lc_file_path, unpack = True)
+            grb_name            = grb_dir
+            grb_data_file_path  = lc_file_path
 
-        times, counts, errs = np.loadtxt(lc_file_path, unpack = True)
-        grb_name            = grb_dir
-        grb_data_file_path  = lc_file_path
-
-        t90 = t90_info[np.where(grb_trig_name == grb_name)[0][0]]
-        grb = GRB(grb_name=grb_name, 
-                  times=times, 
-                  counts=counts, 
-                  errs=errs,
-                  t90=t90, 
-                  grb_data_file_path=grb_data_file_path)
-        fermi_grb_list.append(grb)
+            t90 = t90_info[np.where(grb_trig_name == grb_name)[0][0]]
+            grb = GRB(grb_name=grb_name, 
+                    times=times, 
+                    counts=counts, 
+                    errs=errs,
+                    t90=t90, 
+                    grb_data_file_path=grb_data_file_path)
+            fermi_grb_list.append(grb)
 
     print('Total number of GRB: ', len(grb_dir_list))
     print('GRB with no bs file: ', grb_with_no_bs)

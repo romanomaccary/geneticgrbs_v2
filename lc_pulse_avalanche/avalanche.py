@@ -90,6 +90,8 @@ k_values_batse = np.loadtxt(path_k_values_file_batse, unpack = True)
 path_k_values_file_swift = "../lc_pulse_avalanche/log10_fluence_over_counts_Swift_BAT.txt"
 k_values_swift = np.loadtxt(path_k_values_file_swift, unpack = True)
 
+path_k_values_file_fermi = "../lc_pulse_avalanche/log10_fluence_over_counts_Fermi_GBM.txt"
+k_values_fermi = np.loadtxt(path_k_values_file_fermi, unpack = True)
 #==============================================================================#
 #==============================================================================#
 
@@ -109,24 +111,24 @@ def generate_rand_from_pdf(pdf, x_grid, N=1):
 ### Load the pdf of peak count rates of each instrument, with which we
 # will sample the amplitude A of each pulse (we'll not sample A anymore 
 # from U[0,1])
-peak_count_rates_batse  = '../lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'                                               # LB, AF, external_user
+#peak_count_rates_batse  = '../lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'                                               # LB, AF, external_user
 #peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt' # bach
 #peak_count_rates_batse = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_BATSE_peak_count_rates.txt'                    # gravity
-peak_count_rates_swift  = '../lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'                                               # LB, AF, external_user
+#peak_count_rates_swift  = '../lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'                                               # LB, AF, external_user
 #peak_count_rates_swift = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt' # bach
 #peak_count_rates_swift = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/kde_pdf_Swift_peak_count_rates.txt'                    # gravity
 #
-pdf_peak_count_rates_batse = np.loadtxt(peak_count_rates_batse)
-pdf_peak_count_rates_swift = np.loadtxt(peak_count_rates_swift)
+#pdf_peak_count_rates_batse = np.loadtxt(peak_count_rates_batse)
+#pdf_peak_count_rates_swift = np.loadtxt(peak_count_rates_swift)
 #
-low_exp_batse  =  2
-low_exp_swift  = -3
-high_exp_batse =  6
-high_exp_swift =  3
-x_grid_batse = np.linspace(10**low_exp_batse, 10**high_exp_batse, 2000000)
-x_grid_swift = np.linspace(10**low_exp_swift, 10**high_exp_swift, 2000000)
-peak_count_rate_batse_sample = generate_rand_from_pdf(pdf_peak_count_rates_batse, x_grid_batse, N=100000) 
-peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift, x_grid_swift, N=100000) 
+#low_exp_batse  =  2
+#low_exp_swift  = -3
+#high_exp_batse =  6
+#high_exp_swift =  3
+#x_grid_batse = np.linspace(10**low_exp_batse, 10**high_exp_batse, 2000000)
+#x_grid_swift = np.linspace(10**low_exp_swift, 10**high_exp_swift, 2000000)
+#peak_count_rate_batse_sample = generate_rand_from_pdf(pdf_peak_count_rates_batse, x_grid_batse, N=100000) 
+#peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift, x_grid_swift, N=100000) 
 
 
 ### Load the (gaussian) errors of the Swift GRBs
@@ -227,11 +229,11 @@ class LC(object):
         self._instrument  = instrument
 
         if self._instrument == 'batse':
-            self._peak_count_rate_sample = peak_count_rate_batse_sample
+            #self._peak_count_rate_sample = peak_count_rate_batse_sample
             self.k_values_path           = path_k_values_file_batse
             self.k_values                = k_values_batse
         elif self._instrument == 'swift':
-            self._peak_count_rate_sample = peak_count_rate_swift_sample
+            #self._peak_count_rate_sample = peak_count_rate_swift_sample
             self.k_values_path           = path_k_values_file_swift
             self.k_values                = k_values_swift
         elif self._instrument == 'sax_lr':
@@ -241,7 +243,8 @@ class LC(object):
             pass
             #self._peak_count_rate_sample = peak_count_rate_sax_sample
         elif self._instrument == 'fermi':
-            pass
+            self.k_values_path           = path_k_values_file_fermi
+            self.k_values                = k_values_fermi
             #self._peak_count_rate_sample = peak_count_rate_fermi_sample
         else:
             raise ValueError("Instrument not recognized...")
