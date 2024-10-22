@@ -770,48 +770,28 @@ def load_lc_fermi(path):
     fermi_grb_list = []
     grb_with_no_bs = 0
 
-    #TROVARE IL FILE CON I T90 NUOVI!!!
-    #t90_info, grb_trig_name = np.genfromtxt(path+'fermi_grb_infos.txt', usecols = (5,8), comments='#', delimiter='|', unpack = True, dtype='str')
-    #t90_info = t90_info.astype('float64')
-    #grb_with_no_bs = 0
-    #good_grbs = np.genfromtxt('../lc_pulse_avalanche/fermi_grbs_path_list.txt', dtype='str')
-    vk_grbs, t90_info = np.genfromtxt('../lc_pulse_avalanche/vk_catalog_list.txt', unpack=True)
+
+    vk_grbs, t90_info = np.loadtxt('../lc_pulse_avalanche/vk_catalog_list.txt', unpack=True, dtype='str')
+    t90_info = t90_info.astype('float')
 
     for (grb_dir, t90) in zip(grb_dir_list, t90_info):
         if grb_dir in vk_grbs:
-            #data_files = os.listdir(path+'/data/'+grb_dir+'/LC')
+
             try:
                 path_to_selected_units = path  +'/data/'+grb_dir+'/LC/selected_units.txt'
                 selected_units = np.loadtxt(path_to_selected_units, dtype=str, ndmin=1)
-                path_to_lc = path + '/data/' + grb_dir + '/LC/' + grb_dir + '_LC_64ms_'
+                lc_file_path = path + '/data/' + grb_dir + '/LC/' + grb_dir + '_LC_64ms_'
                 for unit in selected_units:
-                    path_to_lc += unit + '_'
-                path_to_lc += 'bs.txt'
+                    lc_file_path += unit + '_'
+                lc_file_path += 'bs.txt'
             except:
                 grb_with_no_bs += 1
                 continue
 
-        #path_to_selected_units = './astrodata/romain/GBM_LC_repository/data/' + fermi_id + '/LC/selected_units.txt'
-        #selected_units = np.loadtxt(path_to_selected_units, dtype=str, ndmin=1)
-        # print(selected_units)
-        #path_to_lc = './astrodata/romain/GBM_LC_repository/data/' + fermi_id + '/LC/' + fermi_id + '_LC_64ms_'
-        #for unit in selected_units:
-        #    path_to_lc += unit + '_'
-        #path_to_lc += 'bs.txt'
-        #    try:
-        #        lc_file_name = data_files[['_bs' in fpath for fpath in data_files].index(True)]
-        #    except ValueError:
-        #        grb_with_no_bs += 1
-        #        continue
-
-            lc_file_path = path_to_lc#path+'/data/'+grb_dir+'/LC/'+lc_file_name
-            
-            #if lc_file_path in good_grbs:
             times, counts, errs = np.loadtxt(lc_file_path, unpack = True)
             grb_name            = grb_dir
             grb_data_file_path  = lc_file_path
 
-            #t90 = t90_info[np.where(grb_trig_name == grb_name)[0][0]]
             grb = GRB(grb_name=grb_name, 
                     times=times, 
                     counts=counts, 
@@ -820,8 +800,8 @@ def load_lc_fermi(path):
                     grb_data_file_path=grb_data_file_path)
             fermi_grb_list.append(grb)
 
-    print('Total number of GRB: ', len(grb_dir_list))
-    print('GRB with no bs file: ', grb_with_no_bs)
+    print('Total number of GRB: ',    len(grb_dir_list))
+    print('GRB with no bs file: ',    grb_with_no_bs)
     print('Number of accepted GRB: ', len(fermi_grb_list))
 
     return fermi_grb_list
