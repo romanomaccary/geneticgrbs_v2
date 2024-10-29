@@ -2,15 +2,14 @@
 import sys
 import numpy as np
 
-from statistical_test import *
-    
-
 sys.path.append('/home/bazzanini/PYTHON/genetic3_5metrics/statistical_test')
 sys.path.append('/home/bazzanini/PYTHON/genetic3_5metrics/lc_pulse_avalanche')
 sys.path.append('/home/ferro/lc_pulse_avalance/statistical_test')
 sys.path.append('/home/ferro/lc_pulse_avalance/lc_pulse_avalanche')
 sys.path.append('/home/maistrello/geneticgrbs/statistical_test')
 sys.path.append('/home/maistrello/geneticgrbs/lc_pulse_avalanche')
+
+from statistical_test import *
 
 batse_path = '/astrodata/guidorzi/CGRO_BATSE/'
 swift_path = '/astrodata/guidorzi/Swift_BAT/'

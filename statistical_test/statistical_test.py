@@ -765,7 +765,7 @@ def load_lc_sax_lr(path):
 ################################################################################
 
 def load_lc_fermi(path):
-    data_path = path+'/data'
+    data_path = path+'data'
     grb_dir_list = [ name for name in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, name)) ]
     fermi_grb_list = []
     grb_with_no_bs = 0
@@ -778,9 +778,9 @@ def load_lc_fermi(path):
         if grb_dir in vk_grbs:
 
             try:
-                path_to_selected_units = path  +'/data/'+grb_dir+'/LC/selected_units.txt'
+                path_to_selected_units = path  +'data/'+grb_dir+'/LC/selected_units.txt'
                 selected_units = np.loadtxt(path_to_selected_units, dtype=str, ndmin=1)
-                lc_file_path = path + '/data/' + grb_dir + '/LC/' + grb_dir + '_LC_64ms_'
+                lc_file_path = path + 'data/' + grb_dir + '/LC/' + grb_dir + '_LC_64ms_'
                 for unit in selected_units:
                     lc_file_path += unit + '_'
                 lc_file_path += 'bs.txt'
@@ -788,7 +788,12 @@ def load_lc_fermi(path):
                 grb_with_no_bs += 1
                 continue
 
-            times, counts, errs = np.loadtxt(lc_file_path, unpack = True)
+            try:
+                times, counts, errs = np.loadtxt(lc_file_path, unpack = True)
+            except:
+                grb_with_no_bs +=1
+                continue
+
             grb_name            = grb_dir
             grb_data_file_path  = lc_file_path
 
@@ -802,7 +807,7 @@ def load_lc_fermi(path):
 
     print('Total number of GRB: ',    len(grb_dir_list))
     print('GRB with no bs file: ',    grb_with_no_bs)
-    print('Number of accepted GRB: ', len(fermi_grb_list))
+    print('Number of GRB in VK catalogue: ', len(fermi_grb_list))
 
     return fermi_grb_list
 
