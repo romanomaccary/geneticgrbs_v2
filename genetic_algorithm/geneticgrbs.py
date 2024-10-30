@@ -65,7 +65,7 @@ elif user=='gravity':
     batse_path = '/astrodata/guidorzi/CGRO_BATSE/'
     swift_path = '/astrodata/guidorzi/Swift_BAT/'
     sax_path   = '/astrodata/guidorzi/BeppoSAX_GRBM/'
-    fermi_path = '/astrodata/romain/GBM_LC_repository/' 
+    fermi_path = '/astrodata/romain/GBM_LC_repository/data/' 
 elif user=='pleiadi':
     # library paths
     sys.path.append('/beegfs/mbulla/genetic_grbs/genetic/lc_pulse_avalanche/statistical_test')
