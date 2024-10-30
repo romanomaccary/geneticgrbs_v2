@@ -765,8 +765,16 @@ def load_lc_sax_lr(path):
 ################################################################################
 
 def load_lc_fermi(path):
-    data_path = path+'data'
-    grb_dir_list = [ name for name in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, name)) ]
+    # Load the data from von Kienlin catalogue
+    path_vk_catalogue = '../lc_pulse_avalanche/vk_catalog_list.txt'
+    vk_grbs, vk_t90s  = np.loadtxt(path_vk_catalogue, dtype=str, unpack=True)
+    vk_t90s           = vk_t90s.astype(float)
+    
+    # List the Fermi/GBM GRBs
+    grb_dir_list = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
+    grb_dir_list.sort()
+    
+    # Lists
     fermi_grb_list = []
     grb_with_no_bs = []
 
@@ -774,41 +782,32 @@ def load_lc_fermi(path):
         if vk_grb in grb_dir_list:
 
             try:
-                path_to_selected_units = path  +'data/'+grb_dir+'/LC/selected_units.txt'
-                selected_units = np.loadtxt(path_to_selected_units, dtype=str, ndmin=1)
-                lc_file_path = path + 'data/' + grb_dir + '/LC/' + grb_dir + '_LC_64ms_'
+                path_selected_units = path + vk_grb + '/LC/selected_units.txt'
+                selected_units      = np.loadtxt(path_selected_units, dtype=str, ndmin=1)
+                path_lc             = path + 'data/' + vk_grb + '/LC/' + vk_grb + '_LC_64ms_'
                 for unit in selected_units:
-                    path_lc_file += unit + '_'
-                path_lc_file += 'bs.txt'
+                    path_lc += unit + '_'
+                path_lc += 'bs.txt'
             except:
                 grb_with_no_bs.append(vk_grb)
                 continue
             
             try:
-                times, counts, errs = np.loadtxt(path_lc_file, unpack=True)
+                times, counts, errs = np.loadtxt(path_lc, unpack=True)
             except:
                 grb_with_no_bs.append(vk_grb)
                 continue
 
-            try:
-                times, counts, errs = np.loadtxt(lc_file_path, unpack = True)
-            except:
-                grb_with_no_bs +=1
-                continue
-
-            grb_name            = grb_dir
-            grb_data_file_path  = lc_file_path
-
-            grb = GRB(grb_name=grb_name, 
-                    times=times, 
-                    counts=counts, 
-                    errs=errs,
-                    t90=t90, 
-                    grb_data_file_path=grb_data_file_path)
+            grb = GRB(grb_name=vk_grb, 
+                      times=times,
+                      counts=counts,
+                      errs=errs,
+                      t90=vk_t90,
+                      grb_data_file_path=path_lc)
             fermi_grb_list.append(grb)
 
-    print('Total number of GRB: ',    len(grb_dir_list))
-    print('GRB with no bs file: ',    grb_with_no_bs)
+    print('Total number of GRB:           ', len(grb_dir_list))
+    print('GRB with no bs file:           ', len(grb_with_no_bs))
     print('Number of GRB in VK catalogue: ', len(fermi_grb_list))
 
     return fermi_grb_list
