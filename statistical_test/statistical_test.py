@@ -768,24 +768,26 @@ def load_lc_fermi(path):
     data_path = path+'data'
     grb_dir_list = [ name for name in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, name)) ]
     fermi_grb_list = []
-    grb_with_no_bs = 0
+    grb_with_no_bs = []
 
-
-    vk_grbs, t90_info = np.loadtxt('../lc_pulse_avalanche/vk_catalog_list.txt', unpack=True, dtype='str')
-    t90_info = t90_info.astype('float')
-
-    for (grb_dir, t90) in zip(grb_dir_list, t90_info):
-        if grb_dir in vk_grbs:
+    for vk_grb, vk_t90 in zip(vk_grbs, vk_t90s):
+        if vk_grb in grb_dir_list:
 
             try:
                 path_to_selected_units = path  +'data/'+grb_dir+'/LC/selected_units.txt'
                 selected_units = np.loadtxt(path_to_selected_units, dtype=str, ndmin=1)
                 lc_file_path = path + 'data/' + grb_dir + '/LC/' + grb_dir + '_LC_64ms_'
                 for unit in selected_units:
-                    lc_file_path += unit + '_'
-                lc_file_path += 'bs.txt'
+                    path_lc_file += unit + '_'
+                path_lc_file += 'bs.txt'
             except:
-                grb_with_no_bs += 1
+                grb_with_no_bs.append(vk_grb)
+                continue
+            
+            try:
+                times, counts, errs = np.loadtxt(path_lc_file, unpack=True)
+            except:
+                grb_with_no_bs.append(vk_grb)
                 continue
 
             try:
@@ -897,6 +899,7 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
     total_cnts    = {}
     grb_with_neg_t20 = 0
     for grb in grb_list:
+        # print(grb.name)
         times   = np.float32(grb.times)
         counts  = np.float32(grb.counts)
         errs    = np.float32(grb.errs)
