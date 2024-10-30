@@ -784,7 +784,7 @@ def load_lc_fermi(path):
             try:
                 path_selected_units = path + vk_grb + '/LC/selected_units.txt'
                 selected_units      = np.loadtxt(path_selected_units, dtype=str, ndmin=1)
-                path_lc             = path + 'data/' + vk_grb + '/LC/' + vk_grb + '_LC_64ms_'
+                path_lc             = path + vk_grb + '/LC/' + vk_grb + '_LC_64ms_'
                 for unit in selected_units:
                     path_lc += unit + '_'
                 path_lc += 'bs.txt'
