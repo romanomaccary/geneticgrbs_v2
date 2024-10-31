@@ -230,18 +230,17 @@ instr_sax_lr         = {
 }
 
 #------------------------------------------------------------------------------#
-# FERMI/GBM (counts (WIP))
+# FERMI/GBM NaI ONLY (counts (WIP))
 #------------------------------------------------------------------------------#
-# - Effective area: Average on all detectors, as reported by 
-#   https://sites.astro.caltech.edu/~srk/XC/Notes/GBM.pdf
-# - Background: TO BE ADDED
-# NB: solo gli ioduri di sodio
+# - Catalogue: von Kienlin et al. (2020) (https://iopscience.iop.org/article/10.3847/1538-4357/ab7a18/pdf)
+# - Effective area: Meegan et al. (2009) (https://iopscience.iop.org/article/10.1088/0004-637X/702/1/791/pdf) 
+# - Background: 39.4 (computed from the average of the background LC, see `statistical_test.ipynb`)
 name_fermi          = 'fermi'
 res_fermi           = 0.064
-eff_area_fermi      = 100 
-bg_level_fermi      = (400/eff_area_fermi) #TODO: TO BE CHECKED
+eff_area_fermi      = 100 # effective area of a NaI detector at normal incidence 
+bg_level_fermi      = 39.4 # see `statistical_test.ipynb` for the computation 
 t90_threshold_fermi = 2
-sn_threshold_fermi  = 5
+sn_threshold_fermi  = 10
 instr_fermi         = {
     "name"         : name_fermi,
     "res"          : res_fermi,
@@ -250,12 +249,6 @@ instr_fermi         = {
     "t90_threshold": t90_threshold_fermi,
     "sn_threshold" : sn_threshold_fermi
 }
-fermi_prob_dict     = {1: 0.02056555, 
-                       2: 0.23907455, 
-                       3: 0.40616967, 
-                       4: 0.18508997, 
-                       5: 0.13367609, 
-                       6: 0.01542416}
 
 
 ################################################################################
@@ -773,13 +766,19 @@ def load_lc_fermi(path):
     # List the Fermi/GBM GRBs
     grb_dir_list = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
     grb_dir_list.sort()
+
+    # Bad GRBs (to be checked)
+    grbs_to_mask = ['bn130206482',
+                    'bn140603476',
+                    'bn160720275',
+                    'bn180610377']
     
     # Lists
     fermi_grb_list = []
     grb_with_no_bs = []
 
     for vk_grb, vk_t90 in zip(vk_grbs, vk_t90s):
-        if vk_grb in grb_dir_list:
+        if (vk_grb in grb_dir_list) & (vk_grb not in grbs_to_mask):
 
             try:
                 path_selected_units = path + vk_grb + '/LC/selected_units.txt'
@@ -806,9 +805,9 @@ def load_lc_fermi(path):
                       grb_data_file_path=path_lc)
             fermi_grb_list.append(grb)
 
-    print('Total number of GRB:           ', len(grb_dir_list))
-    print('GRB with no bs file:           ', len(grb_with_no_bs))
-    print('Number of GRB in VK catalogue: ', len(fermi_grb_list))
+    print('GRBs in the von Kienlin catalogue: ', len(vk_grbs))
+    print('GRBs without background-subtracted LC: ', len(grb_with_no_bs))
+    print('Loaded GRBs: ', len(fermi_grb_list))
 
     return fermi_grb_list
 
@@ -1233,27 +1232,6 @@ def two_pop_test(distr_1, distr_2, mode='AD'):
         #print('KS (p-value): ', pvalue)
     return pvalue 
     
-def reject_sampling_fermi(prob_dict):
-    """ 
-    Generate the number of detector used for a FERMI LC
-    sampling from a distribution
-    Input:
-    -prob_dict: dictionary containing the number of detector vs 
-     the probability of using that number of detectors
-    Output:
-    -num_dect: the number of detectors
-    """
-    num_dect = 0
-
-    bad_val = True
-
-    while bad_val:
-        num_dect = np.random.randint(min(prob_dict.keys()),max(prob_dict.keys())+1)
-        yprob    = np.random.rand()
-        if yprob <= prob_dict[num_dect]:
-            bad_val = False
-
-    return num_dect
     
 ################################################################################
 
@@ -3160,11 +3138,6 @@ def generate_GRBs(N_grb,                                                        
     while (cnt<N_grb):
         #generated += 1
 
-        if instrument == 'fermi':
-            eff_area_lc = eff_area * reject_sampling_fermi(fermi_prob_dict)
-        else:
-            eff_area_lc = eff_area
-
         lc = LC(### 7 parameters
                 mu=mu,
                 mu0=mu0,
@@ -3180,7 +3153,7 @@ def generate_GRBs(N_grb,                                                        
                 F_min=F_min,
                 ### instrument parameters:
                 res=bin_time,
-                eff_area=eff_area_lc,
+                eff_area=eff_area,
                 bg_level=bg_level,
                 ### other parameters:
                 instrument=instrument,
