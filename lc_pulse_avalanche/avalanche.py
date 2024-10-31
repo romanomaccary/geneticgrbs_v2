@@ -18,16 +18,18 @@ def generate_fluence(p, alpha, beta, F_break, F_min):
     """This function returns a fluence value F from the broken-power-law (BPL)
     distribution: 
     
-    f(F) = N * (F/F_break)**(-alpha) if F <  F_break;
-           N * (F/F_break)**(-beta)  if F >= F_break;
+    p(F) = (F_break/F_min)**(-alpha) * (F/F_break)**(-alpha) if F <  F_break;
+           (F_break/F_min)**(-alpha) * (F/F_break)**(-beta)  if F >= F_break;
     
     where alpha and beta are BPL indices, F_break is the break fluence, and 
-    F_min is minimum fluence. 
-    The idea is sampling the CDF, whose values are found between 0 and 1 by 
+    F_min is minimum fluence. p(F) is the so-called "survival function" (SF), 
+    which is the analogous of the log(N)-log(S) of the GRBs but for individual
+    pulses. 
+    The idea is sampling the SF, whose values are found between 0 and 1 by 
     definition, and turn them into the corresponding fluence values.
 
     Args:
-        p       (float): sampled value from the CDF;
+        p       (float): sampled value from the SF;
         alpha   (float): first BPL index;
         beta    (float): second BPL index;
         F_break (float): break fluence;
@@ -41,29 +43,6 @@ def generate_fluence(p, alpha, beta, F_break, F_min):
     p_0   = f_0*F_break*(1-R_min**(1-alpha))/(1-alpha)
     return np.piecewise(p, [p < p_0, p >= p_0], [lambda p: F_break*(p*(1-alpha)/(f_0*F_break)+R_min**(1-alpha))**(1/(1-alpha)), 
                                                  lambda p: F_break*((p-1)*(1-beta)/(f_0*F_break))**(1/(1-beta))])
-    
-# def generate_fluence(p, alpha, F_min):
-#     """This function returns a fluence value F from the power-law (PL)
-#     distribution: 
-    
-#     f(F) = N * (F/F_min)**(-alpha) if F >= F_break;
-    
-#     where alpha is the PL index, and F_min is minimum fluence. 
-#     The idea is sampling the CDF, whose values are found between 0 and 1 by 
-#     definition, and turn them into the corresponding fluence values.
-
-#     Args:
-#         p       (float): sampled value from the CDF;
-#         alpha   (float): first BPL index;
-#         beta    (float): second BPL index;
-#         F_break (float): break fluence;
-#         F_min   (float): minimum fluence.
-
-#     Returns:
-#         float: the corresponding fluence value F.
-#     """
-#     f_0 = (alpha-1)/F_min
-#     return F_min*((p*(1-alpha))/(f_0*F_min)+1)**(1/(1-alpha))
 
 def generate_peak_counts(generated_fluence, k_values):
     """This function turn fluence into peak counts through a conversion factor
@@ -92,6 +71,7 @@ k_values_swift = np.loadtxt(path_k_values_file_swift, unpack = True)
 
 path_k_values_file_fermi = "../lc_pulse_avalanche/log10_fluence_over_counts_Fermi_GBM.txt"
 k_values_fermi = np.loadtxt(path_k_values_file_fermi, unpack = True)
+
 #==============================================================================#
 #==============================================================================#
 
@@ -121,14 +101,14 @@ def generate_rand_from_pdf(pdf, x_grid, N=1):
 #pdf_peak_count_rates_batse = np.loadtxt(peak_count_rates_batse)
 #pdf_peak_count_rates_swift = np.loadtxt(peak_count_rates_swift)
 #
-#low_exp_batse  =  2
-#low_exp_swift  = -3
-#high_exp_batse =  6
-#high_exp_swift =  3
-#x_grid_batse = np.linspace(10**low_exp_batse, 10**high_exp_batse, 2000000)
-#x_grid_swift = np.linspace(10**low_exp_swift, 10**high_exp_swift, 2000000)
-#peak_count_rate_batse_sample = generate_rand_from_pdf(pdf_peak_count_rates_batse, x_grid_batse, N=100000) 
-#peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift, x_grid_swift, N=100000) 
+# low_exp_batse  =  2
+# low_exp_swift  = -3
+# high_exp_batse =  6
+# high_exp_swift =  3
+# x_grid_batse = np.linspace(10**low_exp_batse, 10**high_exp_batse, 2000000)
+# x_grid_swift = np.linspace(10**low_exp_swift, 10**high_exp_swift, 2000000)
+# peak_count_rate_batse_sample = generate_rand_from_pdf(pdf_peak_count_rates_batse, x_grid_batse, N=100000) 
+# peak_count_rate_swift_sample = generate_rand_from_pdf(pdf_peak_count_rates_swift, x_grid_swift, N=100000) 
 
 
 ### Load the (gaussian) errors of the Swift GRBs
@@ -245,7 +225,6 @@ class LC(object):
         elif self._instrument == 'fermi':
             self.k_values_path           = path_k_values_file_fermi
             self.k_values                = k_values_fermi
-            #self._peak_count_rate_sample = peak_count_rate_fermi_sample
         else:
             raise ValueError("Instrument not recognized...")
         
@@ -590,9 +569,9 @@ class LC(object):
         # self._ampl = ampl
         # self._peak_value = self._max_raw_pcr * self._ampl
 
-        # lc from avalanche scaled + Poissonian bg added (for BATSE)
+        # lc from avalanche scaled + Poissonian bg added (for BATSE and Fermi)
         # For BATSE, the variable `_plot_lc` contains the COUNTS (and not the count RATES!)
-        if self._instrument == 'batse':
+        if self._instrument == 'batse' or self._instrument == 'fermi':
             self._model           = self._raw_lc_counts                                 # model COUNTS 
             self._modelbkg        = self._model + (self._bg * self._res)                # model COUNTS + constant bgk counts
             self._plot_lc         = np.random.poisson(self._modelbkg).astype('float')   # total COUNTS (signal+noise) with Poisson
