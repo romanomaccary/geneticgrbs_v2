@@ -160,7 +160,7 @@ elif instrument=='fermi':
     t_i           = 0                            # [s]
     t_f           = 150                          # [s]
     eff_area      = instr_fermi['eff_area']      # 100 # effective area of instrument [cm2]
-    bg_level      = instr_fermi['bg_level']      # (400/eff_area_fermi) # background level [cnt/cm2/s]
+    bg_level      = instr_fermi['bg_level']      # 39.4 # background level [cnt/cm2/s]
     t90_threshold = instr_fermi['t90_threshold'] # 2 # [s] --> used to select only _long_ GRBs
     t90_frac      = 15
     sn_threshold  = instr_fermi['sn_threshold']  # 5 # signal-to-noise ratio
@@ -332,10 +332,23 @@ elif instrument=='fermi':
                                       t_f=t_f, 
                                       zero_padding=True)
     n_of_pulses_real = None
-    
+
+### Load the Fermi GRBs
+elif instrument=='fermi': 
+    # load all data
+    grb_list_real = load_lc_fermi(path=fermi_path)
+    # apply constraints
+    grb_list_real = apply_constraints(grb_list=grb_list_real,
+                                      bin_time=bin_time,
+                                      t90_threshold=t90_threshold,
+                                      t90_frac=t90_frac,
+                                      sn_threshold=sn_threshold,
+                                      t_f=t_f,
+                                      zero_padding=True)    
+    n_of_pulses_real = None    
 
 else:
-    raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
+    raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax", "fermi".')
 
 end_load_time = time.perf_counter()
 print('\n')
