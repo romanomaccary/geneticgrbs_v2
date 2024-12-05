@@ -172,8 +172,7 @@ res_swift           = 0.064
 eff_area_swift      = 1400
 bg_level_swift      = (10000/eff_area_swift)
 t90_threshold_swift = 2
-#sn_threshold_swift  = 15 # Old version
-sn_threshold_swift  = 5
+sn_threshold_swift  = 10
 instr_swift         = {
     "name"         : name_swift,
     "res"          : res_swift,
@@ -240,7 +239,7 @@ res_fermi           = 0.064
 eff_area_fermi      = 100 # effective area of a NaI detector at normal incidence 
 bg_level_fermi      = 39.4 # see `statistical_test.ipynb` for the computation 
 t90_threshold_fermi = 2
-sn_threshold_fermi  = 10
+sn_threshold_fermi  = 15
 instr_fermi         = {
     "name"         : name_fermi,
     "res"          : res_fermi,

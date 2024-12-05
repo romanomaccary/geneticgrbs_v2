@@ -27,11 +27,11 @@ if sys.getrecursionlimit()<rec_lim:
 #------------------------------------------------------------------------------#
 #user='external_user'
 #user='LB'
-user='AF'
+#user='AF'
 #user='bach'
 #user='gravity'
 #user='pleiadi'
-#user = 'MM'
+user = 'MM'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche')
@@ -108,115 +108,78 @@ if __name__ == '__main__':
     else:
         remove_instrument_path = False
         #----------------------------------------------------------------------#
-        instrument = 'batse'
-        #instrument = 'swift'
+        #instrument = 'batse'
+        instrument = 'swift'
         #instrument = 'sax'
         #instrument = 'sax_lr'
         #instrument = 'fermi'
         #----------------------------------------------------------------------#
-        N_grb = 100#5000 # number of simulated GRBs to produce per set of parameters
+        N_grb = 5000 # number of simulated GRBs to produce per set of parameters
         #----------------------------------------------------------------------#
-        # BATSE v37
+        # BATSE
         #----------------------------------------------------------------------#
         if instrument=='batse':
-            # Optimisation 1
-            #mu        =  0.52  
-            #mu0       =  0.95  
-            #alpha     =  18.34 
-            #delta1    =  -1.2  
-            #delta2    =  0.13  
-            #tau_min   =  0.03  
-            #tau_max   =  15.25
-            #4 BPL parameters.
-            #alpha_bpl = 0.9695826
-            #beta_bpl  = 1.0168259
-            #F_break   = 1.072224e-6
-            #F_min     = 2.662218e-8
-
-            # Optimisation 2
-            # mu        =  0.9523816521027724  
-            # mu0       =  0.9616094669410027
-            # alpha     =  4.349030063628309
-            # delta1    =  -1.1305211417477739
-            # delta2    =  0.10058120798985805 
-            # tau_min   =  0.010126594137917869 
-            # tau_max   =  29.07656948708962
-            # #4 BPL parameters.
-            # alpha_bpl = 0.6668871504178671
-            # beta_bpl  = 1.4744056983592801
-            # F_break   = 5.720842519776897e-07
-            # F_min     = 4.9985254341089906e-08
-
-            # Optimisation 3
-            #mu        =  0.98 
-            #mu0       =  1.05
-            #alpha     =  5.28
-            #delta1    =  -1.16
-            #delta2    =  0.1
-            #tau_min   =  0.02
-            #tau_max   =  32.35
-            #4 BPL parameters
-            #alpha_bpl = 0.74
-            #beta_bpl  = 1.42
-            #F_break   = 6e-07
-            #F_min     = 2.51e-08
-            
-            # Optimisation 4
-            #mu        =  0.97 
-            #mu0       =  1.29
-            #alpha     =  4.42
-            #delta1    =  -1.36
-            #delta2    =  0.05
-            #tau_min   =  0.03
-            #tau_max   =  28.99
-            #4 BPL parameters
-            #alpha_bpl = 0.82
-            #beta_bpl  = 1.49
-            #F_break   = 8.7e-07
-            #F_min     = 5.4e-08
-
-            # Optimisation 4
-            mu        =  0.97 
-            mu0       =  1.29
-            alpha     =  4.42
+            # Train best loss: 0.383
+            # Train average loss (last gen): 0.838
+            # SS96 parameters
+            mu        =  0.84
+            mu0       =  0.98
+            alpha     =  9.62
             delta1    =  -1.36
-            delta2    =  0.05
-            tau_min   =  0.03
-            tau_max   =  28.99
-            #4 BPL parameters
-            alpha_bpl = 0.82
-            beta_bpl  = 1.49
-            F_break   = 1e-8
-            F_min     = 1e-8
+            delta2    =  0.08
+            tau_min   =  0.02
+            tau_max   =  33.15
+            # Peak flux distribution parameters
+            alpha_bpl = 1.61
+            beta_bpl  = 2.19
+            F_break   = 6.18e-07
+            F_min     = 4.87e-08
+        #----------------------------------------------------------------------#
 
 
         #----------------------------------------------------------------------#
-        # Swift v38
+        # Swift 
         #----------------------------------------------------------------------#
         elif instrument=='swift':
-            #mu        = 0.8  
-            #mu0       = 1.62 
-            #alpha     = 16.99
-            #delta1    = -1.05
-            #delta2    = 0.21 
-            #tau_min   = 0.04 
-            #tau_max   = 17.15
-            
-            # Optimization 2
-            mu        = 0.94  
-            mu0       = 1.69 
-            alpha     = 4.86
-            delta1    = -1.33
-            delta2    = 0.14 
-            tau_min   = 0.06
-            tau_max   = 63.55
-            #4 BPL parameters
-            alpha_bpl = 0.99
-            beta_bpl  = 1.75
-            F_break   = 1.98e-07
-            F_min     = 8.45e-09
+            # Train best loss: 0.428
+            # Train average loss (last gen): 0.892
+            # SS96 parameters
+            mu        = 1.04
+            mu0       = 1.31 
+            alpha     = 5.62
+            delta1    = -1.19
+            delta2    = 0.04
+            tau_min   = 0.03
+            tau_max   = 58.8
+            # Peak flux distribution parameters
+            alpha_bpl = 1.97
+            beta_bpl  = 2.55
+            F_break   = 4.37e-07
+            F_min     = 1.14e-09
+        #----------------------------------------------------------------------#
+
 
         #----------------------------------------------------------------------#
+        # Fermi
+        #----------------------------------------------------------------------#
+        elif instrument=='fermi':
+            # SS96 parameters
+            # Train best loss: 0.537
+            # Train average loss (last gen): 0.937
+            mu        = 0.97
+            mu0       = 1.55
+            alpha     = 3.85
+            delta1    = -0.99
+            delta2    = 0.03
+            tau_min   = 0.03
+            tau_max   = 35.84
+            # Peak flux distribution parameters
+            alpha_bpl = 1.88
+            beta_bpl  = 2.58
+            F_break   = 2.88e-07
+            F_min     = 6.04e-08
+        #----------------------------------------------------------------------# 
+        
         else:
             raise ValueError('Assign to the variable "instrument" a correct name!')
 
@@ -250,15 +213,14 @@ if __name__ == '__main__':
     #     bg_level      = instr_sax_lr['bg_level']
     #     t90_threshold = instr_sax_lr['t90_threshold']
     #     sn_threshold  = instr_sax_lr['sn_threshold']
-    # elif instrument=='fermi':
-    #     res           = instr_fermi['res']
-    #     eff_area      = instr_fermi['eff_area']
-    #     bg_level      = instr_fermi['bg_level']
-    #     t90_threshold = instr_fermi['t90_threshold']
-    #     sn_threshold  = instr_fermi['sn_threshold']
-    #     t_f           = 50 # s
+    elif instrument=='fermi':
+        res           = instr_fermi['res']
+        eff_area      = instr_fermi['eff_area']
+        bg_level      = instr_fermi['bg_level']
+        t90_threshold = instr_fermi['t90_threshold']
+        sn_threshold  = instr_fermi['sn_threshold']
     else:
-        raise NameError('Variable "instrument" not defined properly; choose between: "batse" or "swift".')
+        raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", or "fermi".')
 
 
     ################################################################################
