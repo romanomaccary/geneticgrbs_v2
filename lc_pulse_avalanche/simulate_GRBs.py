@@ -144,18 +144,18 @@ if __name__ == '__main__':
             # Train best loss: 0.428
             # Train average loss (last gen): 0.892
             # SS96 parameters
-            mu        = 1.04
-            mu0       = 1.31 
-            alpha     = 5.62
-            delta1    = -1.19
+            mu        = 1.06
+            mu0       = 1.24 
+            alpha     = 7.03
+            delta1    = -1.37
             delta2    = 0.04
-            tau_min   = 0.03
-            tau_max   = 58.8
+            tau_min   = 0.02
+            tau_max   = 62.46
             # Peak flux distribution parameters
-            alpha_bpl = 1.97
-            beta_bpl  = 2.55
-            F_break   = 4.37e-07
-            F_min     = 1.14e-08
+            alpha_bpl = 1.89
+            beta_bpl  = 2.53
+            F_break   = 3.44e-07
+            F_min     = 1.41e-08
         #----------------------------------------------------------------------#
 
 
