@@ -29,11 +29,12 @@ SEED=None
 
 ################################################################################
 
-user='external_user'
+#user='external_user'
 #user='LB'
 #user='AF'
 #user='bach'
 #user='gravity'
+user = 'MM'
 if user=='bach':
     sys.path.append('/home/')
 elif user=='gravity':
@@ -44,6 +45,8 @@ elif user=='LB':
     rc('text', usetex=True)
 elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
+elif user == 'MM':
+    sys.path.append('/home/manuele/Documents/university/grbs/geneticgrbs/lc_pulse_avalanche')
 elif user=='external_user':
     sys.path.append('../lc_pulse_avalanche')
 else:
@@ -125,7 +128,8 @@ res_batse           = 0.064
 eff_area_batse      = 2025
 bg_level_batse      = 2.8 # see `statistical_test.ipynb` for the computation
 t90_threshold_batse = 2
-sn_threshold_batse  = 70
+#sn_threshold_batse  = 70 # Old version
+sn_threshold_batse  = 15
 instr_batse         = {
     "name"         : name_batse,
     "res"          : res_batse,
@@ -168,7 +172,7 @@ res_swift           = 0.064
 eff_area_swift      = 1400
 bg_level_swift      = (10000/eff_area_swift)
 t90_threshold_swift = 2
-sn_threshold_swift  = 15
+sn_threshold_swift  = 10
 instr_swift         = {
     "name"         : name_swift,
     "res"          : res_swift,
@@ -225,18 +229,17 @@ instr_sax_lr         = {
 }
 
 #------------------------------------------------------------------------------#
-# FERMI/GBM (counts (WIP))
+# FERMI/GBM NaI ONLY (counts (WIP))
 #------------------------------------------------------------------------------#
-# - Effective area: Average on all detectors, as reported by 
-#   https://sites.astro.caltech.edu/~srk/XC/Notes/GBM.pdf
-# - Background: TO BE ADDED
-# NB: solo gli ioduri di sodio
+# - Catalogue: von Kienlin et al. (2020) (https://iopscience.iop.org/article/10.3847/1538-4357/ab7a18/pdf)
+# - Effective area: Meegan et al. (2009) (https://iopscience.iop.org/article/10.1088/0004-637X/702/1/791/pdf) 
+# - Background: 39.4 (computed from the average of the background LC, see `statistical_test.ipynb`)
 name_fermi          = 'fermi'
 res_fermi           = 0.064
-eff_area_fermi      = 100 
-bg_level_fermi      = (400/eff_area_fermi) #TODO: TO BE CHECKED
+eff_area_fermi      = 100 # effective area of a NaI detector at normal incidence 
+bg_level_fermi      = 39.4 # see `statistical_test.ipynb` for the computation 
 t90_threshold_fermi = 2
-sn_threshold_fermi  = 5
+sn_threshold_fermi  = 15
 instr_fermi         = {
     "name"         : name_fermi,
     "res"          : res_fermi,
@@ -245,12 +248,6 @@ instr_fermi         = {
     "t90_threshold": t90_threshold_fermi,
     "sn_threshold" : sn_threshold_fermi
 }
-fermi_prob_dict     = {1: 0.02056555, 
-                       2: 0.23907455, 
-                       3: 0.40616967, 
-                       4: 0.18508997, 
-                       5: 0.13367609, 
-                       6: 0.01542416}
 
 
 ################################################################################
@@ -338,7 +335,8 @@ def evaluateDuration20(times, counts, t90=None, t90_frac=15, bin_time=None, filt
 
 ################################################################################
 
-def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter):
+def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter, 
+                   return_cnts=False):
     """
     Compute the S/N ratio between the total signal from a GRB and the background
     in a time interval equal to the GRB duration, as defined in Stern+96, i.e.,
@@ -354,9 +352,13 @@ def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter):
      - t90: T90 of the GRB;
      - bin_time: temporal bin size of the instrument [s];
      - filter: if True, apply savgol filter;
+     - return_cnts: if True, return also the total counts inside the T20% interval;
     Output:
      - s2n: signal to noise ratio;
      - T20: duration of the GRB at 20% level;
+     - T20_start: start time of the T20% interval;
+     - T20_stop: stop time of the T20% interval; 
+     - sum_grb_counts: total counts inside the T20% interval;
     """
     T20, tstart, tstop = evaluateDuration20(times=times, 
                                             counts=counts,
@@ -369,8 +371,10 @@ def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter):
     sum_grb_counts   = np.sum( counts[event_times_mask] )
     sum_errs         = np.sqrt( np.sum(errs[event_times_mask]**2) )
     s2n              = np.abs( sum_grb_counts/sum_errs )
-    return s2n, T20
-
+    if not(return_cnts):
+        return s2n, T20, tstart, tstop
+    else:
+        return s2n, T20, tstart, tstop, sum_grb_counts
 
 def evaluateGRB_SN_peak(counts, errs):
     """
@@ -393,6 +397,7 @@ def load_lc_batse(path):
     Load the BATSE light curves, and put each of them in an object inside
     a list. Since in the analysis we consider only the long GRBs, we load 
     only the light curves listed in the 'alltrig_long.list' file.
+    N.B. BATSE LC are already in counts.
     Input:
     - path: path to the folder that contains a file for each BATSE GRB and the
             file containing all the T90s;
@@ -404,6 +409,34 @@ def load_lc_batse(path):
     all_grb_list_batse = [grb_num.rstrip('\n') for grb_num in open(path+long_list_file).readlines()]
     # load T90s
     t90data = np.loadtxt(path+'T90_full.dat')
+    # Bad GRBs
+    GRBs_to_mask = {
+        "01742": (   0, 250),
+        "02344": (-100, 245),
+        "02898": ( -50, 450),
+        "05474": (-100, 200),
+        "01924": ( -50, 100),
+        "00753": (-100, 100),
+        "02663": (-100, 100),
+        "02863": (-100, 200),
+        "02877": (-100, 250),
+        "02922": ( -45, 400),
+        "03084": (-100, 100),
+        "03611": (-100, 100),
+        "03637": (-100, 100),
+        "05635": (-100, 100),
+        "05867": (-100, 100),
+        "06090": (-100, 100),
+        "06096": (-100, 100),
+        "06216": (-100, 100),
+        "06273": (-100, 100),
+        "06400": (-100, 100),
+        "06422": ( -50, 100),
+        "07219": (-100, 150),
+        "07250": (-150, 100),
+        "07404": (-100, 100),
+        "07997": (-100, 100)
+    }
 
     grb_list_batse = []
     grb_not_found  = []
@@ -417,10 +450,19 @@ def load_lc_batse(path):
             # print(grb_name, ' not found!')
             grb_not_found.append(grb_name)
             continue
+        
+        if grb_name in GRBs_to_mask.keys():
+            start      = GRBs_to_mask[grb_name][0]
+            stop       = GRBs_to_mask[grb_name][1]
+            times_mask = np.logical_and(times >= start, times <= stop)
+            times      = np.float32(times[times_mask])
+            counts     = np.float32(counts[times_mask])
+            errs       = np.float32(errs[times_mask]) 
+        else: 
+            times  = np.float32(times)
+            counts = np.float32(counts)
+            errs   = np.float32(errs)
         t90    = t90data[t90data[:,0] == float(grb_name),1]
-        times  = np.float32(times)
-        counts = np.float32(counts)
-        errs   = np.float32(errs)
         t90    = np.float32(t90)
         grb    = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs,
                      t90=t90, grb_data_file_path=path+grb_name+'_all_bs.out')
@@ -439,6 +481,8 @@ def load_lc_swift(path):
     a list. Since in the analysis we consider only the _long_ GRBs, we load 
     only the light curves listed in the 'merged_lien16-GCN_long_noshortEE_t90.dat'
     file.
+    N.B. Swift LC are in counts/s, so we need to multiply them by the resolution
+    to get the counts.
     Input:
     - path: path to the folder that contains a folder for each Swift GRB named
             with the name of the GRB, and the file containing all the T90s;
@@ -457,6 +501,9 @@ def load_lc_swift(path):
             all_grb_list_swift.append(grb_name)
             t90_dic[grb_name] = np.float32(t90)
 
+    # bin time of Swift
+    res = instr_swift['res']
+
     grb_list_swift = []
     grb_not_found  = []
     #for grb_name in tqdm(all_grb_list_swift):
@@ -469,8 +516,8 @@ def load_lc_swift(path):
             continue
         t90    = t90_dic[grb_name]
         times  = np.float32(times)
-        counts = np.float32(counts)
-        errs   = np.float32(errs)
+        counts = np.float32(counts) * res # convert from counts/s to counts
+        errs   = np.float32(errs)   * res # convert from counts/s to counts
         t90    = np.float32(t90)
         grb    = GRB(grb_name=grb_name, times=times, counts=counts, errs=errs, 
                      t90=t90, grb_data_file_path=path+grb_name+'/'+'all_3col.out')
@@ -710,39 +757,56 @@ def load_lc_sax_lr(path):
 ################################################################################
 
 def load_lc_fermi(path):
-    grb_dir_list = os.listdir(path+'/DATA')
+    # Load the data from von Kienlin catalogue
+    path_vk_catalogue = '../lc_pulse_avalanche/vk_catalog_list.txt'
+    vk_grbs, vk_t90s  = np.loadtxt(path_vk_catalogue, dtype=str, unpack=True)
+    vk_t90s           = vk_t90s.astype(float)
+    
+    # List the Fermi/GBM GRBs
+    grb_dir_list = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
+    grb_dir_list.sort()
+
+    # Bad GRBs (to be checked)
+    grbs_to_mask = ['bn130206482',
+                    'bn140603476',
+                    'bn160720275',
+                    'bn180610377']
+    
+    # Lists
     fermi_grb_list = []
-    t90_info, grb_trig_name = np.genfromtxt(path+'fermi_grb_infos.txt', usecols = (5,8), comments='#', delimiter='|', unpack = True, dtype='str')
-    t90_info = t90_info.astype('float64')
-    grb_with_no_bs = 0
+    grb_with_no_bs = []
 
-    for grb_dir in grb_dir_list:
-        data_files = os.listdir(path+'/DATA/'+grb_dir+'/LC')
+    for vk_grb, vk_t90 in zip(vk_grbs, vk_t90s):
+        if (vk_grb in grb_dir_list) & (vk_grb not in grbs_to_mask):
 
-        try:
-            lc_file_name = data_files[['_bs' in fpath for fpath in data_files].index(True)]
-        except ValueError:
-            grb_with_no_bs += 1
-            continue
+            try:
+                path_selected_units = path + vk_grb + '/LC/selected_units.txt'
+                selected_units      = np.loadtxt(path_selected_units, dtype=str, ndmin=1)
+                path_lc             = path + vk_grb + '/LC/' + vk_grb + '_LC_64ms_'
+                for unit in selected_units:
+                    path_lc += unit + '_'
+                path_lc += 'bs.txt'
+            except:
+                grb_with_no_bs.append(vk_grb)
+                continue
+            
+            try:
+                times, counts, errs = np.loadtxt(path_lc, unpack=True)
+            except:
+                grb_with_no_bs.append(vk_grb)
+                continue
 
-        lc_file_path = path+'/DATA/'+grb_dir+'/LC/'+lc_file_name
+            grb = GRB(grb_name=vk_grb, 
+                      times=times,
+                      counts=counts,
+                      errs=errs,
+                      t90=vk_t90,
+                      grb_data_file_path=path_lc)
+            fermi_grb_list.append(grb)
 
-        times, counts, errs = np.loadtxt(lc_file_path, unpack = True)
-        grb_name            = grb_dir
-        grb_data_file_path  = lc_file_path
-
-        t90 = t90_info[np.where(grb_trig_name == grb_name)[0][0]]
-        grb = GRB(grb_name=grb_name, 
-                  times=times, 
-                  counts=counts, 
-                  errs=errs,
-                  t90=t90, 
-                  grb_data_file_path=grb_data_file_path)
-        fermi_grb_list.append(grb)
-
-    print('Total number of GRB: ', len(grb_dir_list))
-    print('GRB with no bs file: ', grb_with_no_bs)
-    print('Number of accepted GRB: ', len(fermi_grb_list))
+    print('GRBs in the von Kienlin catalogue: ', len(vk_grbs))
+    print('GRBs without background-subtracted LC: ', len(grb_with_no_bs))
+    print('Loaded GRBs: ', len(fermi_grb_list))
 
     return fermi_grb_list
 
@@ -802,7 +866,8 @@ def load_lc_sim(path):
 ################################################################################
 
 def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, 
-                      t90_frac=15, sn_distr=False, filter=True, verbose=True):
+                      t90_frac=15, sn_distr=False, filter=True, 
+                      zero_padding=False, t_cut=200., verbose=True):
     """
     Given as input a list of GBR objects, the function outputs a list containing
     only the GRBs that satisfy the following constraint:
@@ -814,9 +879,12 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
     - sn_threshold;
     - bin_time: temporal bin size of the instrument [s];
     - t_f: time after the peak that we need the signal to last [s];
-    - sn_distr: if True, returns and export also the distribution of the s2n of  
-                _only_ the GRBs that have passed the constraint selection;
-    - filter: if True, is applies a savgol filter before computing the S2N;
+    - sn_distr: if True, returns and export also the distribution of the s2n 
+                (and the total counts inside the T20%) of _only_ the GRBs that 
+                have passed the constraint selection;
+    - filter: if True, it applies a savgol filter before computing the S2N;
+    - zero_padding: if True, pads to zero outside the 5/3 of the T20% interval;
+    - t_cut: time after the peak at which the zero padding stops.
     Output:
     - good_grb_list: list of GRB objects, where each one is a GRB that satisfies
                      the 3 constraints described above;
@@ -825,27 +893,47 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
     """
     good_grb_list = []
     sn_levels     = {}
+    total_cnts    = {}
     grb_with_neg_t20 = 0
     for grb in grb_list:
+        # print(grb.name)
         times   = np.float32(grb.times)
         counts  = np.float32(grb.counts)
         errs    = np.float32(grb.errs)
         t90     = np.float32(grb.t90)
         i_c_max = np.argmax(counts)
         try:
-            s_n, T20 = evaluateGRB_SN(times=times, 
-                                      counts=counts, 
-                                      errs=errs, 
-                                      t90=t90,
-                                      t90_frac=t90_frac,
-                                      bin_time=bin_time,
-                                      filter=filter)
+            s_n, T20, T20_start, T20_stop, sum_grb_counts = evaluateGRB_SN(times=times, 
+                                                                           counts=counts, 
+                                                                           errs=errs, 
+                                                                           t90=t90,
+                                                                           t90_frac=t90_frac,
+                                                                           bin_time=bin_time,
+                                                                           filter=filter,
+                                                                           return_cnts=True)
         except AssertionError:
             #remove GRB if the t20% is negative
             grb_with_neg_t20 += 1
             s_n = 0
         # if sn_distr:
         #     sn_levels[grb.name] = s_n
+        
+        if (zero_padding):
+            padding_mask         = np.logical_or(times<T20_start-T20/3., 
+                                                 times>T20_stop +T20/3.)
+            counts[padding_mask] = 0.
+            errs[padding_mask]   = 0.
+            t_max                = np.max(times)
+            if(t_max<=t_cut):
+                missing_bins = np.zeros(int((t_cut-t_max)/bin_time)+1)
+                counts       = np.concatenate([counts, missing_bins])
+                errs         = np.concatenate([errs,   missing_bins])
+                times        = np.linspace(min(times), t_cut, len(counts))
+                
+                # re-define times, counts, and errors after the padding 
+                grb.times  = times
+                grb.counts = counts
+                grb.errs   = errs         
 
         cond_1 = t90>t90_threshold
         cond_2 = s_n>sn_threshold
@@ -855,7 +943,8 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
             grb.t20 = T20
             good_grb_list.append(grb)
             if sn_distr:
-                sn_levels[grb.name] = s_n
+                sn_levels[grb.name]  = s_n
+                total_cnts[grb.name] = sum_grb_counts
 
     if verbose:
         print("Total number of input GRBs: ", len(grb_list))
@@ -865,9 +954,9 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
     # Export the s2n distribution of the GRBs that passed the constraints
     if sn_distr:
         with open('./sn_distr.txt', 'w') as f:
-            print("# grb_name    s2n", file=f)
-            for name, value in sn_levels.items():
-                print(f"{name}    {value}", file=f)
+            print("# grb_name    s2n    total_cnts", file=f)
+            for key in sn_levels:
+                print(f"{key}    {sn_levels[key]}    {total_cnts[key]}", file=f)
 
     if sn_distr:
         return good_grb_list, sn_levels
@@ -1127,61 +1216,64 @@ def compute_kde_log_duration(duration_list, x_left=-2, x_right=5, h_opt=0.09):
 
 ################################################################################
 
-def AD_2pop_test(distr_1, distr_2):
+def two_pop_test(distr_1, distr_2, mode='AD'):
     """ 
-    Perform AD 2-population statistical tests.
+    Perform a 2-population statistical compatibility test (AD or KS).
     Returns the p-value of the test.
     """
-    res_ad = anderson_ksamp([distr_1,distr_2])
-    #print('AD (p-value): ', res_ad.significance_level)
-    return res_ad.significance_level 
-
-def KS_2pop_test(distr_1, distr_2):
-    """ 
-    Perform KS 2-population statistical tests.
-    Returns the p-value of the test.
-    """
-    res_ks = ks_2samp(distr_1,distr_2)
-    #print('KS (p-value): ', res_ks.pvalue)
-    return res_ks.pvalue 
-
+    if mode=='AD':
+        res_ad = anderson_ksamp([distr_1,distr_2])
+        pvalue = res_ad.significance_level
+        #print('AD (p-value): ', pvalue)
+    elif mode=='KS':
+        res_ks = ks_2samp(distr_1,distr_2)
+        pvalue = res_ks.pvalue
+        #print('KS (p-value): ', pvalue)
+    return pvalue 
     
-def reject_sampling_fermi(prob_dict):
-    """ 
-    Generate the number of detector used for a FERMI LC
-    sampling from a distribution
-    Input:
-    -prob_dict: dictionary containing the number of detector vs 
-     the probability of using that number of detectors
-    Output:
-    -num_dect: the number of detectors
-    """
-    num_dect = 0
-
-    bad_val = True
-
-    while bad_val:
-        num_dect = np.random.randint(min(prob_dict.keys()),max(prob_dict.keys())+1)
-        yprob    = np.random.rand()
-        if yprob <= prob_dict[num_dect]:
-            bad_val = False
-
-    return num_dect
     
 ################################################################################
 
-def loss_AD(p_AD):
+def loss_compatibility_test(p, alpha=0.05, rescale_factor=1):
     """
-    Since the p-value of the Anderson-Darling test caps at 25%, then we can 
-    rescale the sigmoid in such a way that it reaches the value 0.999 at x=0.25:
-        y = expit(x) = 1/(1+exp(-x))
-        x = - log((1/y)-1),    with y=0.99
+    Calculate the loss for a compatibility test based on a p-value.
+    
+    Parameters:
+    p (float): The p-value of the compatibility test.
+    rescale_factor (float, optional): A rescaling factor for the loss. Default is 1.
+    alpha (float, optional): The significance level for the compatibility test. Default is 0.05.
+    
+    Returns:
+    The calculated loss.
     """
-    perc_cap  = 0.25
-    threshold = 0.999
-    x_ = - np.log((1./threshold)-1)
-    y  = 1-expit(p_AD*(x_/perc_cap))
-    return y
+    if p >= alpha:
+        loss = 0
+    elif p <= 1e-9:
+        loss = 1 - np.log10(1e-9)
+    else:
+        loss = 1 - np.log10(p)
+
+    return loss / rescale_factor
+
+# Run this to see a plot of the behaviour of this function
+if False:
+    # Generate x values in log space
+    x = np.logspace(-10, 0, 10000)
+    # Compute corresponding y values
+    y = np.array([loss_compatibility_test(xi) for xi in x])
+    # Plot the points
+    plt.figure(figsize=(8, 6))
+    plt.plot(x, y, color='k', label='Loss function')
+    plt.axvline(1e-9,  color='r', linestyle='--', label=r'$p=10^{-9}$')
+    plt.axvline(0.05,  color='g', linestyle='--', label=r'$p=0.05$')
+    plt.axvline(1,     color='b', linestyle='--', label=r'$p=1$')
+    plt.xlabel(r'$p$-value', size=14)
+    plt.ylabel(r'Loss', rotation=90, size=14)
+    plt.title('Loss S/N distribution', size=16)
+    plt.xscale('log')  # Set x-axis to logarithmic scale
+    plt.grid(True)
+    plt.legend(fontsize=12)
+    plt.show()
 
 ################################################################################
 
@@ -1189,9 +1281,10 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
                  averaged_fluxes_cube, averaged_fluxes_cube_sim,
                  acf,                  acf_sim,
                  duration,             duration_sim,
-                 n_of_pulses,          n_of_pulses_sim,   
-                 return_individual_loss=False, test_pulse_distr=False,
-                 log=False, verbose=False):
+                 n_of_pulses,          n_of_pulses_sim,
+                 sn_distrib_real=[],   sn_distrib_sim=[],   
+                 test_sn_distr=False,  test_pulse_distr=False,
+                 return_individual_loss=False, log=False, verbose=False):
     """
     Compute the loss to be used for the optimization in the Genetic Algorithm.
     Input:
@@ -1210,46 +1303,62 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         # 'duration_sim' is already in log scale, since it is the output of compute_kde_log_duration()
 
     # w_i = \frac{1/L_{\mathrm{tot}}^{(i)}}{\sum_{i=1}^{4} 1/L_{\mathrm{tot}}^{(i)}} 
-    #
     # L_{tot}^{(1)} = 
     # L_{tot}^{(2)} = 
     # L_{tot}^{(3)} = 
     # L_{tot}^{(4)} = 
-    #
-    # w1 = 
-    # w2 = 
-    # w3 = 
-    # w4 = 
+    # L_{tot}^{(5)} = 
+    # L_{tot}^{(6)} = 
     
     w1 = 1.
     w2 = 1.
     w3 = 1.
     w4 = 1.
-    w5 = 0
+    w5 = 1.
+    w6 = 0.
 
     l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
     l2_loss_fluxes_cube = np.sqrt( np.sum(np.power((averaged_fluxes_cube-averaged_fluxes_cube_sim),2)) )
     l2_loss_acf         = np.sqrt( np.sum(np.power((acf-acf_sim),2)) )
     l2_loss_duration    = np.sqrt( np.sum(np.power((duration-duration_sim),2)) )
-    l_AD                = 0.
+    l_sn_distr          = 0.
+    l_pulse_distr       = 0.
+    
+    ### Compute the loss associated to the difference in S/N distributions (real vs sim)
+    if test_sn_distr:
+        # Perform the AD 2-populations compatibility test between:
+        # - la distribuzione di S2N dei dati reali
+        # - la distribuzione di S2N dei dati simulati
+        p_sn_distr = two_pop_test(distr_1=sn_distrib_real, 
+                                  distr_2=sn_distrib_sim,
+                                  mode='KS')
+        l_sn_distr = loss_compatibility_test(p=p_sn_distr)
+
+    ### Compute the loss associated to the difference in number-of-peaks distribution (real vs sim)
     if test_pulse_distr:
-        nbin=20
+        raise Exception('Being a discrete distribution, we cannot use AD/KS-test for the compatibility test (use chi^2 instead!)')
+        ### WRONG! We have to use the !
         # Perform the AD 2-populations compatibility test between:
         # - la distribuzione del numero di impulsi calcolata da MEPSA (su dati reali di BATSE)
-        # - la distribuzione del numero di impulsi calcolato con il nostro codice (sulla simulazione corrente)
-        n_mepsa_real, bins = np.histogram(n_of_pulses,     bins=nbin, density=True)
-        n_peaks_sim,     _ = np.histogram(n_of_pulses_sim, bins=nbin, density=True)
-        p_AD               = AD_2pop_test(distr_1=n_mepsa_real, 
-                                          distr_2=n_peaks_sim)
-        l_AD               = loss_AD(p_AD=p_AD)
-    # total loss
+        # - la distribuzione del numero di impulsi calcolato con il nostro codice (sulla simulazione corrente)        
+        # p_pulse_distr = two_pop_test(distr_1=n_of_pulses, 
+        #                              distr_2=n_of_pulses_sim,
+        #                              mode='AD')
+        # l_pulse_distr = loss_compatibility_test(p=p_pulse_distr)
+    
+    ### Total loss
     l2_loss = w1 * l2_loss_fluxes      + \
               w2 * l2_loss_fluxes_cube + \
               w3 * l2_loss_acf         + \
               w4 * l2_loss_duration    + \
-              w5 * l_AD   
-    # divide to obtain the _average_ value of the loss
-    if test_pulse_distr:
+              w5 * l_sn_distr          + \
+              w6 * l_pulse_distr
+    # Divide to obtain the _average_ value of the loss
+    if test_sn_distr and test_pulse_distr:
+        l2_loss *= (1./6)
+    elif test_pulse_distr:
+        l2_loss *= (1./5)
+    elif test_sn_distr:
         l2_loss *= (1./5)
     else:
         l2_loss *= (1./4)
@@ -1265,8 +1374,12 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
         pass
                           
     if return_individual_loss:
-        if test_pulse_distr:
-            return l2_loss, l2_loss_fluxes, l2_loss_fluxes_cube, l2_loss_acf, l2_loss_duration, l_AD
+        if test_sn_distr and test_pulse_distr:
+            return l2_loss, l2_loss_fluxes, l2_loss_fluxes_cube, l2_loss_acf, l2_loss_duration, l_sn_distr, l_pulse_distr
+        elif test_sn_distr:
+            return l2_loss, l2_loss_fluxes, l2_loss_fluxes_cube, l2_loss_acf, l2_loss_duration, l_sn_distr
+        elif test_pulse_distr:
+            return l2_loss, l2_loss_fluxes, l2_loss_fluxes_cube, l2_loss_acf, l2_loss_duration, l_pulse_distr
         else:
             return l2_loss, l2_loss_fluxes, l2_loss_fluxes_cube, l2_loss_acf, l2_loss_duration
     else:
@@ -2629,14 +2742,15 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 
 ################################################################################
 
-def generate_GRBs(N_grb,                                               # number of simulated GRBs to produce
-                  mu, mu0, alpha, delta1, delta2, tau_min, tau_max,    # 7 parameters
-                  instrument, bin_time, eff_area, bg_level,            # instrument parameters
-                  sn_threshold, t_f,                                   # constraint parameters 
-                  t90_threshold, t90_frac=15, filter=True,             # constraint parameters
-                  export_files=False, export_path='None',              # other parameters
-                  n_cut=2500, with_bg=False, seed=None,                # other parameters
-                  remove_instrument_path=False, test_pulse_distr=False # other parameters
+def generate_GRBs(N_grb,                                                              # number of simulated GRBs to produce
+                  mu, mu0, alpha, delta1, delta2, tau_min, tau_max,                   # 7 parameters
+                  instrument, bin_time, eff_area, bg_level,                           # instrument parameters
+                  sn_threshold, t_f,                                                  # constraint parameters 
+                  t90_threshold, t90_frac=15, filter=True,                            # constraint parameters
+                  export_files=False, export_path='None',                             # other parameters
+                  n_cut=2500, with_bg=False, seed=None,                               # other parameters
+                  remove_instrument_path=False, test_pulse_distr=False,               # other parameters
+                  alpha_bpl=0.5, beta_bpl=1.5, F_break=1e-6, F_min=1e-10              # 5 parameters of the BPL
                   ):
     """
     This function generates a list of GRBs using the pulse-avalanche stochastic
@@ -2655,6 +2769,11 @@ def generate_GRBs(N_grb,                                               # number 
     - delta2:
     - tau_min:
     - tau_max:
+    ### 5 parameters of BPL
+    - alpha_bpl:
+    - beta_bpl:
+    - F_break:
+    - F_min:
     ### instrument parameters
     - instrument:
     - res:
@@ -2763,99 +2882,7 @@ def generate_GRBs(N_grb,                                               # number 
             savefile.write('{0} {1} {2} {3}\n'.format(times[i], lc[i], err_lc[i], T90))
         savefile.close()
 
-    def count_significative_pulses(lc, verbose=False):
-        """
-        Count the number of significative pulses in a simulated LC. A pulse is significative
-        if its peak rate is bigger than 50*(FWHM)**-0.6 counts/64 ms, where FWHM is the 
-        FWHM of the peak.
-        Input:
-        - lc: object that contains the light curve;
-        Output:
-        - n_of_sig_pulses: number of significative pulses;
-        - n_of_total_pulses: number of total pulses generated for the LC;
-        """
-        pulses_param_list = lc._lc_params
-        ampl              = lc._ampl
-        eff_area          = lc._eff_area
-
-        n_of_sig_pulses      = 0
-        significative_pulses = []
-        n_of_total_pulses    = len(pulses_param_list)
-
-        delay_factor   = 2 
-        minimum_pulse_delay = delay_factor * bin_time
-        last_t_delay   = 0
-        last_fwhm      = 0
-        bluring_thresh = 3 
-
-        minimum_peak_rate_list   = []
-        peak_rate_list           = []
-        current_delay_list       = []
-        minimum_pulse_delay_list = []
-
-        for el, pulse in enumerate(pulses_param_list):
-            # Reads parameters of the pulse and generates it
-            norm    = pulse['norm']
-            t_delay = pulse['t_delay']
-            tau     = pulse['tau']
-            tau_r   = pulse['tau_r']
-
-            pulse_curve = lc.norris_pulse(norm, t_delay, tau, tau_r) * ampl * eff_area
-
-            #Evaluate delay with previous pulse
-            current_delay = t_delay - last_t_delay
-
-            # Find peak rate
-            peak_rate = np.max(pulse_curve)
-
-            # Evaluate the FWHM of the pulse (analytical evaluation)
-            t_1 = t_delay - tau_r * np.sqrt(np.log(2))
-            t_2 = t_delay + tau   * np.log(2)
-            peak_fwhm = t_2 - t_1
-
-            if verbose:
-                print('----')
-                print('Delay time: ',      t_delay,   's')
-                print('Pulse peak rate: ', peak_rate, 'counts/64 ms')
-                print('Pulse FWHM: ',      peak_fwhm, 's' )
-
-            # Evaluate the minimum peak rate for the pulse to be significative (CG formula) and check if the peak rate of the pulse is above the minimum  
-            minimum_peak_rate = 25 * peak_fwhm**(-0.6)
-            if peak_rate >= minimum_peak_rate:
-                if el==0:
-                    # for the very first pulse, the t_delay should be infinite,
-                    # so the constraint 'current_delay > minimum_pulse_delay' is
-                    # always satisfied!
-                    significative_pulses.append(pulse)
-                    n_of_sig_pulses += 1
-                    last_t_delay     = t_delay
-                    last_fwhm        = peak_fwhm
-                elif current_delay > minimum_pulse_delay:
-                    #bluring_level = current_delay / np.sqrt(peak_fwhm**2 + last_fwhm**2)
-                    #if bluring_level >= bluring_thresh:
-                    significative_pulses.append(pulse)
-                    n_of_sig_pulses += 1
-                    last_t_delay     = t_delay
-                    last_fwhm        = peak_fwhm
-
-            minimum_peak_rate_list.append(minimum_peak_rate)
-            peak_rate_list.append(peak_rate)
-            current_delay_list.append(current_delay)
-            minimum_pulse_delay_list.append(minimum_pulse_delay)
-
-        lc._minimum_peak_rate_list   = minimum_peak_rate_list
-        lc._peak_rate_list           = peak_rate_list
-        lc._current_delay_list       = current_delay_list
-        lc._minimum_pulse_delay_list = minimum_pulse_delay_list
-
-        if verbose:
-            print('-------------------------------------')
-            print('Number of generated pulses: ', len(pulses_param_list))
-            print('Number of significative pulses: ', n_of_sig_pulses)
-            print('-------------------------------------')
-
-        return n_of_sig_pulses, n_of_total_pulses, significative_pulses
-
+    
     #################### NEW VERSION WIP #################################
 
     def count_significative_pulses_ver2(lc, verbose=False, sn_min = 15):
@@ -3094,11 +3121,6 @@ def generate_GRBs(N_grb,                                               # number 
 
 ###################################################################################
 
-    def getPulsesTimeDistance(pulses):
-        delay_times    = np.sort(np.array([pulse['t_delay'] for pulse in pulses]))
-        time_distances = np.diff(delay_times)
-        return time_distances
-
     # check that the parameters are in the correct range
     assert delta1<0
     assert delta2>=0
@@ -3110,13 +3132,10 @@ def generate_GRBs(N_grb,                                               # number 
     cnt=0
     grb_list_sim         = []
     pulse_time_distances = []
+    #generated = 0
 
     while (cnt<N_grb):
-
-        if instrument == 'fermi':
-            eff_area_lc = eff_area * reject_sampling_fermi(fermi_prob_dict)
-        else:
-            eff_area_lc = eff_area
+        #generated += 1
 
         lc = LC(### 7 parameters
                 mu=mu,
@@ -3126,9 +3145,14 @@ def generate_GRBs(N_grb,                                               # number 
                 delta2=delta2,
                 tau_min=tau_min, 
                 tau_max=tau_max,
+                ### 5 parameters of BPL
+                alpha_bpl=alpha_bpl,
+                beta_bpl=beta_bpl,
+                F_break=F_break,
+                F_min=F_min,
                 ### instrument parameters:
                 res=bin_time,
-                eff_area=eff_area_lc,
+                eff_area=eff_area,
                 bg_level=bg_level,
                 ### other parameters:
                 instrument=instrument,
@@ -3150,6 +3174,7 @@ def generate_GRBs(N_grb,                                               # number 
             #sig_pulses = count_significative_pulses(lc, verbose=False)
             n_of_sig_pulses, \
             n_of_total_pulses, \
+            #To be deleted ####################
             sig_pulses = count_significative_pulses_ver2(lc, verbose=False)
             lc._minimum_peak_rate_list   = None
             lc._peak_rate_list           = None
@@ -3236,7 +3261,7 @@ def generate_GRBs(N_grb,                                               # number 
             grb_list_sim.append(grb)
             cnt+=1
         del(lc)
-
+    #print('Total Generated: ', generated)
     return grb_list_sim
 
 ################################################################################
@@ -3303,5 +3328,48 @@ def save_config(variables, file_name=None):
         with open(file_name, 'w') as f:
             for name, value in variables.items():
                 print(f"{name} = {value}", file=f)
+
+###############################################################################
+
+def rebin_histogram(bin_edges, data, n_min=20):
+    """
+    Rebins the histogram so that each bin contains at least 20 data points.
+    We start with a predefined set of bins (e.g., we decide the have nbins=15
+    bins, so that bin_edges will be: 
+        bin_edges = np.linspace(min(data), max(data), nbins+1)
+    Every time in a predefined bin there are less than n_min=20 counts, we 
+    extend the right endpoint of the current bin towards the next bin. We do
+    this iteratively until the current (enlarged) bin has >= n_min=20 points.
+    The last points on the right that do not form a complete bin of n_min is
+    included in the bin immediately before (which then becomes the last one).
+    Args:
+        - bin_edges: A list of the bin endpoints;
+        - data: The data to be rebinned;
+    Returns:
+        - new_bin_edges: A list of the new bin edges;
+        - new_bin_counts: A list of the new bin counts;
+    """
+  
+    data      = np.array(data)
+    bin_edges = np.array(bin_edges)
+    new_bin_counts = []
+    new_bin_edges  = []
+    new_bin_edges.append(bin_edges[0])
+    for i in range(len(bin_edges)-1):
+        bin_count = len( data[(new_bin_edges[-1]<=data) & (data<bin_edges[i+1])] )
+        if (bin_count >= n_min):
+            new_bin_edges.append(bin_edges[i+1])
+            new_bin_counts.append(bin_count)
+
+    if (np.sum(new_bin_counts)!=len(data)):
+        # if the last data did not form a bin with len>20, 
+        # then we incorporate in the last complete (n>20) bin
+        new_bin_counts[-1] += len(data[data>=new_bin_edges[-1]])
+        new_bin_edges[-1]   = bin_edges[-1]
+    new_bin_counts = np.array(new_bin_counts).astype('int')
+
+    assert np.sum(new_bin_counts) == len(data), "The number of counts in the rebinned histogram is different from the initial one!" 
+    
+    return new_bin_edges, new_bin_counts
 
 ###############################################################################

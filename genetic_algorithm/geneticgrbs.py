@@ -44,6 +44,7 @@ print_time=True
 #user='bach'
 user='gravity'
 #user='pleiadi'
+#user = 'MM'
 if user=='bach':
     # library paths
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
@@ -54,12 +55,17 @@ if user=='bach':
     sax_path   = '/astrodata/guidorzi/BeppoSAX_GRBM/'
 elif user=='gravity':
     # library paths
-    sys.path.append('/home/bazzanini/PYTHON/genetic3/statistical_test')
-    sys.path.append('/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche')
+    sys.path.append('/home/bazzanini/PYTHON/genetic3_5metrics/statistical_test')
+    sys.path.append('/home/bazzanini/PYTHON/genetic3_5metrics/lc_pulse_avalanche')
+    sys.path.append('/home/ferro/lc_pulse_avalance/statistical_test')
+    sys.path.append('/home/ferro/lc_pulse_avalance/lc_pulse_avalanche')
+    sys.path.append('/home/maistrello/geneticgrbs/statistical_test')
+    sys.path.append('/home/maistrello/geneticgrbs/lc_pulse_avalanche')
     # real data
     batse_path = '/astrodata/guidorzi/CGRO_BATSE/'
     swift_path = '/astrodata/guidorzi/Swift_BAT/'
     sax_path   = '/astrodata/guidorzi/BeppoSAX_GRBM/'
+    fermi_path = '/astrodata/romain/GBM_LC_repository/data/' 
 elif user=='pleiadi':
     # library paths
     sys.path.append('/beegfs/mbulla/genetic_grbs/genetic/lc_pulse_avalanche/statistical_test')
@@ -78,12 +84,19 @@ elif user=='LB':
     sax_path   = '/Users/lorenzo/Documents/UNIVERSITA/Astrophysics/PYTHON/DATA/BeppoSAX_GRBM/'
 elif user=='AF':
     # libraries
-    sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/statistical_test')
-    sys.path.append('C:/Users/Lisa/Documents/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
+    sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/statistical_test')
+    sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
     # real data
-    batse_path = 'E:/grb_to_test/CGRO_BATSE/'
-    swift_path = 'E:/grb_to_test/Swift_BAT/'
-    sax_path   = 'E:/grb_to_test/BeppoSAX_GRBM/'
+    batse_path = 'D:/grb_to_test/CGRO_BATSE/'
+    swift_path = 'D:/grb_to_test/Swift_BAT/'
+    sax_path   = 'D:/grb_to_test/BeppoSAX_GRBM/'
+elif user == 'MM':
+    sys.path.append('/home/manuele/Documents/university/grbs/geneticgrbs/statistical_test')
+    sys.path.append('/home/manuele/Documents/university/grbs/geneticgrbs/lc_pulse_avalanche')
+    # real data
+    batse_path = '/home/manuele/Documents/university/grbs/geneticgrbs_data/CGRO_BATSE/'
+    swift_path = '/home/manuele/Documents/university/grbs/geneticgrbs_data/Swift_BAT/'
+    sax_path   = '/home/manuele/Documents/university/grbs/geneticgrbs_data/BeppoSAX_GRBM/'
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
@@ -97,9 +110,9 @@ from avalanche import LC
 
 ### Choose the instrument
 #instrument = 'batse'
-instrument = 'swift'
+#instrument = 'swift'
 #instrument = 'sax'
-#instrument = 'fermi'
+instrument = 'fermi'
 
 #------------------------------------------------------------------------------#
 
@@ -147,14 +160,13 @@ elif instrument=='fermi':
     t_i           = 0                            # [s]
     t_f           = 150                          # [s]
     eff_area      = instr_fermi['eff_area']      # 100 # effective area of instrument [cm2]
-    bg_level      = instr_fermi['bg_level']      # (400/eff_area_fermi) # background level [cnt/cm2/s]
+    bg_level      = instr_fermi['bg_level']      # 39.4 # background level [cnt/cm2/s]
     t90_threshold = instr_fermi['t90_threshold'] # 2 # [s] --> used to select only _long_ GRBs
     t90_frac      = 15
     sn_threshold  = instr_fermi['sn_threshold']  # 5 # signal-to-noise ratio
     bin_time      = instr_fermi['res']           # 0.064 # [s] temporal bins for Fermi
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
 # elif instrument=='batse_old': # it is actually for 'galileo'
-#     t_i           = 0     # [s]
 #     t_f           = 150   # [s]
 #     eff_area      = 3600  # effective area of instrument [cm2]
 #     bg_level      = 10.67 # background level [cnt/cm2/s]
@@ -174,7 +186,7 @@ crossover_probability = 1                      # 'None' means couples parent k w
 initial_population    = None                   # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
 crossover_type        = "scattered"
-num_generations       = 15                     # Number of generations.
+num_generations       = 2                     # Number of generations.
 sol_per_pop           = 2000                   # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.15*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
 keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
@@ -184,7 +196,8 @@ mutation_probability  = 0.04                   # by default is 'None', otherwise
 # Other parameters
 N_grb            = 2000   # number of simulated GRBs to produce per set of parameters
 n_cut            = 2500   # maximum number of pulses to consider in the avalanche model
-test_pulse_distr = False  # add a fifth metric regarding the distribution of number of pulses per GRB (set False by default)
+test_sn_distr    = True   # add a fifth metric regarding  the S/N distribution (set True by default)
+test_pulse_distr = False  # add a sixth metric regarding the distribution of number of pulses per GRB (set False by default)
 
 # Options for parallelization
 if user=='pleiadi':
@@ -198,15 +211,15 @@ parallel_processing  = ["process", n_processes]  # USE THIS ONE!
 # Name of the pkl file where to save the GA instance at the end of the run
 filename_model = 'geneticGRB'
 
-# We impose constraints on the range of values that the 7 parameter can assume
+epsilon = 1.e-6
 range_mu      = {"low": 0.80,            "high": 1.7}
 range_mu0     = {"low": 0.80,            "high": 1.7} 
 range_alpha   = {"low": 1,               "high": 15} 
-range_delta1  = {"low": -1.5,            "high": -0.30-1.e-6} 
+range_delta1  = {"low": -1.5,            "high": -0.30-epsilon} 
 range_delta2  = {"low": 0,               "high": 0.30}
-range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-1.e-6)}  # sample `tau_min` uniformly in log    space
-#range_tau_min = {"low": 1.e-2,          "high": bin_time-1.e-6}            # sample `tau_min` uniformly in linear space
-range_tau_max = {"low": 1,               "high": 60}
+range_tau_min = {"low": np.log10(1.e-2), "high": np.log10(bin_time-epsilon)}  # sample `tau_min` uniformly in log    space
+#range_tau_min = {"low": 1.e-2,          "high": bin_time-epsilon}            # sample `tau_min` uniformly in linear space
+range_tau_max = {"low": 1,               "high": 65}
 # The values of the 7 parameters from the paper [Stern & Svensson, 1996] are:
 # mu=1.2
 # mu0=1
@@ -216,15 +229,25 @@ range_tau_max = {"low": 1,               "high": 60}
 # tau_min=0.02
 # tau_max=26
 
+#Range of the 5 parameters of the BPL model of the pulse counts distribution
+range_alpha_bpl = {"low": 1.+epsilon,                  "high": 2.-epsilon}
+range_beta_bpl  = {"low": 2.+epsilon,                  "high": 3.} 
+range_F_break   = {"low": np.log10(1.e-7*(1+epsilon)), "high": np.log10(1.e-5)}             # sample `F_break` uniformly in log space
+range_F_min     = {"low": np.log10(1.e-8),             "high": np.log10(1.e-7*(1-epsilon))} # sample `F_min`   uniformly in log space
+
 range_constraints = [range_mu, 
                      range_mu0,
                      range_alpha,
                      range_delta1, 
                      range_delta2, 
                      range_tau_min, 
-                     range_tau_max]
+                     range_tau_max,
+                     range_alpha_bpl,
+                     range_beta_bpl,
+                     range_F_break,
+                     range_F_min]
 
-num_genes = len(range_constraints) # 7
+num_genes = len(range_constraints) #11
 
 save_model = True
 
@@ -251,7 +274,8 @@ if instrument=='batse':
                                       t90_threshold=t90_threshold,
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold,
-                                      t_f=t_f)
+                                      t_f=t_f,
+                                      zero_padding=True)
     # Load MEPSA results on BATSE (ONLY those that satisfy the constraint!)
     mepsa_out_file_list_temp = []
     for i in range(len(grb_list_real)):
@@ -277,7 +301,8 @@ elif instrument=='swift':
                                       t90_threshold=t90_threshold,
                                       t90_frac=t90_frac, 
                                       sn_threshold=sn_threshold, 
-                                      t_f=t_f)
+                                      t_f=t_f,
+                                      zero_padding=True)
     n_of_pulses_real = None
 
 ### Load the BeppoSAX GRBs
@@ -290,11 +315,40 @@ elif instrument=='sax':
                                       t90_threshold=t90_threshold, 
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold, 
-                                      t_f=t_f)
+                                      t_f=t_f, 
+                                      zero_padding=True)
     n_of_pulses_real = None
 
+### Load the Fermi/GBM GRBs
+elif instrument=='fermi':
+    # load all data
+    grb_list_real = load_lc_fermi(path=fermi_path)
+    # apply constraints
+    grb_list_real = apply_constraints(grb_list=grb_list_real, 
+                                      bin_time=bin_time, 
+                                      t90_threshold=t90_threshold, 
+                                      t90_frac=t90_frac,
+                                      sn_threshold=sn_threshold, 
+                                      t_f=t_f, 
+                                      zero_padding=True)
+    n_of_pulses_real = None
+
+### Load the Fermi GRBs
+elif instrument=='fermi': 
+    # load all data
+    grb_list_real = load_lc_fermi(path=fermi_path)
+    # apply constraints
+    grb_list_real = apply_constraints(grb_list=grb_list_real,
+                                      bin_time=bin_time,
+                                      t90_threshold=t90_threshold,
+                                      t90_frac=t90_frac,
+                                      sn_threshold=sn_threshold,
+                                      t_f=t_f,
+                                      zero_padding=True)    
+    n_of_pulses_real = None    
+
 else:
-    raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax".')
+    raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", "sax", "fermi".')
 
 end_load_time = time.perf_counter()
 print('\n')
@@ -334,6 +388,18 @@ duration_real = [ evaluateDuration20(times=grb.times,
                                      bin_time=bin_time)[0] for grb in grb_list_real ]
 duration_distr_real = compute_kde_log_duration(duration_list=duration_real)
 
+### TEST 5: S2N distribution
+if test_sn_distr:
+    sn_distr_real = [evaluateGRB_SN(grb.times, 
+                                    grb.counts, 
+                                    grb.errs, 
+                                    grb.t90, 
+                                    t90_frac, 
+                                    bin_time,
+                                    filter=True)[0] for grb in grb_list_real]
+    sn_distr_real = np.array(sn_distr_real)
+else:
+    sn_distr_real = []
 
 ################################################################################
 # DEFINE FITNESS FUNCTION OF THE GENETIC ALGORITHM
@@ -372,7 +438,13 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                                  export_files=False,
                                  n_cut=n_cut,
                                  with_bg=False,
-                                 test_pulse_distr=test_pulse_distr)
+                                 test_pulse_distr=test_pulse_distr,
+                                 ### 5 parameters of BPL
+                                 alpha_bpl=solution[7],
+                                 beta_bpl=solution[8],
+                                 F_break=10**solution[9], # sample `F_break` uniformly in log space
+                                 F_min=10**solution[10]   # sample `F_min`   uniformly in log space
+                                 )
     if test_pulse_distr:
         n_of_pulses_sim = [ grb.num_of_sig_pulses for grb in grb_list_sim ]
     else:
@@ -407,6 +479,19 @@ def fitness_func(ga_instance, solution, solution_idx=None):
     duration_sim       = np.array( [ grb.t20 for grb in grb_list_sim ] )
     duration_distr_sim = compute_kde_log_duration(duration_list=duration_sim)
 
+    ### TEST 5: S2N distribution
+    if test_sn_distr:
+        sn_distr_sim = [evaluateGRB_SN(grb.times, 
+                                        grb.counts, 
+                                        grb.errs, 
+                                        grb.t90, 
+                                        t90_frac, 
+                                        bin_time,
+                                        filter=True)[0] for grb in grb_list_sim]
+        sn_distr_sim = np.array(sn_distr_sim)
+    else:
+        sn_distr_sim = []
+
     #--------------------------------------------------------------------------#
     # COMPUTE LOSS
     #--------------------------------------------------------------------------#
@@ -420,7 +505,10 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                            duration_sim=duration_distr_sim,
                            n_of_pulses=n_of_pulses_real,
                            n_of_pulses_sim=n_of_pulses_sim,
-                           test_pulse_distr=test_pulse_distr)
+                           sn_distrib_real=sn_distr_real,
+                           sn_distrib_sim=sn_distr_sim,
+                           test_pulse_distr=test_pulse_distr,
+                           test_sn_distr=test_sn_distr)
     fitness = 1.0 / (l2_loss + 1.e-9)
     return fitness
 
@@ -439,14 +527,18 @@ def write_best_par_per_epoch(solution, filename='best_par_per_epoch.txt'):
     - filename: The name of the file to open in append mode. Default is 'output.txt'.
     """
     with open(filename, 'a') as file:
-        file.write("mu      = {solution}".format(solution=solution[0])+'\n')
-        file.write("mu0     = {solution}".format(solution=solution[1])+'\n')
-        file.write("alpha   = {solution}".format(solution=solution[2])+'\n')
-        file.write("delta1  = {solution}".format(solution=solution[3])+'\n')
-        file.write("delta2  = {solution}".format(solution=solution[4])+'\n')
-        file.write("tau_min = {solution}".format(solution=10**(solution[5]))+'\n') # sample `tau_min` uniformly in log    space
-        #file.write("tau_min = {solution}".format(solution=solution[5])+'\n')      # sample `tau_min` uniformly in linear space
-        file.write("tau_max = {solution}".format(solution=solution[6])+'\n')
+        file.write("mu        = {solution}".format(solution=solution[0])+'\n')
+        file.write("mu0       = {solution}".format(solution=solution[1])+'\n')
+        file.write("alpha     = {solution}".format(solution=solution[2])+'\n')
+        file.write("delta1    = {solution}".format(solution=solution[3])+'\n')
+        file.write("delta2    = {solution}".format(solution=solution[4])+'\n')
+        file.write("tau_min   = {solution}".format(solution=10**(solution[5]))+'\n') # sample `tau_min` uniformly in log    space
+        #file.write("tau_min = {solution}".format(solution=solution[5])+'\n')        # sample `tau_min` uniformly in linear space
+        file.write("tau_max   = {solution}".format(solution=solution[6])+'\n')
+        file.write("alpha_bpl = {solution}".format(solution=solution[7])+'\n')
+        file.write("beta_bpl  = {solution}".format(solution=solution[8])+'\n')
+        file.write("F_break   = {solution}".format(solution=10**solution[9])+'\n')
+        file.write("F_min     = {solution}".format(solution=10**solution[10])+'\n')
         file.write('\n')
 
 
@@ -470,14 +562,18 @@ def on_generation(ga_instance):
     solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
     # Print the best solution of the current generation on TERMINAL
     print("Parameters of the best solution in the current generation:")
-    print("    - mu      = {solution}".format(solution=solution[0]))
-    print("    - mu0     = {solution}".format(solution=solution[1]))
-    print("    - alpha   = {solution}".format(solution=solution[2]))
-    print("    - delta1  = {solution}".format(solution=solution[3]))
-    print("    - delta2  = {solution}".format(solution=solution[4]))
-    print("    - tau_min = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log    space
+    print("    - mu        = {solution}".format(solution=solution[0]))
+    print("    - mu0       = {solution}".format(solution=solution[1]))
+    print("    - alpha     = {solution}".format(solution=solution[2]))
+    print("    - delta1    = {solution}".format(solution=solution[3]))
+    print("    - delta2    = {solution}".format(solution=solution[4]))
+    print("    - tau_min   = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log space
     #print("    - tau_min = {solution}".format(solution=solution[5]))      # sample `tau_min` uniformly in linear space
-    print("    - tau_max = {solution}".format(solution=solution[6]))      
+    print("    - tau_max   = {solution}".format(solution=solution[6]))
+    print("    - alpha_bpl = {solution}".format(solution=solution[7]))
+    print("    - beta_bpl  = {solution}".format(solution=solution[8]))
+    print("    - F_break   = {solution}".format(solution=10**solution[9]))  # sample `F_break` uniformly in log space
+    print("    - F_min     = {solution}".format(solution=10**solution[10])) # sample `F_min`   uniformly in log space   
     # Print the best solution of the current generation on FILE
     write_best_par_per_epoch(solution)
 
@@ -572,7 +668,13 @@ if __name__ == '__main__':
                                          export_files=False,
                                          n_cut=n_cut,
                                          with_bg=False,
-                                         test_pulse_distr=test_pulse_distr)
+                                         test_pulse_distr=test_pulse_distr,
+                                         ### 5 parameters of BPL
+                                         alpha_bpl=solution[7],
+                                         beta_bpl=solution[8],
+                                         F_break=10**solution[9], # sample `F_break` uniformly in log space
+                                         F_min=10**solution[10]   # sample `F_min` uniformly in log space
+                                         )
             if test_pulse_distr:
                 n_of_pulses_sim = [ grb.num_of_sig_pulses for grb in grb_list_sim ]
             else:
@@ -606,6 +708,20 @@ if __name__ == '__main__':
             #                                    bin_time=bin_time)[0] for grb in grb_list_sim ]
             duration_sim       = np.array( [ grb.t20 for grb in grb_list_sim ] )
             duration_distr_sim = compute_kde_log_duration(duration_list=duration_sim)
+
+            ### TEST 5: S2N distribution
+            if test_sn_distr:
+                sn_distr_sim = [evaluateGRB_SN(grb.times, 
+                                                grb.counts, 
+                                                grb.errs, 
+                                                grb.t90, 
+                                                t90_frac, 
+                                                bin_time,
+                                                filter=True)[0] for grb in grb_list_sim]
+                sn_distr_sim = np.array(sn_distr_sim)
+            else:
+                sn_distr_sim = []
+
 
             #--------------------------------------------------------------------------#
             # Compute loss
@@ -666,14 +782,19 @@ if __name__ == '__main__':
     print('\n################################################################################')
     print('################################################################################')
     print("* Parameters of the BEST solution:")
-    print("    - mu      = {solution}".format(solution=solution[0]))
-    print("    - mu0     = {solution}".format(solution=solution[1]))
-    print("    - alpha   = {solution}".format(solution=solution[2]))
-    print("    - delta1  = {solution}".format(solution=solution[3]))
-    print("    - delta2  = {solution}".format(solution=solution[4]))
-    print("    - tau_min = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log    space
+    print("    - mu        = {solution}".format(solution=solution[0]))
+    print("    - mu0       = {solution}".format(solution=solution[1]))
+    print("    - alpha     = {solution}".format(solution=solution[2]))
+    print("    - delta1    = {solution}".format(solution=solution[3]))
+    print("    - delta2    = {solution}".format(solution=solution[4]))
+    print("    - tau_min   = {solution}".format(solution=10**(solution[5]))) # sample `tau_min` uniformly in log    space
     #print("    - tau_min = {solution}".format(solution=solution[5]))      # sample `tau_min` uniformly in linear space
-    print("    - tau_max = {solution}".format(solution=solution[6]))
+    print("    - tau_max   = {solution}".format(solution=solution[6]))
+    print("    - alpha_bpl = {solution}".format(solution=solution[7]))
+    print("    - beta_bpl  = {solution}".format(solution=solution[8]))
+    print("    - F_break   = {solution}".format(solution=10**solution[9]))  # sample `F_break` uniformly in log    space
+    print("    - F_min     = {solution}".format(solution=10**solution[10])) # sample `F_min` uniformly in log    space  
+
     print("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
     print("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))
     #print("Index of the best solution          : {solution_idx}".format(solution_idx=solution_idx))
@@ -721,6 +842,13 @@ if __name__ == '__main__':
     file.write('\n')
     file.write('range_tau_max        = {}'.format(range_tau_max))
     file.write('\n')
+    file.write('alpha_bpl            = {}'.format(range_alpha_bpl))
+    file.write('\n')
+    file.write('beta_bpl             = {}'.format(range_beta_bpl))
+    file.write('\n')
+    file.write('F_break              = {}'.format(range_F_break))  
+    file.write('\n')
+    file.write('F_min                = {}'.format(range_F_min)) 
     file.write('\n')
     file.write('################################################################################')
     file.write('\n')
@@ -745,6 +873,14 @@ if __name__ == '__main__':
     #file.write("    - tau_min = {solution}".format(solution=solution[5]))       # sample `tau_min` uniformly in linear space
     file.write('\n')
     file.write("    - tau_max = {solution}".format(solution=solution[6]))
+    file.write('\n')
+    file.write("    - alpha_bpl = {solution}".format(solution=solution[7]))
+    file.write('\n')
+    file.write("    - beta_bpl  = {solution}".format(solution=solution[8]))
+    file.write('\n')
+    file.write("    - F_break   = {solution}".format(solution=10**solution[9]))  # sample `F_break` uniformly in log space
+    file.write('\n')
+    file.write("    - F_min     = {solution}".format(solution=10**solution[10])) # sample `F_min`   uniformly in log space
     file.write('\n')
     file.write("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
     file.write('\n')
@@ -868,25 +1004,34 @@ if __name__ == '__main__':
     all_gen_fitness = np.array(ga_GRB.solutions_fitness[:])
 
     # all solutions in the ALL epochs:
-    all_gen_sol     = np.array(ga_GRB.solutions[:])
-    all_gen_mu      = np.array(all_gen_sol[:,0])       # array with all the mu      of the ALL generations 
-    all_gen_mu0     = np.array(all_gen_sol[:,1])       # array with all the mu0     of the ALL generations
-    all_gen_alpha   = np.array(all_gen_sol[:,2])       # array with all the alpha   of the ALL generations
-    all_gen_delta1  = np.array(all_gen_sol[:,3])       # array with all the delta1  of the ALL generations
-    all_gen_delta2  = np.array(all_gen_sol[:,4])       # array with all the delta1  of the ALL generations
-    all_gen_tau_min = 10**(np.array(all_gen_sol[:,5])) # array with all the tau_min of the ALL generations  # sample `tau_min` uniformly in log    space
+    all_gen_sol       = np.array(ga_GRB.solutions[:])
+    all_gen_mu        = np.array(all_gen_sol[:,0])       # array with all the mu      of the ALL generations 
+    all_gen_mu0       = np.array(all_gen_sol[:,1])       # array with all the mu0     of the ALL generations
+    all_gen_alpha     = np.array(all_gen_sol[:,2])       # array with all the alpha   of the ALL generations
+    all_gen_delta1    = np.array(all_gen_sol[:,3])       # array with all the delta1  of the ALL generations
+    all_gen_delta2    = np.array(all_gen_sol[:,4])       # array with all the delta1  of the ALL generations
+    all_gen_tau_min   = 10**(np.array(all_gen_sol[:,5])) # array with all the tau_min of the ALL generations  # sample `tau_min` uniformly in log    space
     #all_gen_tau_min = np.array(all_gen_sol[:,5])      # array with all the tau_min of the ALL generations  # sample `tau_min` uniformly in linear space
-    all_gen_tau_max = np.array(all_gen_sol[:,6])       # array with all the tau_max of the ALL generations
+    all_gen_tau_max   = np.array(all_gen_sol[:,6])       # array with all the tau_max of the ALL generations
+
+    all_gen_alpha_bpl = np.array(all_gen_sol[:,7])       # array with all the alpha_bpl of the ALL generations
+    all_gen_beta_bpl  = np.array(all_gen_sol[:,8])       # array with all the beta_bpl of the ALL generations
+    all_gen_F_break   = 10**np.array(all_gen_sol[:,9])   # array with all the F_break of the ALL generations
+    all_gen_F_min     = 10**np.array(all_gen_sol[:,10])  # array with all the F_min of the ALL generations
 
     data_all_gen = {
-        'mu':      all_gen_mu,
-        'mu0':     all_gen_mu0,
-        'alpha':   all_gen_alpha,
-        'delta1':  all_gen_delta1,
-        'delta2':  all_gen_delta2,
-        'tau_min': all_gen_tau_min,
-        'tau_max': all_gen_tau_max,
-        'fitness': all_gen_fitness
+        'mu':        all_gen_mu,
+        'mu0':       all_gen_mu0,
+        'alpha':     all_gen_alpha,
+        'delta1':    all_gen_delta1,
+        'delta2':    all_gen_delta2,
+        'tau_min':   all_gen_tau_min,
+        'tau_max':   all_gen_tau_max,
+        'alpha_bpl': all_gen_alpha_bpl,
+        'beta_bpl':  all_gen_beta_bpl,
+        'F_break':   all_gen_F_break,
+        'F_min':     all_gen_F_min,
+        'fitness':   all_gen_fitness
     }
     df_all_gen = pd.DataFrame(data_all_gen)
     df_all_gen.to_csv('./df_all_gen.csv', index=False)    

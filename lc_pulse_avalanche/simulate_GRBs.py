@@ -25,12 +25,13 @@ if sys.getrecursionlimit()<rec_lim:
 #------------------------------------------------------------------------------#
 # Set the username for the path of the files:
 #------------------------------------------------------------------------------#
-user='external_user'
+#user='external_user'
 #user='LB'
 #user='AF'
 #user='bach'
 #user='gravity'
 #user='pleiadi'
+user = 'MM'
 if user=='bach':
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche')
@@ -50,6 +51,10 @@ elif user=='AF':
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/statistical_test')
     sys.path.append('C:/Users/lisaf/Desktop/GitHub/lc_pulse_avalanche/lc_pulse_avalanche')
     export_path='C:/Users/lisaf/Desktop/'
+elif user=='MM':
+    sys.path.append('/home/manuele/Documents/university/grbs/geneticgrbs/statistical_test')
+    sys.path.append('/home/manuele/Documents/university/grbs/geneticgrbs/lc_pulse_avalanche')
+    export_path='/home/manuele/Documents/university/grbs/geneticgrbs_simulations/'
 elif user=='external_user':
     sys.path.append('../statistical_test')
     sys.path.append('../lc_pulse_avalanche')
@@ -95,7 +100,7 @@ if __name__ == '__main__':
         print('==============================================')
         save_config_path = str(sim_dir)+'/config_'+timestamp+'.txt'
         save_config(variables=variables, file_name=save_config_path)
-        print('==============================================')
+        print('==============================================') 
 
     #--------------------------------------------------------------------------#
     # SET PARAMETERS Read params from down below
@@ -111,36 +116,70 @@ if __name__ == '__main__':
         #----------------------------------------------------------------------#
         N_grb = 5000 # number of simulated GRBs to produce per set of parameters
         #----------------------------------------------------------------------#
-        # The 7 values obtained from BATSE v35 optimization are
-        # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg,  
-        # corrected ACF, corrected sampling of the individual peaks), 
-        # corrected T90 estimate, fixed subcritical value, 30 gen
-        # MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+        # BATSE
+        #----------------------------------------------------------------------#
         if instrument=='batse':
-            mu      = 1.10 
-            mu0     = 0.91
-            alpha   = 2.57
-            delta1  = -1.28
-            delta2  = 0.28
-            tau_min = 0.02
-            tau_max = 40.2
+            # Train best loss: 0.383
+            # Train average loss (last gen): 0.838
+            # SS96 parameters
+            mu        =  0.84
+            mu0       =  0.98
+            alpha     =  9.62
+            delta1    =  -1.36
+            delta2    =  0.08
+            tau_min   =  0.02
+            tau_max   =  33.15
+            # Peak flux distribution parameters
+            alpha_bpl = 1.61
+            beta_bpl  = 2.19
+            F_break   = 6.18e-07
+            F_min     = 4.87e-08
+        #----------------------------------------------------------------------#
+
 
         #----------------------------------------------------------------------#
-        # The 7 values obtained from Swift v36 optimization are
-        # (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, 
-        # corrected ACF, corrected sampling of the individual peaks), 
-        # corrected T90 estimate, fixed subcritical value, 30 gen
-        # MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+        # Swift 
+        #----------------------------------------------------------------------#
         elif instrument=='swift':
-            mu      = 1.34
-            mu0     = 1.16
-            alpha   = 2.53
-            delta1  = -0.75
-            delta2  = 0.27
-            tau_min = 0.03
-            tau_max = 56.8
+            # Train best loss: 0.428
+            # Train average loss (last gen): 0.892
+            # SS96 parameters
+            mu        = 1.06
+            mu0       = 1.24 
+            alpha     = 7.03
+            delta1    = -1.37
+            delta2    = 0.04
+            tau_min   = 0.02
+            tau_max   = 62.46
+            # Peak flux distribution parameters
+            alpha_bpl = 1.89
+            beta_bpl  = 2.53
+            F_break   = 3.44e-07
+            F_min     = 1.41e-08
+        #----------------------------------------------------------------------#
+
 
         #----------------------------------------------------------------------#
+        # Fermi
+        #----------------------------------------------------------------------#
+        elif instrument=='fermi':
+            # SS96 parameters
+            # Train best loss: 0.537
+            # Train average loss (last gen): 0.937
+            mu        = 0.97
+            mu0       = 1.55
+            alpha     = 3.85
+            delta1    = -0.99
+            delta2    = 0.03
+            tau_min   = 0.03
+            tau_max   = 35.84
+            # Peak flux distribution parameters
+            alpha_bpl = 1.88
+            beta_bpl  = 2.58
+            F_break   = 2.88e-07
+            F_min     = 6.04e-08
+        #----------------------------------------------------------------------# 
+        
         else:
             raise ValueError('Assign to the variable "instrument" a correct name!')
 
@@ -174,15 +213,14 @@ if __name__ == '__main__':
     #     bg_level      = instr_sax_lr['bg_level']
     #     t90_threshold = instr_sax_lr['t90_threshold']
     #     sn_threshold  = instr_sax_lr['sn_threshold']
-    # elif instrument=='fermi':
-    #     res           = instr_fermi['res']
-    #     eff_area      = instr_fermi['eff_area']
-    #     bg_level      = instr_fermi['bg_level']
-    #     t90_threshold = instr_fermi['t90_threshold']
-    #     sn_threshold  = instr_fermi['sn_threshold']
-    #     t_f           = 50 # s
+    elif instrument=='fermi':
+        res           = instr_fermi['res']
+        eff_area      = instr_fermi['eff_area']
+        bg_level      = instr_fermi['bg_level']
+        t90_threshold = instr_fermi['t90_threshold']
+        sn_threshold  = instr_fermi['sn_threshold']
     else:
-        raise NameError('Variable "instrument" not defined properly; choose between: "batse" or "swift".')
+        raise NameError('Variable "instrument" not defined properly; choose between: "batse", "swift", or "fermi".')
 
 
     ################################################################################
@@ -217,7 +255,13 @@ if __name__ == '__main__':
                           n_cut=n_cut,
                           with_bg=False,
                           remove_instrument_path=remove_instrument_path,
-                          test_pulse_distr=test_pulse_distr)
+                          test_pulse_distr=test_pulse_distr,
+                          ### 4 parameters of BPL
+                          alpha_bpl=alpha_bpl,
+                          beta_bpl=beta_bpl,
+                          F_break=F_break,
+                          F_min=F_min
+                          )
 
     if test_pulse_distr:
         pulse_out_file=open('./n_of_pulses.txt', 'w')
@@ -228,10 +272,14 @@ if __name__ == '__main__':
     if test_pulse_distr:
         n_of_pulses = [ grb.num_of_sig_pulses for grb in test ]
 
-    print('Time elapsed: ', (datetime.now() - start).seconds)
+    print('Time elapsed: ', (datetime.now() - start))
 
 ################################################################################
-################################################################################
+############################################
+# 
+# 
+# 
+# ####################################
 
 # The 7 values obtained from v1 optimization are
 # (3 loss)
@@ -532,6 +580,57 @@ if __name__ == '__main__':
 # delta2  = 0.25
 # tau_min = 0.02
 # tau_max = 48.2
+
+# The 7 values obtained from BATSE v35 optimization are
+# (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
+# corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value, 30 gen
+# MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+# mu      = 1.10 
+# mu0     = 0.91
+# alpha   = 2.57
+# delta1  = -1.28
+# delta2  = 0.28
+# tau_min = 0.02
+# tau_max = 40.2
+
+# The 7 values obtained from Swift v36 optimization are
+# (4 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
+# corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value, 30 gen
+# MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+# mu      = 1.34
+# mu0     = 1.16
+# alpha   = 2.53
+# delta1  = -0.75
+# delta2  = 0.27
+# tau_min = 0.03
+# tau_max = 56.8
+
+# The 7 values obtained from BATSE v37 optimization are
+# (5 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
+# corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value
+# 5 metrics (sn_distr)
+# MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+# mu      =  0.52  
+# mu0     =  0.95  
+# alpha   =  18.34 
+# delta1  =  -1.2  
+# delta2  =  0.13  
+# tau_min =  0.03  
+# tau_max =  15.25 
+    
+# The 7 values obtained from Swift v38 optimization are
+# (5 loss, Poisson, equal weights, keep_elitism=0, corrected noise+bkg, corrected ACF, 
+# corrected sampling of the individual peaks), corrected T90 estimate, fixed subcritical value
+# 5 metrics (sn_distr)
+# MEDIAN VALUES OF THE PARAMETERS IN THE LAST GENERATION
+# mu      = 0.8  
+# mu0     = 1.62 
+# alpha   = 16.99
+# delta1  = -1.05
+# delta2  = 0.21 
+# tau_min = 0.04 
+# tau_max = 17.15
+    
 
 ################################################################################
 ################################################################################
