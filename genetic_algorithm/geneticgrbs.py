@@ -9,6 +9,7 @@ import pygad
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+#comment
 
 ### Increase the recursion limit to avoid: "RecursionError: maximum recursion depth exceeded in comparison"
 rec_lim=50000
