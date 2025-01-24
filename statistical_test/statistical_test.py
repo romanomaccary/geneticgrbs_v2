@@ -2743,14 +2743,13 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 ################################################################################
 
 def generate_GRBs(N_grb,                                                              # number of simulated GRBs to produce
-                  mu, mu0, alpha, delta1, delta2, tau_min, tau_max,                   # 7 parameters
+                  q, a, alpha, k, t_0,                                                # 7 parameters
                   instrument, bin_time, eff_area, bg_level,                           # instrument parameters
                   sn_threshold, t_f,                                                  # constraint parameters 
                   t90_threshold, t90_frac=15, filter=True,                            # constraint parameters
                   export_files=False, export_path='None',                             # other parameters
                   n_cut=2500, with_bg=False, seed=None,                               # other parameters
-                  remove_instrument_path=False, test_pulse_distr=False,               # other parameters
-                  alpha_bpl=0.5, beta_bpl=1.5, F_break=1e-6, F_min=1e-10              # 5 parameters of the BPL
+                  remove_instrument_path=False, test_pulse_distr=False,               # other parameters          
                   ):
     """
     This function generates a list of GRBs using the pulse-avalanche stochastic
@@ -2761,19 +2760,14 @@ def generate_GRBs(N_grb,                                                        
 
     Input:
     - N_grb: total number of simulated GRBs to produce in output;
-    ### 7 parameters
-    - mu:
-    - mu0:
+    ### 5 parameters
+    - q:
+    - a:
     - alpha:
-    - delta1:
-    - delta2:
+    - k:
+    - t0:
     - tau_min:
     - tau_max:
-    ### 5 parameters of BPL
-    - alpha_bpl:
-    - beta_bpl:
-    - F_break:
-    - F_min:
     ### instrument parameters
     - instrument:
     - res:
@@ -3137,19 +3131,12 @@ def generate_GRBs(N_grb,                                                        
     while (cnt<N_grb):
         #generated += 1
 
-        lc = LC(### 7 parameters
-                mu=mu,
-                mu0=mu0,
+        lc = LC(### 5 parameters defining the SDE
+                q=q,
+                a=a,
                 alpha=alpha,
-                delta1=delta1,
-                delta2=delta2,
-                tau_min=tau_min, 
-                tau_max=tau_max,
-                ### 5 parameters of BPL
-                alpha_bpl=alpha_bpl,
-                beta_bpl=beta_bpl,
-                F_break=F_break,
-                F_min=F_min,
+                k=k,
+                t_0=t_0, 
                 ### instrument parameters:
                 res=bin_time,
                 eff_area=eff_area,
@@ -3158,7 +3145,7 @@ def generate_GRBs(N_grb,                                                        
                 instrument=instrument,
                 n_cut=n_cut,
                 with_bg=with_bg)
-        lc.generate_avalanche(seed=None)
+        #lc.generate_avalanche(seed=None)
 
         if lc.check==0:
             # check that we have generated a lc with non-zero values; otherwise,
