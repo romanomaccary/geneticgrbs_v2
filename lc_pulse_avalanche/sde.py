@@ -28,9 +28,10 @@ SEED=None
 
 
 ### Load the (gaussian) errors of the Swift GRBs
-path_swift_errs = '../lc_pulse_avalanche/'                                                # LB
+#path_swift_errs = '../lc_pulse_avalanche/'                                                # LB
 #path_swift_errs = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/' # bach
-#path_swift_errs = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/'                    # gravity
+path_swift_errs = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/'                    # gravity
+path_swift_errs = '/astrodata/romain/sde_ga/swift_err/'    
 #
 # bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10. , 21.5443469 , 46.41588834, 100. ])
 bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10.])
@@ -165,8 +166,8 @@ class LC(object):
             X[i, :] = X[i-1, :] + mu(X[i-1, :], t[i-1]) * dt + sigma(X[i-1, :], t[i-1]) * dW[i-1, :]
 
         return X
-        
-   def generate_LC_from_sde(self,q,a,alpha,k,t0):
+
+    def generate_LC_from_sde(self,q,a,alpha,k,t0):
 
         f = lambda x,t: (0.5*q-a+alpha/(t+1e-12)-(k/3/t0)*(t/t0)**(-2/3))*x
         g = lambda x,t:np.sqrt(q)*x
@@ -175,9 +176,9 @@ class LC(object):
         self._max_raw_pc = self._rates.max()
         self._peak_value = self._max_raw_pc
         if (self._max_raw_pc<1.e-12):
-             # check that we have generated a lc with non-zero values; otherwise,
-             # exit and set the flag 'self.check=0', which indicates that this
-             # lc has to be skipped
+            # check that we have generated a lc with non-zero values; otherwise,
+            # exit and set the flag 'self.check=0', which indicates that this
+            # lc has to be skipped
             self.check=0
             return 0
         else:

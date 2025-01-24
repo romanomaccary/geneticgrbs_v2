@@ -34,7 +34,8 @@ SEED=None
 #user='AF'
 #user='bach'
 #user='gravity'
-user = 'MM'
+#user = 'MM'
+user='romano'
 if user=='bach':
     sys.path.append('/home/')
 elif user=='gravity':
@@ -49,10 +50,13 @@ elif user == 'MM':
     sys.path.append('/home/manuele/Documents/university/grbs/geneticgrbs/lc_pulse_avalanche')
 elif user=='external_user':
     sys.path.append('../lc_pulse_avalanche')
+elif user=='romano':
+    sys.path.append('/astrodata/romain/sde_GA/geneticgrbs_v2/lc_pulse_avalanche')
+
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
     
-from avalanche import LC
+from sde import LC
 
 ################################################################################
 
@@ -758,7 +762,7 @@ def load_lc_sax_lr(path):
 
 def load_lc_fermi(path):
     # Load the data from von Kienlin catalogue
-    path_vk_catalogue = '../lc_pulse_avalanche/vk_catalog_list.txt'
+    path_vk_catalogue = '/astrodata/romain/sde_GA/geneticgrbs_v2/lc_pulse_avalanche/vk_catalog_list.txt'
     vk_grbs, vk_t90s  = np.loadtxt(path_vk_catalogue, dtype=str, unpack=True)
     vk_t90s           = vk_t90s.astype(float)
     

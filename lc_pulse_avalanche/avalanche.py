@@ -63,13 +63,14 @@ def generate_peak_counts(generated_fluence, k_values):
     counts    = (10.**(-k_sampled))*fluence
     return counts 
 
-path_k_values_file_batse = "../lc_pulse_avalanche/log10_fluence_over_counts_CGRO_BATSE.txt"
+print('sono qua')
+path_k_values_file_batse = "log10_fluence_over_counts_CGRO_BATSE.txt"
 k_values_batse = np.loadtxt(path_k_values_file_batse, unpack = True)
 
-path_k_values_file_swift = "../lc_pulse_avalanche/log10_fluence_over_counts_Swift_BAT.txt"
+path_k_values_file_swift = "log10_fluence_over_counts_Swift_BAT.txt"
 k_values_swift = np.loadtxt(path_k_values_file_swift, unpack = True)
 
-path_k_values_file_fermi = "../lc_pulse_avalanche/log10_fluence_over_counts_Fermi_GBM.txt"
+path_k_values_file_fermi = "log10_fluence_over_counts_Fermi_GBM.txt"
 k_values_fermi = np.loadtxt(path_k_values_file_fermi, unpack = True)
 
 #==============================================================================#
@@ -112,10 +113,12 @@ def generate_rand_from_pdf(pdf, x_grid, N=1):
 
 
 ### Load the (gaussian) errors of the Swift GRBs
-path_swift_errs = '../lc_pulse_avalanche/'                                                # LB
+#path_swift_errs = '../lc_pulse_avalanche/'                                                # LB
 #path_swift_errs = '/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/lc_pulse_avalanche/' # bach
+
 #path_swift_errs = '/home/bazzanini/PYTHON/genetic3/lc_pulse_avalanche/'                    # gravity
-#
+path_swift_errs = '/astrodata/romain/sde_GA/geneticgrbs_v2/lc_pulse_avalanche/'            # romano
+
 # bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10. , 21.5443469 , 46.41588834, 100. ])
 bins_swift_errs = np.array([  0.1, 0.21544347, 0.46415888, 1., 2.15443469, 4.64158883, 10.])
 dict_errs_swift = {}

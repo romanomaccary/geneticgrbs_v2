@@ -1,8 +1,11 @@
 ################################################################################
-# IMPORT LIBRARIES
+# # IMPORT LiBRARIES
 ################################################################################
 
 #import os
+
+
+from ast import If
 import sys
 import time
 import pygad
@@ -11,6 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 #comment2
 
+print(1)
 ### Increase the recursion limit to avoid: "RecursionError: maximum recursion depth exceeded in comparison"
 rec_lim=50000
 if sys.getrecursionlimit()<rec_lim:
@@ -43,9 +47,11 @@ print_time=True
 #user='LB'
 #user='AF'
 #user='bach'
-user='gravity'
+#user='gravity'
+user = 'romano'
 #user='pleiadi'
 #user = 'MM'
+
 if user=='bach':
     # library paths
     sys.path.append('/home/bazzanini/PYTHON/genetic/lc_pulse_avalanche/statistical_test')
@@ -98,11 +104,20 @@ elif user == 'MM':
     batse_path = '/home/manuele/Documents/university/grbs/geneticgrbs_data/CGRO_BATSE/'
     swift_path = '/home/manuele/Documents/university/grbs/geneticgrbs_data/Swift_BAT/'
     sax_path   = '/home/manuele/Documents/university/grbs/geneticgrbs_data/BeppoSAX_GRBM/'
+elif user == 'romano':
+    # library paths
+    sys.path.append('/astrodata/romain/sde_GA/geneticgrbs_v2/statistical_test')
+    sys.path.append('/astrodata/romain/sde_GA/geneticgrbs_v2/lc_pulse_avalanche')
+    # real data
+    batse_path = '/astrodata/guidorzi/CGRO_BATSE/'
+    swift_path = '/astrodata/guidorzi/Swift_BAT/'
+    sax_path   = '/astrodata/guidorzi/BeppoSAX_GRBM/'
+    fermi_path = '/astrodata/romain/GBM_LC_repository/data/' 
 else:
     raise ValueError('Assign to the variable "user" a correct username!')
 
 from statistical_test import *
-from avalanche import LC
+from sde import LC
 
 
 ################################################################################
