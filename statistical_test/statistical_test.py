@@ -3120,12 +3120,12 @@ def generate_GRBs(N_grb,                                                        
 ###################################################################################
 
     # check that the parameters are in the correct range
-    assert delta1<0
-    assert delta2>=0
-    assert np.abs(delta1)>np.abs(delta2)
-    assert tau_min>0
-    assert tau_max>0
-    assert tau_max>tau_min
+    #assert delta1<0
+    #assert delta2>=0
+    #assert np.abs(delta1)>np.abs(delta2)
+    #assert tau_min>0
+    #assert tau_max>0
+    #assert tau_max>tau_min
 
     cnt=0
     grb_list_sim         = []
@@ -3150,12 +3150,12 @@ def generate_GRBs(N_grb,                                                        
                 n_cut=n_cut,
                 with_bg=with_bg)
         #lc.generate_avalanche(seed=None)
-
-        if lc.check==0:
+        lc.generate_LC_from_sde(q,a,alpha,k,t_0)
+        #if lc.check==0:
             # check that we have generated a lc with non-zero values; otherwise,
             # skip it and continue in the generation process
-            del(lc)
-            continue
+        #    del(lc)
+        #    continue
 
         if test_pulse_distr:
             # count how many pulses are signficative enough to be detected by 

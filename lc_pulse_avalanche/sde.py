@@ -7,6 +7,7 @@ import os, h5py
 from functools import partial
 from scipy import stats
 
+
 SEED=None
 #SEED=42
 #np.random.seed(SEED)
@@ -83,11 +84,10 @@ class LC(object):
                   exponential for sampling the number of initial pulses and child
     """
     
-    def __init__(self, q, a, alpha, k, t_0,t_min=-10, t_max=1000, res=0.256, 
+    def __init__(self, q, a, alpha, k, t_0,t_min=+0.1, t_max=1000, res=0.256, 
                  eff_area=3600, bg_level=10.67, with_bg=True, use_poisson=True,
                  min_photon_rate=1.3, max_photon_rate=1300, sigma=5, 
-                 n_cut=None, instrument='batse', verbose=False,
-                 alpha_bpl=0.5, beta_bpl=1.5, F_break=1e-6, F_min=1e-10): #New parameters of the BPL count distrib
+                 n_cut=None, instrument='batse', verbose=False): #New parameters of the BPL count distrib
         
         #self._mu      = mu # mu~1 --> critical runaway regime
         self._q =q
@@ -126,25 +126,25 @@ class LC(object):
         self._use_poisson = use_poisson
         self._instrument  = instrument
 
-        if self._instrument == 'batse':
+        #if self._instrument == 'batse':
             #self._peak_count_rate_sample = peak_count_rate_batse_sample
-            self.k_values_path           = path_k_values_file_batse
-            self.k_values                = k_values_batse
-        elif self._instrument == 'swift':
+        #    self.k_values_path           = path_k_values_file_batse
+        #    self.k_values                = k_values_batse
+        #elif self._instrument == 'swift':
             #self._peak_count_rate_sample = peak_count_rate_swift_sample
-            self.k_values_path           = path_k_values_file_swift
-            self.k_values                = k_values_swift
-        elif self._instrument == 'sax_lr':
-            pass
+        #    self.k_values_path           = path_k_values_file_swift
+        #    self.k_values                = k_values_swift
+        #elif self._instrument == 'sax_lr':
+        #    pass
             #self._peak_count_rate_sample = peak_count_rate_sax_lr_sample
-        elif self._instrument == 'sax':
-            pass
+        #elif self._instrument == 'sax':
+        #    pass
             #self._peak_count_rate_sample = peak_count_rate_sax_sample
-        elif self._instrument == 'fermi':
-            self.k_values_path           = path_k_values_file_fermi
-            self.k_values                = k_values_fermi
-        else:
-            raise ValueError("Instrument not recognized...")
+        #elif self._instrument == 'fermi':
+        #    self.k_values_path           = path_k_values_file_fermi
+        #    self.k_values                = k_values_fermi
+        #else:
+        #    raise ValueError("Instrument not recognized...")
         
        
     
@@ -153,26 +153,49 @@ class LC(object):
 
     #--------------------------------------------------------------------------#
 
-    
-    def sde_euler_maruyama(times, mu, sigma, n_paths):
-        N = len(times)
-        dt = times[1]-times[0]
-        X = np.zeros((N, n_paths))
-        X[0, :] = x0
+    def generate_LC_from_sde(self,q,a,alpha,k,t_0):
 
-        dW = np.random.normal(0, np.sqrt(dt), (N-1, n_paths))
+        # def sde_euler_maruyama(times, mu, sigma, n_paths):
+        #     N = len(times)
+        #     dt = times[1]-times[0]
+        #     X = np.zeros((N, n_paths))
+        #     x0 = np.random.random() # first point of the sde is set randomly
+        #     X[0, :] = x0
 
-        for i in range(1, N):
-            X[i, :] = X[i-1, :] + mu(X[i-1, :], t[i-1]) * dt + sigma(X[i-1, :], t[i-1]) * dW[i-1, :]
+        #     dW = np.random.normal(0, np.sqrt(dt), (N-1, n_paths))
 
-        return X
+        #     for i in range(1, N):
+        #         X[i, :] = X[i-1, :] + mu(X[i-1, :], times[i-1]) * dt + sigma(X[i-1, :], times[i-1]) * dW[i-1, :]
 
-    def generate_LC_from_sde(self,q,a,alpha,k,t0):
+        #     return X
 
-        f = lambda x,t: (0.5*q-a+alpha/(t+1e-12)-(k/3/t0)*(t/t0)**(-2/3))*x
-        g = lambda x,t:np.sqrt(q)*x
+        def brownian(n, dt, q):
+            # For each element of x0, generate a sample of n numbers from a
+            # normal distribution.
+            r = stats.norm.rvs(size=n, scale=np.sqrt(q*dt))
+            # This computes the Brownian motion by forming the cumulative sum of
+            # the random samples. 
+            beta= np.cumsum(r, axis=0)
+            return beta
 
-        self._rates = sde_euler_maruyama(self._times, f, g,1)
+        def generale_lc_from_solution_SDE(q,a,alpha,k,t_0,times):
+            x00 = 1
+            n=len(times)
+            dt=times[1]-times[0]
+            beta = brownian(n,dt,q)
+            return x00*times**(alpha)*np.exp(-a*times)*np.exp(-k*(times/t_0)**(1./3.))*np.exp(beta) 
+
+
+
+
+
+        #f = lambda x,t: (0.5*q-a+alpha/(t+1e-12)-(k/3/t_0)*(t/t_0)**(-2/3))*x
+        #g = lambda x,t:np.sqrt(q)*x
+
+        #self._rates = sde_euler_maruyama(self._times, f, g,1).T[0]
+        
+        self._rates = generale_lc_from_solution_SDE(q,a,alpha,k,t_0,self._times)
+       
         self._max_raw_pc = self._rates.max()
         self._peak_value = self._max_raw_pc
         if (self._max_raw_pc<1.e-12):
@@ -183,11 +206,11 @@ class LC(object):
             return 0
         else:
             self.check=1
-
+        #print("INSTRUMENT=",self._instrument)
          # lc from avalanche scaled + Poissonian bg added (for BATSE and Fermi)
          # For BATSE, the variable `_plot_lc` contains the COUNTS (and not the count RATES!)
         if self._instrument == 'batse' or self._instrument == 'fermi':
-            self._model           = self._raw_lc_counts                                 # model COUNTS 
+            self._model           = self._rates                                 # model COUNTS 
             self._modelbkg        = self._model + (self._bg * self._res)                # model COUNTS + constant bgk counts
             self._plot_lc         = np.random.poisson(self._modelbkg).astype('float')   # total COUNTS (signal+noise) with Poisson
             self._plot_lc_with_bg = self._plot_lc  
@@ -199,7 +222,7 @@ class LC(object):
         
         # For Swift, the variable `_plot_lc` contains the COUNTS RATES (and not the counts!)
         elif self._instrument == 'swift':
-            self._model           = self._raw_lc_counts      # model COUNTS 
+            self._model           = self._rates      # model COUNTS 
             self._model_rate      = self._model / self._res  # model COUNT RATES
             self._modelbkg        = self._model              # bkg 0 in Swift
             self._modelbkg_rate   = self._model_rate         # bkg 0 in Swift
@@ -257,6 +280,7 @@ class LC(object):
 
         #else:
         #    return self._lc_params
+        return self._lc_params
     #--------------------------------------------------------------------------#
 
     def plot_lc(self, rescale=True, save=False, name="./plot_lc.pdf", show_duration=False):
@@ -571,7 +595,6 @@ class LC(object):
 #==============================================================================#
 # Define the class Restore_LC
 #==============================================================================#
-    
 class Restored_LC(LC):
     """
     Class to restore an avalanche from yaml file
@@ -591,6 +614,5 @@ class Restored_LC(LC):
             self._lc_params = par_list
  
         self._restore_lc()
-
 #==============================================================================#
 #==============================================================================#

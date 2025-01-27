@@ -219,7 +219,7 @@ test_pulse_distr = False  # add a sixth metric regarding the distribution of num
 if user=='pleiadi':
     n_processes = int(os.environ['OMP_NUM_THREADS'])
 else:
-    n_processes = 100
+    n_processes = 50
 parallel_processing  = ["process", n_processes]  # USE THIS ONE!  
 #parallel_processing = ["thread", n_processes]   # this is slower
 #parallel_processing = None                      # single thread
@@ -524,7 +524,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
 def write_best_par_per_epoch(solution, filename='best_par_per_epoch.txt'):
     """
     Function to write the best parameters of each generation in a file. The file
-    is opened in append mode, so that we can append the results of each generation
+    is opened in append mode, so that we can append the results of eacch generation
     at the end of the file at each epoch.
     Parameters:
     - solution: array containing the best solution (7 params) of a generation.
@@ -648,7 +648,7 @@ if __name__ == '__main__':
             #--------------------------------------------------------------------------#
             grb_list_sim = generate_GRBs(# number of simulated GRBs to produce:
                                          N_grb=N_grb,
-                                         # 7 parameters:
+                                         # 5 parameters:
                                          q=solution[0],
                                          a=solution[1],
                                          alpha=solution[2],

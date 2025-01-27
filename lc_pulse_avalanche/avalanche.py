@@ -63,15 +63,15 @@ def generate_peak_counts(generated_fluence, k_values):
     counts    = (10.**(-k_sampled))*fluence
     return counts 
 
-print('sono qua')
-path_k_values_file_batse = "log10_fluence_over_counts_CGRO_BATSE.txt"
-k_values_batse = np.loadtxt(path_k_values_file_batse, unpack = True)
 
-path_k_values_file_swift = "log10_fluence_over_counts_Swift_BAT.txt"
-k_values_swift = np.loadtxt(path_k_values_file_swift, unpack = True)
+#path_k_values_file_batse = "log10_fluence_over_counts_CGRO_BATSE.txt"
+#k_values_batse = np.loadtxt(path_k_values_file_batse, unpack = True)
 
-path_k_values_file_fermi = "log10_fluence_over_counts_Fermi_GBM.txt"
-k_values_fermi = np.loadtxt(path_k_values_file_fermi, unpack = True)
+#path_k_values_file_swift = "log10_fluence_over_counts_Swift_BAT.txt"
+#k_values_swift = np.loadtxt(path_k_values_file_swift, unpack = True)
+
+#path_k_values_file_fermi = "log10_fluence_over_counts_Fermi_GBM.txt"
+#k_values_fermi = np.loadtxt(path_k_values_file_fermi, unpack = True)
 
 #==============================================================================#
 #==============================================================================#
