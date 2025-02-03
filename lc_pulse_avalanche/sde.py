@@ -6,14 +6,170 @@ from scipy.stats import poisson
 import os, h5py
 from functools import partial
 from scipy import stats
-
+from statistical_test_test import *
 
 SEED=None
+
+
 #SEED=42
 #np.random.seed(SEED)
 
 #==============================================================================#
 #==============================================================================#
+
+import time
+
+def slow_function():
+    #print("Starting...")
+    time.sleep(2)  # Pause for 2 seconds
+    #print("Finished!")
+
+slow_function()
+
+
+def evaluateDuration20(times, counts, t90=None, t90_frac=15, bin_time=None, filter=True):
+    """
+    Compute the duration of the GRB event as described in [Stern et al., 1996].
+    We define the starting time when the signal reaches the 20% of the value of
+    the peak, and analogously for the ending time. The difference of those two
+    times is taken as definition of the duration of the GRBs (T20%).
+    If filter==True, we smooth the signal using a Savitzky-Golay filter on the
+    light curves before computing the T20%.
+    Inputs:
+      - times: time values of the bins of the light-curve;
+      - counts: counts per bin of the GRB;
+      - t90: T90 duration of the GRB;
+      - bin_time: temporal bin size of the instrument [s];
+      - t90_frac: fraction of T90 to be used as window length;
+      - filter: boolean variable. If True, it activates the smoothing savgol
+                filter before computing the T20% duration;
+    Output:
+      - duration: T20%, that is, the duration at 20% level;
+    """
+    if filter:
+        t90_frac = t90_frac
+        window   = int(t90/t90_frac/bin_time)+2
+        window   = window if window%2==1 else window+1
+
+        try:
+            counts = savgol_filter(x=counts,
+                                   window_length=window,
+                                   polyorder=2)
+        except:
+            #print('window_length =', window)
+            print('Error in "evaluateDuration20()" during the "savgol_filter()"...')
+            sys.exit()
+
+    threshold_level = 0.20
+    c_max           = np.max(counts)
+    c_threshold     = c_max * threshold_level
+    selected_times  = times[ np.where(counts>=c_threshold)[0] ]
+    #selected_times = times[counts >= c_threshold]
+    tstart          = selected_times[ 0]
+    tstop           = selected_times[-1]
+    duration        = tstop - tstart # T20%
+    assert duration>0
+
+    return np.array( [duration, tstart, tstop] )
+
+def evaluateGRB_SN(times, counts, errs, t90, t90_frac, bin_time, filter, 
+                   return_cnts=False):
+    """
+    Compute the S/N ratio between the total signal from a GRB and the background
+    in a time interval equal to the GRB duration, as defined in Stern+96, i.e.,
+    the time interval between the first and the last moments in which the signal
+    reaches the 20% of the peak (T20%). The S2N ratio is defined in the 
+    following way: we sum of the signal inside the time window defined by the 
+    T20%, and we divide it by the square root of the squared sum of the errors
+    in the same time interval.
+    Input:
+     - times: array of times;
+     - counts: counts of the event;
+     - errs: errors over the counts;
+     - t90: T90 of the GRB;
+     - bin_time: temporal bin size of the instrument [s];
+     - filter: if True, apply savgol filter;
+     - return_cnts: if True, return also the total counts inside the T20% interval;
+    Output:
+     - s2n: signal to noise ratio;
+     - T20: duration of the GRB at 20% level;
+     - T20_start: start time of the T20% interval;
+     - T20_stop: stop time of the T20% interval; 
+     - sum_grb_counts: total counts inside the T20% interval;
+    """
+    T20, tstart, tstop = evaluateDuration20(times=times, 
+                                            counts=counts,
+                                            t90=t90, 
+                                            t90_frac=t90_frac, 
+                                            bin_time=bin_time,
+                                            filter=filter)
+    
+    event_times_mask = np.logical_and(times>=tstart, times<=tstop)
+    sum_grb_counts   = np.sum( counts[event_times_mask] )
+    sum_errs         = np.sqrt( np.sum(errs[event_times_mask]**2) )
+    s2n              = np.abs( sum_grb_counts/sum_errs )
+    if not(return_cnts):
+        return s2n, T20, tstart, tstop
+    else:
+        return s2n, T20, tstart, tstop, sum_grb_counts
+
+def generate_fluence(p, alpha, beta, F_break, F_min):
+    """This function returns a fluence value F from the broken-power-law (BPL)
+    distribution: 
+    
+    p(F) = (F_break/F_min)**(-alpha) * (F/F_break)**(-alpha) if F <  F_break;
+           (F_break/F_min)**(-alpha) * (F/F_break)**(-beta)  if F >= F_break;
+    
+    where alpha and beta are BPL indices, F_break is the break fluence, and 
+    F_min is minimum fluence. p(F) is the so-called "survival function" (SF), 
+    which is the analogous of the log(N)-log(S) of the GRBs but for individual
+    pulses. 
+    The idea is sampling the SF, whose values are found between 0 and 1 by 
+    definition, and turn them into the corresponding fluence values.
+
+    Args:
+        p       (float): sampled value from the SF;
+        alpha   (float): first BPL index;
+        beta    (float): second BPL index;
+        F_break (float): break fluence;
+        F_min   (float): minimum fluence.
+
+    Returns:
+        float: the corresponding fluence value F.
+    """
+    R_min = F_min/F_break
+    f_0   = (F_break*((1-R_min**(1-alpha))/(1-alpha)-1/(1-beta)))**(-1)
+    p_0   = f_0*F_break*(1-R_min**(1-alpha))/(1-alpha)
+    return np.piecewise(p, [p < p_0, p >= p_0], [lambda p: F_break*(p*(1-alpha)/(f_0*F_break)+R_min**(1-alpha))**(1/(1-alpha)), 
+                                                 lambda p: F_break*((p-1)*(1-beta)/(f_0*F_break))**(1/(1-beta))])
+
+def generate_peak_counts(generated_fluence, k_values):
+    """This function turn fluence into peak counts through a conversion factor
+    that depends on the selected instrument. Each time, the function randomly 
+    pick a value from the list of conversion factors in order to take into
+    account the spectral diversity of the GRBs.
+
+    Args:
+        generated_fluence (float): fluence value generated through the function
+                                   generate_fluence;
+        k_values          (float): list of conversion factors.
+
+    Returns:
+        float: the corresponding peak counts.
+    """
+    fluence   = generated_fluence(np.random.rand())
+    k_sampled = np.random.choice(k_values)
+    counts    = (10.**(-k_sampled))*fluence
+    return counts 
+
+path_k_values_file_batse = "../lc_pulse_avalanche/log10_fluence_over_counts_CGRO_BATSE.txt"
+k_values_batse = np.loadtxt(path_k_values_file_batse, unpack = True)
+
+path_k_values_file_swift = "../lc_pulse_avalanche/log10_fluence_over_counts_Swift_BAT.txt"
+k_values_swift = np.loadtxt(path_k_values_file_swift, unpack = True)
+
+path_k_values_file_fermi = "../lc_pulse_avalanche/log10_fluence_over_counts_Fermi_GBM.txt"
+k_values_fermi = np.loadtxt(path_k_values_file_fermi, unpack = True)
 
 # path_k_values_file_batse = "../lc_pulse_avalanche/log10_fluence_over_counts_CGRO_BATSE.txt"
 # k_values_batse = np.loadtxt(path_k_values_file_batse, unpack = True)
@@ -84,7 +240,7 @@ class LC(object):
                   exponential for sampling the number of initial pulses and child
     """
     
-    def __init__(self, q, a, alpha, k, t_0,t_min=+0.1, t_max=1000, res=0.256, 
+    def __init__(self, q,a,alpha, k, t_0,norm_A,t_min=+0.1, t_max=1000, res=0.256, 
                  eff_area=3600, bg_level=10.67, with_bg=True, use_poisson=True,
                  min_photon_rate=1.3, max_photon_rate=1300, sigma=5, 
                  n_cut=None, instrument='batse', verbose=False): #New parameters of the BPL count distrib
@@ -95,8 +251,7 @@ class LC(object):
         self._alpha = alpha
         self._k = k
         self._t_0 = t_0
-
-
+        self._norm_A = norm_A
         self._eff_area = eff_area 
         self._bg = bg_level * self._eff_area # cnt/s
         self._min_photon_rate = min_photon_rate  
@@ -126,34 +281,39 @@ class LC(object):
         self._use_poisson = use_poisson
         self._instrument  = instrument
 
-        #if self._instrument == 'batse':
+        if self._instrument == 'batse':
             #self._peak_count_rate_sample = peak_count_rate_batse_sample
-        #    self.k_values_path           = path_k_values_file_batse
-        #    self.k_values                = k_values_batse
-        #elif self._instrument == 'swift':
+            self.k_values_path           = path_k_values_file_batse
+            self.k_values                = k_values_batse
+        elif self._instrument == 'swift':
             #self._peak_count_rate_sample = peak_count_rate_swift_sample
-        #    self.k_values_path           = path_k_values_file_swift
-        #    self.k_values                = k_values_swift
-        #elif self._instrument == 'sax_lr':
-        #    pass
+            self.k_values_path           = path_k_values_file_swift
+            self.k_values                = k_values_swift
+        elif self._instrument == 'sax_lr':
+            pass
             #self._peak_count_rate_sample = peak_count_rate_sax_lr_sample
-        #elif self._instrument == 'sax':
-        #    pass
+        elif self._instrument == 'sax':
+            pass
             #self._peak_count_rate_sample = peak_count_rate_sax_sample
-        #elif self._instrument == 'fermi':
-        #    self.k_values_path           = path_k_values_file_fermi
-        #    self.k_values                = k_values_fermi
-        #else:
-        #    raise ValueError("Instrument not recognized...")
+        elif self._instrument == 'fermi':
+            self.k_values_path           = path_k_values_file_fermi
+            self.k_values                = k_values_fermi
+        else:
+            raise ValueError("Instrument not recognized...")
         
-       
-    
+        # self.alpha_bpl = alpha_bpl
+        # self.beta_bpl  = beta_bpl
+        # self.F_break   = F_break
+        # self.F_min     = F_min
+        # self.generated_fluence = partial(generate_fluence, alpha = alpha_bpl, 
+        #                                 beta = beta_bpl, F_break = F_break, 
+        #                                 F_min = F_min)
+        
         if self._verbose:
              print("Time resolution: ", self._step)
-
     #--------------------------------------------------------------------------#
 
-    def generate_LC_from_sde(self,q,a,alpha,k,t_0):
+    def generate_LC_from_sde(self,q,a,alpha,k,t_0,norm_A):
 
         # def sde_euler_maruyama(times, mu, sigma, n_paths):
         #     N = len(times)
@@ -178,27 +338,32 @@ class LC(object):
             beta= np.cumsum(r, axis=0)
             return beta
 
-        def generale_lc_from_solution_SDE(q,a,alpha,k,t_0,times):
-            x00 = 1
+        # def generale_lc_from_solution_SDE(q,a,alpha,k,t_0,times):
+        #     x00 = 1000
+        #     print(x00)
+        #     n=len(times)
+        #     dt=times[1]-times[0]
+        #     beta = brownian(n,dt,q)
+        #     return x00*times**(alpha)*np.exp(-a*times)*np.exp(-k*(times/t_0)**(1./3.))*np.exp(beta)
+        
+        def generale_lc_from_solution_SDE(q,a,alpha,k,t_0,norm_A,times):
+            #norm_A = generate_peak_counts(self.generated_fluence, self.k_values)
+            #norm_A = np.float64(norm_A)
+            #print("norm=",norm_B)
+            #print("q=",q,"a=",a,"alpha=",alpha,"k=",k)
             n=len(times)
             dt=times[1]-times[0]
             beta = brownian(n,dt,q)
-            return x00*times**(alpha)*np.exp(-a*times)*np.exp(-k*(times/t_0)**(1./3.))*np.exp(beta) 
-
-
-
-
-
-        #f = lambda x,t: (0.5*q-a+alpha/(t+1e-12)-(k/3/t_0)*(t/t_0)**(-2/3))*x
-        #g = lambda x,t:np.sqrt(q)*x
-
-        #self._rates = sde_euler_maruyama(self._times, f, g,1).T[0]
+            return norm_A*(times/t_0)**(alpha)*np.exp(-a*times-k*(times/t_0)**(1./3.)+beta)  
         
-        self._rates = generale_lc_from_solution_SDE(q,a,alpha,k,t_0,self._times)
-       
+        self._rates = generale_lc_from_solution_SDE(q,a,alpha,k,t_0,norm_A,self._times)
         self._max_raw_pc = self._rates.max()
         self._peak_value = self._max_raw_pc
+
+        #print(self._max_raw_pc)
+        #print('max_lc',self._peak_value)
         if (self._max_raw_pc<1.e-12):
+            print('LC with 0 value')
             # check that we have generated a lc with non-zero values; otherwise,
             # exit and set the flag 'self.check=0', which indicates that this
             # lc has to be skipped
@@ -206,13 +371,28 @@ class LC(object):
             return 0
         else:
             self.check=1
+        
+        if (self._max_raw_pc>1.e17):
+            print('PEAK>1e16')
+            #return 0
+
+        #if (self._max_raw_pc<1.e16) and (self._max_raw_pc>1e-12):
+        #    print('PEAK=',self._max_raw_pc)
+        
         #print("INSTRUMENT=",self._instrument)
          # lc from avalanche scaled + Poissonian bg added (for BATSE and Fermi)
          # For BATSE, the variable `_plot_lc` contains the COUNTS (and not the count RATES!)
         if self._instrument == 'batse' or self._instrument == 'fermi':
             self._model           = self._rates                                 # model COUNTS 
             self._modelbkg        = self._model + (self._bg * self._res)                # model COUNTS + constant bgk counts
-            self._plot_lc         = np.random.poisson(self._modelbkg).astype('float')   # total COUNTS (signal+noise) with Poisson
+            #print('condition for poisson',np.any(self._modelbkg > 1e17))
+            if np.any(self._modelbkg > 1e17):
+                #print('HIGH LAMBDA')
+                self._plot_lc=np.random.normal(loc=self._modelbkg, scale=np.sqrt(self._modelbkg))
+                #print('p=',np.random.normal(loc=self._modelbkg, scale=np.sqrt(self._modelbkg)))
+            else:
+                self._plot_lc = np.random.poisson(self._modelbkg).astype('float')   # total COUNTS (signal+noise) with Poisson
+            
             self._plot_lc_with_bg = self._plot_lc  
             self._err_lc          = np.sqrt(self._plot_lc)
             if self._with_bg: # lc with background
@@ -257,27 +437,12 @@ class LC(object):
             #     self._plot_lc = self._plot_lc - (self._bg * self._res)   # total COUNTS (removed the constant bkg level)
 
         self._get_lc_properties()
-
-        #assert self._n_pulses==len(self._lc_params)
-
-        #for p in self._lc_params:
-        #    p['norm'] *= 0
-        #norms         = np.empty((0,))
-        #t_delays      = np.empty((0,))
-        #taus          = np.empty((0,))
-        #tau_rs        = np.empty((0,))
-        #counts_pulses = np.empty((0,))
-
-        #if return_array:
-        #    for p in self._lc_params:
-        #        norms    = np.append(norms,    p['norm'])
-        #        t_delays = np.append(t_delays, p['t_delay'])
-        #        taus     = np.append(taus,     p['tau'])
-        #        tau_rs   = np.append(tau_rs,   p['tau_r'])
-                # counts_pulses = np.append(counts_pulses, p['counts_pulse'])   
-
-        #    return norms, t_delays, taus, tau_rs, self._peak_value
-
+        #print('S/N=',evaluateGRB_SN(self._times,self._plot_lc,self._err_lc,self._t90,15,0.064,True,return_cnts=False)[0],'k=',"%1.2f"%self._k,'t0=',"%1.2f"%self._t_0)
+        #SNoi=evaluateGRB_SN(self._times,self._plot_lc,self._err_lc,self._t90,15,0.064,True,return_cnts=False)[0]
+        #if SNoi < 5:
+            #print('S/N=',"%1.3f"%SNoi,'k=',"%1.3f"%self._k,'t0=',"%1.3f"%self._t_0,"q=","%1.3f"%self._q,"alpha=","%1.3f"%self._alpha,"norm","%1.3e"%self._norm_A)
+            #slow_function()
+   
         #else:
         #    return self._lc_params
         return self._lc_params
