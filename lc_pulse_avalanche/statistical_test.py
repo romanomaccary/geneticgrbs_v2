@@ -131,7 +131,7 @@ bg_level_batse      = 2.8 # see `statistical_test.ipynb` for the computation
 t90_threshold_batse = 2
 #sn_threshold_batse  = 70 # Old version
 sn_threshold_batse  = 15
-sn_threshold_sup = 1385.5025634765625*3
+sn_threshold_sup = 1385.5025634765625*5
 instr_batse         = {
     "name"         : name_batse,
     "res"          : res_batse,
@@ -949,10 +949,10 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, sn_threshold_sup,bi
         #cond_2 = s_n_peak>sn_threshold
         cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
         cond_4 = s_n<sn_threshold_sup
-        #if not(cond_4):
-        #    print('sn too high',s_n)
-        #if not(cond_2):
-        #    print('sn too low',s_n)        
+        # if not(cond_4):
+        #     print('sn too high',s_n)
+        # if not(cond_2):
+        #     print('sn too low',s_n)        
     
         if ( cond_1 and cond_2 and cond_3 and cond_4 ):
             grb.t20 = T20
@@ -1336,7 +1336,7 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
     w3 = 1.
     w4 = 1.
     #w5 = 1.
-    w5 = 2.
+    w5 = 1.
     w6 = 0.
 
     l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
@@ -2765,7 +2765,7 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 ################################################################################
 
 def generate_GRBs(N_grb,                                                              # number of simulated GRBs to produce
-                  tau_i,tau_d,alpha,tau_se,x_min,alpha_pl,                                                # 7 parameters
+                  tau_i,tau_d,alpha,tau_se,x0,                                                # 7 parameters
                   instrument, bin_time, eff_area, bg_level,                           # instrument parameters
                   sn_threshold, sn_threshold_sup,t_f,                                                  # constraint parameters 
                   t90_threshold, t90_frac=15, filter=True,                            # constraint parameters
@@ -3160,8 +3160,7 @@ def generate_GRBs(N_grb,                                                        
                 tau_d=tau_d,
                 alpha=alpha,
                 tau_se=tau_se,
-                x_min=x_min,
-                alpha_pl=alpha_pl,
+                x0=x0,
                 ### instrument parameters:
                 res=bin_time,
                 eff_area=eff_area,
@@ -3170,7 +3169,7 @@ def generate_GRBs(N_grb,                                                        
                 instrument=instrument,
                 with_bg=with_bg)
         #lc.generate_avalanche(seed=None)
-        lc.generate_LC_from_sde(tau_i,tau_d,alpha,tau_se,x_min,alpha_pl)
+        lc.generate_LC_from_sde(tau_i,tau_d,alpha,tau_se,x0)
         #if lc.check==0:
             # check that we have generated a lc with non-zero values; otherwise,
             # skip it and continue in the generation process

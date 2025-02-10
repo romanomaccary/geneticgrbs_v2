@@ -253,7 +253,7 @@ class LC(object):
                   exponential for sampling the number of initial pulses and child
     """
     
-    def __init__(self,tau_i,tau_d,alpha,tau_se,x_min,alpha_pl,t_min=+0.1, t_max=1000, res=0.256, 
+    def __init__(self,tau_i,tau_d,alpha,tau_se,x0,t_min=+0.1, t_max=1000, res=0.256, 
                  eff_area=3600, bg_level=10.67, with_bg=True, use_poisson=True,
                  min_photon_rate=1.3, max_photon_rate=1300, sigma=5, instrument='batse', verbose=False): #New parameters of the BPL count distrib
         
@@ -261,8 +261,7 @@ class LC(object):
         self._tau_d = tau_d
         self._alpha = alpha
         self._tau_se = tau_se
-        self._x_min= x_min
-        self._alpha_pl = alpha_pl
+        self._x0= x0
         self._eff_area = eff_area 
         self._bg = bg_level * self._eff_area # cnt/s
         self._min_photon_rate = min_photon_rate  
@@ -321,7 +320,7 @@ class LC(object):
              print("Time resolution: ", self._step)
     #--------------------------------------------------------------------------#
 
-    def generate_LC_from_sde(self,tau_i,tau_d,alpha,tau_se,x_min,alpha_pl):
+    def generate_LC_from_sde(self,tau_i,tau_d,alpha,tau_se,x0):
 
         # def sde_euler_maruyama(times, mu, sigma, n_paths):
         #     N = len(times)
@@ -354,17 +353,18 @@ class LC(object):
         #     beta = brownian(n,dt,q)
         #     return x00*times**(alpha)*np.exp(-a*times)*np.exp(-k*(times/t_0)**(1./3.))*np.exp(beta)
         
-        def generale_lc_from_solution_SDE(tau_i,tau_d,alpha,tau_se,x_min,alpha_pl,times):
-            norm_A = sample_power_law(x_min,alpha_pl)
+        def generale_lc_from_solution_SDE(tau_i,tau_d,alpha,tau_se,x0,times):
+            norm_A = x0
+            #print(norm_A)
             n=len(times)
             dt=times[1]-times[0]
             beta = brownian(n,dt,1/tau_i)
             return norm_A*(times/tau_se)**(alpha)*np.exp(-times/tau_d-(times/tau_se)**(1./3.)+beta)  
         
-        self._rates = generale_lc_from_solution_SDE(tau_i,tau_d,alpha,tau_se,x_min,alpha_pl,self._times)
+        self._rates = generale_lc_from_solution_SDE(tau_i,tau_d,alpha,tau_se,x0,self._times)
         self._max_raw_pc = self._rates.max()
         self._peak_value = self._max_raw_pc
-
+        #print(self._rates)
         #print(self._max_raw_pc)
         #print('max_lc',self._peak_value)
         if (self._max_raw_pc<1.e-12):

@@ -58,7 +58,7 @@ elif user=='MM':
 elif user == 'romano':
     sys.path.append('/astrodata/romain/sde_GA/geneticgrbs_v2/statistical_test')
     sys.path.append('/astrodata/romain/sde_GA/geneticgrbs_v2/lc_pulse_avalanche')
-    export_path='/astrodata/romain/geneticgrbs_simulations_new_formulation_v4/'
+    export_path='/astrodata/romain/GA_SIMULATIONS/geneticgrbs_simulations_new_formulation_x0/'
 elif user=='external_user':
     sys.path.append('../statistical_test')
     sys.path.append('../lc_pulse_avalanche')
@@ -94,8 +94,7 @@ if __name__ == '__main__':
         tau_d         = variables['tau_d']
         alpha       = variables['alpha']
         tau_se          = variables['tau_se']
-        x_min       = variables['x_min']
-        alpha_pl    = variables['alpha_pl']
+        x0       = variables['x0']
         export_path = variables['dir']
         # Print the variables and their values
         print('==============================================')
@@ -130,16 +129,8 @@ if __name__ == '__main__':
             tau_d       = 46.27  
             alpha     = 1.26   
             tau_se    = 3.52  
-            x_min    = 196.34  
-            alpha_pl     = 2.42   
-            
-#             tau_i       = 2.16   ( +  0.07 , -  0.02 )
-# tau_d       = 46.27   ( +  0.0 , -  8.71 )
-# alpha     = 1.26   ( +  0.4 , -  0.19 )
-# tau_se    = 3.52   ( +  4.13 , -  2.28 )
-# x_min    = 196.34   ( +  773.94 , -  167.7 )
-# alpha_pl     = 2.42   ( +  1.46 , -  0.67 )
-#         #----------------------------------------------------------------------#
+            x0        = 100
+         #----------------------------------------------------------------------#
         # Swift 
         #----------------------------------------------------------------------#
         elif instrument=='swift':
@@ -239,8 +230,7 @@ if __name__ == '__main__':
                           tau_d=tau_d,
                           alpha=alpha,
                           tau_se=tau_se,
-                          x_min=x_min,
-                          alpha_pl=alpha_pl,
+                          x0=x0,
                           # instrument parameters
                           instrument=instrument,
                           bin_time=res,

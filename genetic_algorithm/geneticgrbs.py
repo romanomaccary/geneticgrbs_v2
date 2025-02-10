@@ -36,7 +36,7 @@ if sys.getrecursionlimit()<rec_lim:
 #rc('text', usetex=True)
 save_plot=0
 
-save_folder='/astrodata/romain/sde_GA/geneticgrbs_v2/genetic_algorithm/result_sde_new_sde_formulation_v5/'
+save_folder='/astrodata/romain/sde_GA/geneticgrbs_v2/genetic_algorithm/RESULT/result_sde_new_sde_formulation_x0/'
 
 random_seed=777
 print(random_seed)
@@ -160,7 +160,7 @@ if instrument=='batse':
     t90_threshold = instr_batse['t90_threshold'] # 2     # [s] --> used to select only _long_ GRBs
     t90_frac      = 15
     sn_threshold  = instr_batse['sn_threshold']  # 70    # signal-to-noise ratio
-    sn_threshold_sup = 1385.5025634765625*3 # Two times the maximum value of the sn_distr_real
+    sn_threshold_sup = 1385.5025634765625*5 # Two times the maximum value of the sn_distr_real
     
     bin_time      = instr_batse['res']           # 0.064 # [s] temporal bins for BATSE (time resolution)
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
@@ -294,8 +294,10 @@ range_tau_i      = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log
 range_tau_d     = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log scale
 range_alpha      = {"low": 1,                        "high": 8}  # linear scale
 range_tau_se     = {"low": np.log10(1e-2),             "high": np.log10(1e3)}
-range_x_min      = {"low":np.log10(1e0),           "high":np.log10(1e4)}
-range_alpha_pl   = {"low":1,                         "high":5}
+range_x0      = {"low":np.log10(1e0),           "high":np.log10(1e6)}
+
+#range_x_min      = {"low":np.log10(1e0),           "high":np.log10(1e4)}
+#range_alpha_pl   = {"low":1,                         "high":5}
 
 # q=0.1
 # a=q/2
@@ -306,7 +308,7 @@ range_alpha_pl   = {"low":1,                         "high":5}
 
 #Range of the 4 parameters of the SDE model
 
-range_constraints = [range_tau_i,range_tau_d,range_alpha,range_tau_se,range_x_min,range_alpha_pl]
+range_constraints = [range_tau_i,range_tau_d,range_alpha,range_tau_se,range_x0]
 
 num_genes = len(range_constraints) 
 
@@ -480,8 +482,8 @@ def fitness_func(ga_instance, solution, solution_idx=None):
     # Generate the GRBs
     #--------------------------------------------------------------------------#
     
-    ## if the solution extremely violates the condition tau_d <= 2tau_i, (like tau_d> 10*tau_i), we assign to this solution a fitness of 1e-9.
-    if 10**solution[1] > 10*(10**solution[0]):
+    ## if the solution extremely violates the condition tau_d <= 2tau_i, (like tau_d> 3*tau_i), we assign to this solution a fitness of 1e-9.
+    if 10**solution[1] > 3*(10**solution[0]):
         return 1e-9
     
     if nparams==5:
@@ -493,8 +495,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                                     tau_d=10**solution[1],
                                     alpha=solution[2],
                                     tau_se=10**solution[3],
-                                    x_min = 10**solution[4],
-                                    alpha_pl=solution[5],
+                                    x0 = 10**solution[4],
                                     # instrument parameters:
                                     instrument=instrument,
                                     bin_time=bin_time,
@@ -514,7 +515,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                                  )
         except Exception:
             #n_discarded += 1
-            print("we can't generate good GRBs with these parameters",[10**solution[0],10**solution[1],solution[2],10**solution[3],10**solution[4],solution[5]])
+            print("we can't generate good GRBs with these parameters",[10**solution[0],10**solution[1],solution[2],10**solution[3],10**solution[4]])
             #print("fufa")
             return 1e-9
 
@@ -528,8 +529,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                                     tau_d=0.5*(10**solution[0]),
                                     alpha=solution[2],
                                     tau_se=10**solution[3],
-                                    x_min=10**solution[4],
-                                    alpha_pl = solution[5],
+                                    x0=10**solution[4],
                                     # instrument parameters:
                                     instrument=instrument,
                                     bin_time=bin_time,
@@ -640,9 +640,7 @@ def write_best_par_per_epoch(solution,loss, filename=save_folder+'best_par_per_e
         file.write("tau_d       = {solution}".format(solution=10**solution[1])+'\n')
         file.write("alpha     = {solution}".format(solution=solution[2])+'\n')
         file.write("tau_se    = {solution}".format(solution=10**solution[3])+'\n')
-        file.write("x_min    = {solution}".format(solution=10**solution[4])+'\n')
-        file.write("alpha_pl    = {solution}".format(solution=solution[5])+'\n')
-     
+        file.write("x0    = {solution}".format(solution=10**solution[4])+'\n')
 
         file.write(loss+'\n')
 
@@ -674,8 +672,8 @@ def on_generation(ga_instance):
     print("    - tau_d        = {solution}".format(solution=10**solution[1]))
     print("    - alpha        = {solution}".format(solution=solution[2]))
     print("    - tau_se       = {solution}".format(solution=10**solution[3]))
-    print("    - x_min        = {solution}".format(solution=10**solution[4]))
-    print("    - alpha_pl      = {solution}".format(solution=solution[5]))
+    print("    - x0        = {solution}".format(solution=10**solution[4]))
+    #print("    - x_min        = {solution}".format(solution=10**solution[4]))
         
     fitness_values = ga_instance.last_generation_fitness
     loss_values = fitness_values**(-1)
@@ -814,8 +812,7 @@ if __name__ == '__main__':
                                             tau_d=0.5*(10**solution[0]),
                                             alpha=solution[2],
                                             tau_se=10**solution[3],
-                                            x_min=10**solution[4],
-                                            alpha_pl = solution[5],
+                                            x0=10**solution[4],
                                             # instrument parameters:
                                             instrument=instrument,
                                             bin_time=bin_time,
@@ -844,8 +841,7 @@ if __name__ == '__main__':
                                             tau_d=10**solution[1],
                                             alpha=solution[2],
                                             tau_se=10**solution[3],
-                                            x_min=10**solution[4],
-                                            alpha_pl = solution[5],
+                                            x0=10**solution[4],
                                             # instrument parameters:
                                             instrument=instrument,
                                             bin_time=bin_time,
@@ -978,8 +974,8 @@ if __name__ == '__main__':
     print("    - tau_d        = {solution}".format(solution=10**solution[1]))
     print("    - alpha        = {solution}".format(solution=solution[2]))
     print("    - tau_se       = {solution}".format(solution=10**solution[3]))
-    print("    - x_min        = {solution}".format(solution=10**solution[4]))
-    print("    - alpha_pl     = {solution}".format(solution=solution[5]))
+    print("    - x0       = {solution}".format(solution=10**solution[4]))
+
     
     print("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
     print("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))
@@ -1022,9 +1018,7 @@ if __name__ == '__main__':
     file.write('\n')
     file.write('range_tau_se         = {}'.format(range_tau_se))
     file.write('\n')
-    file.write('range_x_min         = {}'.format(range_x_min))
-    file.write('\n')
-    file.write('range_alpha_pl         = {}'.format(range_alpha_pl))
+    file.write('range_x0         = {}'.format(range_x0))
     file.write('\n')
     file.write('################################################################################')
     file.write('\n')
@@ -1043,9 +1037,7 @@ if __name__ == '__main__':
     file.write('\n')
     file.write("    - tau_se  = {solution}".format(solution=10**solution[3]))
     file.write('\n')
-    file.write("    - x_min  = {solution}".format(solution=10**solution[4]))
-    file.write('\n')
-    file.write("    - alpha_pl  = {solution}".format(solution=solution[5]))
+    file.write("    - x0  = {solution}".format(solution=10**solution[4]))
     file.write('\n')
    
     file.write("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
@@ -1176,16 +1168,14 @@ if __name__ == '__main__':
     all_gen_tau_d       = 10**np.array(all_gen_sol[:,1])       # array with all the mu0     of the ALL generations
     all_gen_alpha     = np.array(all_gen_sol[:,2])       # array with all the alpha   of the ALL generations
     all_gen_tau_se    = 10**np.array(all_gen_sol[:,3])       # array with all the delta1  of the ALL generations
-    all_gen_x_min    = 10**np.array(all_gen_sol[:,4])       # array with all the delta1  of the ALL generations
-    all_gen_alpha_pl    = np.array(all_gen_sol[:,5])
+    all_gen_x0    = 10**np.array(all_gen_sol[:,4])       # array with all the delta1  of the ALL generations
 
     data_all_gen = {
         'tau_i':        all_gen_tau_i,
         'tau_d':       all_gen_tau_d,
         'alpha':     all_gen_alpha,
         'tau_se':    all_gen_tau_se,
-        'x_min': all_gen_x_min,
-        'alpha_pl': all_gen_alpha_pl,
+        'x0': all_gen_x0,
         'fitness':   all_gen_fitness
     }
     df_all_gen = pd.DataFrame(data_all_gen)
