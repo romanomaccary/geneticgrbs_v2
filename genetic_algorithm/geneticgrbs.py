@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ################################################################################
 # # IMPORT LiBRARIES
 ################################################################################
@@ -35,13 +36,12 @@ if sys.getrecursionlimit()<rec_lim:
 #rc('text', usetex=True)
 save_plot=0
 
+save_folder='/astrodata/romain/sde_GA/geneticgrbs_v2/genetic_algorithm/result_sde_new_sde_formulation_v5/'
 
-
-
-random_seed=12345671
+random_seed=777
 print(random_seed)
 def fix_all_seeds(seed):
-    """Fix randomness. Usage: fix_all_seeds(42)"""
+    #Fix randomness. Usage: fix_all_seeds(42)
     random.seed(seed)
     np.random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -52,9 +52,6 @@ def fix_all_seeds(seed):
     # torch.backends.cudnn.benchmark     = True
 
 fix_all_seeds(random_seed)
-
-#random_seed=42
-#np.random.seed(random_seed)
 
 print_time=True
 
@@ -67,6 +64,7 @@ print_time=True
 #user='AF'
 #user='bach'
 #user='gravity'
+
 user = 'romano'
 #user='pleiadi'
 #user = 'MM'
@@ -162,6 +160,8 @@ if instrument=='batse':
     t90_threshold = instr_batse['t90_threshold'] # 2     # [s] --> used to select only _long_ GRBs
     t90_frac      = 15
     sn_threshold  = instr_batse['sn_threshold']  # 70    # signal-to-noise ratio
+    sn_threshold_sup = 1385.5025634765625*3 # Two times the maximum value of the sn_distr_real
+    
     bin_time      = instr_batse['res']           # 0.064 # [s] temporal bins for BATSE (time resolution)
     test_times    = np.linspace(t_i, t_f, int((t_f-t_i)/bin_time))
 elif instrument=='swift':
@@ -224,17 +224,16 @@ crossover_probability = 1                      # 'None' means couples parent k w
 initial_population    = None                   # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
 crossover_type        = "scattered"
-num_generations       = 25                     # Number of generations.
-sol_per_pop           = 5000                   # Number of solutions in the population (i.e., number of different sets per generation).
+num_generations       = 20                     # Number of generations.
+sol_per_pop           = 2000                # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.15*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
-keep_parents          = 0                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
+keep_parents          = 10                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
-#mutation_probability=0.2
+#mutation_probability=0.1
 
 # Other parameters
 N_grb            = 2000   # number of simulated GRBs to produce per set of parameters
-n_cut            = 2500   # maximum number of pulses to consider in the avalanche model
 test_sn_distr    = True   # add a fifth metric regarding  the S/N distribution (set True by default)
 test_pulse_distr = False  # add a sixth metric regarding the distribution of number of pulses per GRB (set False by default)
 
@@ -248,7 +247,7 @@ parallel_processing  = ["process", n_processes]  # USE THIS ONE!
 #parallel_processing = None                      # single thread
 
 # Name of the pkl file where to save the GA instance at the end of the run
-filename_model = 'geneticGRB_sde'
+filename_model = save_folder+'geneticGRB_sde'
 
 epsilon = 1.e-6
 
@@ -271,31 +270,47 @@ epsilon = 1.e-6
 
 ### THIS ONES WORK WITHOUT BLOCKING!
 
-range_q      = {"low": np.log10(1e-2),            "high": np.log10(1e0)} #log scale
-range_a     = {"low": np.log10(1e-3)-np.log10(2),            "high": np.log10(1e1)-np.log10(2)} #log scale
-range_alpha   = {"low": 1,               "high": 4} # line scale
-range_t_0  = {"low": np.log10(6e-2),               "high": np.log10(5e1)}
-range_k  = {"low": np.log10(5e-2),            "high":np.log10(4)} #log scale
-range_norm_A     = {"low": np.log10(1e2),             "high": np.log10(1e8)} # sample norm
+# range_q      = {"low": np.log10(1e-2),            "high": np.log10(1e0)} #log scale
+# range_a     = {"low": np.log10(1e-3)-np.log10(2),            "high": np.log10(1e1)-np.log10(2)} #log scale
+# range_alpha   = {"low": 1,               "high": 4} # line scale
+# range_t_0  = {"low": np.log10(6e-2),               "high": np.log10(5e1)}
+# range_k  = {"low": np.log10(5e-2),            "high":np.log10(4)} #log scale
+# range_norm_A     = {"low": np.log10(1e2),             "high": np.log10(1e8)} # sample norm
+
+## NEW FORMULATION OF THE SDE
+
+# range_tau_i      = {"low": np.log10(1e0),            "high": np.log10(1e1)} #log scale
+# range_tau_d     = {"low": np.log10(1e0),            "high": np.log10(1e1)} #log scale
+# range_alpha      = {"low": 1,                        "high": 4}  # linear scale
+# range_tau_se     = {"low": np.log10(1e-2),             "high": np.log10(1e2)}
+# range_x_min      = {"low":np.log10(1e2),           "high":np.log10(1e8)}
+# range_alpha_pl   = {"low":1,                         "high":4}
 
 
-q=0.1
-a=q/2
-alpha=2.5
-k=0.1
-t_0=0.1
+## NEW FORMULATION OF THE SDE
+## NEW RUN WITH BROADER RANGE OF PARAMS (last time some params reach upper bounds)
+
+range_tau_i      = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log scale
+range_tau_d     = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log scale
+range_alpha      = {"low": 1,                        "high": 8}  # linear scale
+range_tau_se     = {"low": np.log10(1e-2),             "high": np.log10(1e3)}
+range_x_min      = {"low":np.log10(1e0),           "high":np.log10(1e4)}
+range_alpha_pl   = {"low":1,                         "high":5}
+
+# q=0.1
+# a=q/2
+# alpha=2.5
+# k=0.1
+# t_0=0.1
 
 
 #Range of the 4 parameters of the SDE model
 
-range_constraints = [range_q,range_a, 
-                     range_alpha,
-                     range_k, 
-                     range_t_0,range_norm_A]
+range_constraints = [range_tau_i,range_tau_d,range_alpha,range_tau_se,range_x_min,range_alpha_pl]
 
 num_genes = len(range_constraints) 
 
-nparams=4 # we fixed a=q/2, so the number of free parameters is 4
+nparams=5 # we fixed a=q/2, so the number of free parameters is 4
 
 save_model = True
 
@@ -322,6 +337,7 @@ if instrument=='batse':
                                       t90_threshold=t90_threshold,
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold,
+                                      sn_threshold_sup=sn_threshold_sup,
                                       t_f=t_f,
                                       zero_padding=True)
     # Load MEPSA results on BATSE (ONLY those that satisfy the constraint!)
@@ -349,6 +365,7 @@ elif instrument=='swift':
                                       t90_threshold=t90_threshold,
                                       t90_frac=t90_frac, 
                                       sn_threshold=sn_threshold, 
+                                      sn_threshold_sup=sn_threshold_sup,
                                       t_f=t_f,
                                       zero_padding=True)
     n_of_pulses_real = None
@@ -363,6 +380,7 @@ elif instrument=='sax':
                                       t90_threshold=t90_threshold, 
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold, 
+                                      sn_threshold_sup=sn_threshold_sup,
                                       t_f=t_f, 
                                       zero_padding=True)
     n_of_pulses_real = None
@@ -377,6 +395,7 @@ elif instrument=='fermi':
                                       t90_threshold=t90_threshold, 
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold, 
+                                      sn_threshold_sup=sn_threshold_sup,
                                       t_f=t_f, 
                                       zero_padding=True)
     n_of_pulses_real = None
@@ -391,6 +410,7 @@ elif instrument=='fermi':
                                       t90_threshold=t90_threshold,
                                       t90_frac=t90_frac,
                                       sn_threshold=sn_threshold,
+                                      sn_threshold_sup=sn_threshold_sup,
                                       t_f=t_f,
                                       zero_padding=True)    
     n_of_pulses_real = None    
@@ -459,17 +479,22 @@ def fitness_func(ga_instance, solution, solution_idx=None):
     #--------------------------------------------------------------------------#
     # Generate the GRBs
     #--------------------------------------------------------------------------#
+    
+    ## if the solution extremely violates the condition tau_d <= 2tau_i, (like tau_d> 10*tau_i), we assign to this solution a fitness of 1e-9.
+    if 10**solution[1] > 10*(10**solution[0]):
+        return 1e-9
+    
     if nparams==5:
         try:
             grb_list_sim = generate_GRBs(# number of simulated GRBs to produce:
                                     N_grb=N_grb,
                                     # 5 parameters:
-                                    q=10**solution[0],
-                                    a=10**solution[1],
+                                    tau_i=10**solution[0],
+                                    tau_d=10**solution[1],
                                     alpha=solution[2],
-                                    k=10**solution[3],
-                                    t_0=10**solution[4],
-                                    norm_A = 10**solution[5],
+                                    tau_se=10**solution[3],
+                                    x_min = 10**solution[4],
+                                    alpha_pl=solution[5],
                                     # instrument parameters:
                                     instrument=instrument,
                                     bin_time=bin_time,
@@ -477,19 +502,21 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                                     bg_level=bg_level,
                                     # constraint parameters:
                                     sn_threshold=sn_threshold,
+                                    sn_threshold_sup=sn_threshold_sup,
                                     t90_threshold=t90_threshold,
                                     t90_frac=t90_frac,
                                     t_f=t_f,
                                     filter=True,
                                     # other parameters:
                                     export_files=False,
-                                    n_cut=n_cut,
                                     with_bg=False,
                                     test_pulse_distr=test_pulse_distr
                                  )
         except Exception:
-            print("we can't generate good GRBs with these parameters",solution)
-            return -1e9
+            #n_discarded += 1
+            print("we can't generate good GRBs with these parameters",[10**solution[0],10**solution[1],solution[2],10**solution[3],10**solution[4],solution[5]])
+            #print("fufa")
+            return 1e-9
 
                                     
     elif nparams==4:
@@ -497,12 +524,12 @@ def fitness_func(ga_instance, solution, solution_idx=None):
             grb_list_sim = generate_GRBs(# number of simulated GRBs to produce:
                                     N_grb=N_grb,
                                     # 5 parameters:
-                                    q=10**solution[0],
-                                    a=0.5*(10**solution[0]),
+                                    tau_i=10**solution[0],
+                                    tau_d=0.5*(10**solution[0]),
                                     alpha=solution[2],
-                                    k=10**solution[3],
-                                    t_0=10**solution[4],
-                                    norm_A=10**solution[5],
+                                    tau_se=10**solution[3],
+                                    x_min=10**solution[4],
+                                    alpha_pl = solution[5],
                                     # instrument parameters:
                                     instrument=instrument,
                                     bin_time=bin_time,
@@ -510,19 +537,21 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                                     bg_level=bg_level,
                                     # constraint parameters:
                                     sn_threshold=sn_threshold,
+                                    sn_threshold_sup=sn_threshold_sup,
                                     t90_threshold=t90_threshold,
                                     t90_frac=t90_frac,
                                     t_f=t_f,
                                     filter=True,
                                     # other parameters:
                                     export_files=False,
-                                    n_cut=n_cut,
                                     with_bg=False,
                                     test_pulse_distr=test_pulse_distr
                                     )
         except Exception:
+            #n_discarded += 1
             print("we can't generate good GRBs with these parameters",solution)
-            return -1e9
+            print('fitness')
+            return 1e-9
     
     
     if test_pulse_distr:
@@ -597,7 +626,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
 # DEFINE AUXILIARY FUNCTION
 ################################################################################
 
-def write_best_par_per_epoch(solution, filename='best_par_per_epoch.txt'):
+def write_best_par_per_epoch(solution,loss, filename=save_folder+'best_par_per_epoch.txt'):
     """
     Function to write the best parameters of each generation in a file. The file
     is opened in append mode, so that we can append the results of eacch generation
@@ -607,12 +636,16 @@ def write_best_par_per_epoch(solution, filename='best_par_per_epoch.txt'):
     - filename: The name of the file to open in append mode. Default is 'output.txt'.
     """
     with open(filename, 'a') as file:
-        file.write("q        = {solution}".format(solution=10**solution[0])+'\n')
-        file.write("a       = {solution}".format(solution=0.5*10**solution[0])+'\n')
+        file.write("tau_i        = {solution}".format(solution=10**solution[0])+'\n')
+        file.write("tau_d       = {solution}".format(solution=10**solution[1])+'\n')
         file.write("alpha     = {solution}".format(solution=solution[2])+'\n')
-        file.write("k    = {solution}".format(solution=10**solution[3])+'\n')
-        file.write("t_0    = {solution}".format(solution=10**solution[4])+'\n')
-        file.write("norm    = {solution}".format(solution=10**solution[5])+'\n')
+        file.write("tau_se    = {solution}".format(solution=10**solution[3])+'\n')
+        file.write("x_min    = {solution}".format(solution=10**solution[4])+'\n')
+        file.write("alpha_pl    = {solution}".format(solution=solution[5])+'\n')
+     
+
+        file.write(loss+'\n')
+
         file.write('\n')
 
 
@@ -628,23 +661,35 @@ def on_generation(ga_instance):
     print("Generation     = {generation}".format(generation=ga_instance.generations_completed))
     current_fitness       = ga_instance.best_solution(pop_fitness=ga_instance.last_generation_fitness)[1]
     current_loss          = current_fitness**(-1)                
-    print("Best Loss      = {solution_loss}".format(solution_loss=current_loss))
-    print("Best Fitness   = {fitness}".format(fitness=current_fitness))
+    print("Best Loss      = {solution_loss}".format(solution_loss="%1.3f"%current_loss))
+    print("Averaged Loss  = {avgd_loss}".format(avgd_loss="%1.3f"%np.median(ga_instance.last_generation_fitness**(-1))))
+    print("Best Fitness   = {fitness}".format(fitness="%1.3f"%current_fitness))
     print("Fitness Change = {change}".format(change=current_fitness-last_fitness))
     last_fitness          = current_fitness
     last_loss             = current_loss
     solution, solution_fitness, solution_idx = ga_instance.best_solution(ga_instance.last_generation_fitness)
     # Print the best solution of the current generation on TERMINAL
     print("Parameters of the best solution in the current generation:")
-    print("    - q        = {solution}".format(solution=10**solution[0]))
-    print("    - a       = {solution}".format(solution=0.5*10**solution[0]))
-    print("    - alpha     = {solution}".format(solution=solution[2]))
-    print("    - k    = {solution}".format(solution=10**solution[3]))
-    print("    - t_0    = {solution}".format(solution=10**solution[4]))
-    print("    - norm_A    = {solution}".format(solution=10**solution[5]))
+    print("    - tau_i        = {solution}".format(solution=10**solution[0]))
+    print("    - tau_d        = {solution}".format(solution=10**solution[1]))
+    print("    - alpha        = {solution}".format(solution=solution[2]))
+    print("    - tau_se       = {solution}".format(solution=10**solution[3]))
+    print("    - x_min        = {solution}".format(solution=10**solution[4]))
+    print("    - alpha_pl      = {solution}".format(solution=solution[5]))
+        
+    fitness_values = ga_instance.last_generation_fitness
+    loss_values = fitness_values**(-1)
+    #print('fitness values length',len(loss_values))
+    #print('fitness_values',fitness_values)
+    print('loss values below threshold',len( np.where(loss_values >1e8)[0] ))
+    num_below_threshold = len( np.where(loss_values>1e8)[0] )/len(loss_values)
+    print("Percentage of discarded solutions: ","%1.3f"%(100*num_below_threshold),"%")
+    #print("Number of solutions that were discarded",n_discarded)
+    #
+    # n_discarded = 0 # reinitialize the counter of discarded solutions
 
     # Print the best solution of the current generation on FILE
-    write_best_par_per_epoch(solution)
+    write_best_par_per_epoch(solution,"Best Loss      = {solution_loss}".format(solution_loss=current_loss))
 
 
 def on_start(ga_instance):
@@ -673,6 +718,10 @@ def on_stop(ga_instance, last_population_fitness):
 ################################################################################
 
 if __name__ == '__main__':
+
+    #global n_discarded
+    #n_discarded=0
+
     #k= 3.891 t0= 0.145 q= 0.093 alpha= 1.461 norm 1.970e+03
     #solution = np.array([np.log10(0.093),0.1,1.461,np.log10(3.891),np.log10(0.145),np.log10(1.970e+03)])
     #print('fitness sol=',fitness_func(solution))
@@ -761,12 +810,12 @@ if __name__ == '__main__':
                     grb_list_sim = generate_GRBs(# number of simulated GRBs to produce:
                                             N_grb=N_grb,
                                             # 5 parameters:
-                                            q=10**solution[0],
-                                            a=0.5*(10**solution[0]),
+                                            tau_i=10**solution[0],
+                                            tau_d=0.5*(10**solution[0]),
                                             alpha=solution[2],
-                                            k=10**solution[3],
-                                            t_0=10**solution[4],
-                                            norm_A=10**solution[5],
+                                            tau_se=10**solution[3],
+                                            x_min=10**solution[4],
+                                            alpha_pl = solution[5],
                                             # instrument parameters:
                                             instrument=instrument,
                                             bin_time=bin_time,
@@ -774,29 +823,29 @@ if __name__ == '__main__':
                                             bg_level=bg_level,
                                             # constraint parameters:
                                             sn_threshold=sn_threshold,
+                                            sn_threshold_sup=sn_threshold_sup,
                                             t90_threshold=t90_threshold,
                                             t90_frac=t90_frac,
                                             t_f=t_f,
                                             filter=True,
                                             # other parameters:
                                             export_files=False,
-                                            n_cut=n_cut,
                                             with_bg=False,
                                             test_pulse_distr=test_pulse_distr)
                 except Exception:
                     print("we can't generate good GRBs with these parameters",solution)
-                    return -1e9
+                    return 1e-9
             elif nparams == 5:
                 try:
                     grb_list_sim = generate_GRBs(# number of simulated GRBs to produce:
                                             N_grb=N_grb,
                                             # 5 parameters:
-                                            q=10**solution[0],
-                                            a=10**solution[1],
+                                            tau_i=10**solution[0],
+                                            tau_d=10**solution[1],
                                             alpha=solution[2],
-                                            k=10**solution[3],
-                                            t_0=10**solution[4],
-                                            norm_A=10**solution[5],
+                                            tau_se=10**solution[3],
+                                            x_min=10**solution[4],
+                                            alpha_pl = solution[5],
                                             # instrument parameters:
                                             instrument=instrument,
                                             bin_time=bin_time,
@@ -804,18 +853,18 @@ if __name__ == '__main__':
                                             bg_level=bg_level,
                                             # constraint parameters:
                                             sn_threshold=sn_threshold,
+                                            sn_threshold_sup=sn_threshold_sup,
                                             t90_threshold=t90_threshold,
                                             t90_frac=t90_frac,
                                             t_f=t_f,
                                             filter=True,
                                             # other parameters:
                                             export_files=False,
-                                            n_cut=n_cut,
                                             with_bg=False,
                                             test_pulse_distr=test_pulse_distr)
                 except Exception:
                     print("we can't generate good GRBs with these parameters",solution)
-                    return -1e9
+                    return 1e-9
             
         
             if test_pulse_distr:
@@ -925,12 +974,12 @@ if __name__ == '__main__':
     print('\n################################################################################')
     print('################################################################################')
     print("* Parameters of the BEST solution:")
-    print("    - q        = {solution}".format(solution=10**solution[0]))
-    #print("    - a       = {solution}".format(solution=10**solution[1]))
-    print("    - alpha     = {solution}".format(solution=solution[2]))
-    print("    - k    = {solution}".format(solution=10**solution[3]))
-    print("    - t_0    = {solution}".format(solution=10**solution[4]))
-    print("    - norm_A    = {solution}".format(solution=10**solution[5]))
+    print("    - tau_i        = {solution}".format(solution=10**solution[0]))
+    print("    - tau_d        = {solution}".format(solution=10**solution[1]))
+    print("    - alpha        = {solution}".format(solution=solution[2]))
+    print("    - tau_se       = {solution}".format(solution=10**solution[3]))
+    print("    - x_min        = {solution}".format(solution=10**solution[4]))
+    print("    - alpha_pl     = {solution}".format(solution=solution[5]))
     
     print("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
     print("* Fitness value of the best solution : {solution_fitness}".format(solution_fitness=solution_fitness))
@@ -942,7 +991,7 @@ if __name__ == '__main__':
     #--------------------------------------------------------------------------#
     # Print on file
     #--------------------------------------------------------------------------#
-    file = open("./simulation_info.txt", "w")
+    file = open(save_folder+"simulation_info.txt", "w")
     file.write('################################################################################')
     file.write('\n')
     file.write("INPUT")
@@ -965,19 +1014,18 @@ if __name__ == '__main__':
     file.write('mutation_probability = {}'.format(mutation_probability))
     file.write('\n')
     file.write('\n')
-    file.write('range_q             = {}'.format(range_q))
+    file.write('range_tau_i             = {}'.format(range_tau_i))
     file.write('\n')
-    #file.write('range_a           = {}'.format(range_a))
-    #file.write('\n')
+    file.write('range_tau_d           = {}'.format(range_tau_d))
+    file.write('\n')
     file.write('range_alpha          = {}'.format(range_alpha))
     file.write('\n')
-    file.write('range_k         = {}'.format(range_k))
+    file.write('range_tau_se         = {}'.format(range_tau_se))
     file.write('\n')
-    file.write('range_t_0         = {}'.format(range_t_0))
+    file.write('range_x_min         = {}'.format(range_x_min))
     file.write('\n')
-    file.write('range_norm_A         = {}'.format(range_norm_A))
+    file.write('range_alpha_pl         = {}'.format(range_alpha_pl))
     file.write('\n')
-
     file.write('################################################################################')
     file.write('\n')
     file.write("OUTPUT")
@@ -987,17 +1035,17 @@ if __name__ == '__main__':
     file.write('\n')
     file.write("* Parameters of the BEST solution:")
     file.write('\n')
-    file.write("    - q      = {solution}".format(solution=10**solution[0]))
+    file.write("    - tau_i      = {solution}".format(solution=10**solution[0]))
     file.write('\n')
-    file.write("    -  a     = {solution}".format(solution=(10**solution[0])/2))
+    file.write("    - tau_d     = {solution}".format(solution=(10**solution[1])))
     file.write('\n')
     file.write("    - alpha   = {solution}".format(solution=solution[2]))
     file.write('\n')
-    file.write("    - k  = {solution}".format(solution=10**solution[3]))
+    file.write("    - tau_se  = {solution}".format(solution=10**solution[3]))
     file.write('\n')
-    file.write("    - t_0  = {solution}".format(solution=10**solution[4]))
+    file.write("    - x_min  = {solution}".format(solution=10**solution[4]))
     file.write('\n')
-    file.write("    - norm_A  = {solution}".format(solution=10**solution[5]))
+    file.write("    - alpha_pl  = {solution}".format(solution=solution[5]))
     file.write('\n')
    
     file.write("* Loss value of the best solution    : {solution_loss}".format(solution_loss=solution_fitness**(-1)))
@@ -1023,6 +1071,7 @@ if __name__ == '__main__':
     if MODE=='first':
         best_loss = np.array(ga_GRB.best_solutions_fitness)**(-1)
         loss_list = np.array(ga_GRB.solutions_fitness)**(-1)
+        loss_list = loss_list[np.where(loss_list<1e7)[0]]
         avg_loss  = np.zeros(len(best_loss))
         std_loss  = np.zeros(len(best_loss))
         for i in range(len(best_loss)):
@@ -1030,7 +1079,7 @@ if __name__ == '__main__':
             std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
         #print('best_loss[-1] =', best_loss[-1])
 
-        datafile = './datafile.txt'
+        datafile = save_folder+'datafile.txt'
         file = open(datafile, 'w')
         file.write('# generation\t best_loss\t avg_loss\t std_loss\t std_loss/sqrt(sol_per_pop)\n')
         for i in range(len(best_loss)):
@@ -1057,7 +1106,7 @@ if __name__ == '__main__':
                 avg_loss_print.append(avg_loss[i])
                 std_loss_print.append(std_loss[i])              
 
-        datafile = './datafile.txt'
+        datafile = save_folder+'datafile.txt'
         file = open(datafile, 'w')
         file.write('# generation\t best_loss\t avg_loss\t std_loss\t std_loss/sqrt(sol_per_pop)\n')
         for i in range(len(best_loss_print)):
@@ -1074,20 +1123,20 @@ if __name__ == '__main__':
             #plt.yscale('log')
             plt.xlabel(r'Generation')
             plt.ylabel(r'Best Loss')
-            plt.savefig('fig01.pdf')
+            plt.savefig(save_folder+'fig01.pdf')
             plt.clf()
 
             plt.errorbar(np.arange(len(best_loss)), avg_loss, yerr=std_loss/np.sqrt(sol_per_pop), ls='-', lw=2, c='b')
             #plt.yscale('log')
             plt.xlabel(r'Generation')
             plt.ylabel(r'Average Loss')
-            plt.savefig('fig02.pdf')
+            plt.savefig(save_folder+'fig02.pdf')
             plt.clf()
 
             plt.plot(std_loss, ls='-', lw=2, c='b')
             plt.xlabel(r'Generation')
             plt.ylabel(r'Standard Deviation of the loss')
-            plt.savefig('fig03.pdf')
+            plt.savefig(save_folder+'fig03.pdf')
             plt.clf()
 
         elif MODE=='resume':
@@ -1095,20 +1144,20 @@ if __name__ == '__main__':
             #plt.yscale('log')
             plt.xlabel(r'Generation')
             plt.ylabel(r'Best Loss')
-            plt.savefig('fig01.pdf')
+            plt.savefig(save_folder+'fig01.pdf')
             plt.clf()
 
             plt.errorbar(np.arange(len(best_loss_print)), np.array(avg_loss_print), yerr=np.array(std_loss_print)/np.sqrt(sol_per_pop), ls='-', lw=2, c='b')
             #plt.yscale('log')
             plt.xlabel(r'Generation')
             plt.ylabel(r'Average Loss')
-            plt.savefig('fig02.pdf')
+            plt.savefig(save_folder+'fig02.pdf')
             plt.clf()
 
             plt.plot(np.array(std_loss_print), ls='-', lw=2, c='b')
             plt.xlabel(r'Generation')
             plt.ylabel(r'Standard Deviation of the loss')
-            plt.savefig('fig03.pdf')
+            plt.savefig(save_folder+'fig03.pdf')
             plt.clf()
     
 
@@ -1123,24 +1172,24 @@ if __name__ == '__main__':
 
     # all solutions in the ALL epochs:
     all_gen_sol       = np.array(ga_GRB.solutions[:])
-    all_gen_q        = 10**np.array(all_gen_sol[:,0])       # array with all the mu      of the ALL generations 
-    all_gen_a       = 10**np.array(all_gen_sol[:,1])       # array with all the mu0     of the ALL generations
+    all_gen_tau_i        = 10**np.array(all_gen_sol[:,0])       # array with all the mu      of the ALL generations 
+    all_gen_tau_d       = 10**np.array(all_gen_sol[:,1])       # array with all the mu0     of the ALL generations
     all_gen_alpha     = np.array(all_gen_sol[:,2])       # array with all the alpha   of the ALL generations
-    all_gen_k    = 10**np.array(all_gen_sol[:,3])       # array with all the delta1  of the ALL generations
-    all_gen_t_0    = 10**np.array(all_gen_sol[:,4])       # array with all the delta1  of the ALL generations
-    all_gen_norm_A    = 10**np.array(all_gen_sol[:,5])       # array with all the delta1  of the ALL generations
+    all_gen_tau_se    = 10**np.array(all_gen_sol[:,3])       # array with all the delta1  of the ALL generations
+    all_gen_x_min    = 10**np.array(all_gen_sol[:,4])       # array with all the delta1  of the ALL generations
+    all_gen_alpha_pl    = np.array(all_gen_sol[:,5])
 
     data_all_gen = {
-        'q':        all_gen_q,
-        'a':       all_gen_a,
+        'tau_i':        all_gen_tau_i,
+        'tau_d':       all_gen_tau_d,
         'alpha':     all_gen_alpha,
-        'k':    all_gen_k,
-        't_0':    all_gen_t_0,
-        'norm_A': all_gen_norm_A,
+        'tau_se':    all_gen_tau_se,
+        'x_min': all_gen_x_min,
+        'alpha_pl': all_gen_alpha_pl,
         'fitness':   all_gen_fitness
     }
     df_all_gen = pd.DataFrame(data_all_gen)
-    df_all_gen.to_csv('./df_all_gen.csv', index=False)    
+    df_all_gen.to_csv(save_folder+'df_all_gen.csv', index=False)    
     
     ############################################################################
     ############################################################################
