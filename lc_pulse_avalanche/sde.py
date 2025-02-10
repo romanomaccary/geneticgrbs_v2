@@ -6,7 +6,6 @@ from scipy.stats import poisson
 import os, h5py
 from functools import partial
 from scipy import stats
-from statistical_test_test import *
 
 SEED=None
 
@@ -143,6 +142,8 @@ def generate_fluence(p, alpha, beta, F_break, F_min):
     return np.piecewise(p, [p < p_0, p >= p_0], [lambda p: F_break*(p*(1-alpha)/(f_0*F_break)+R_min**(1-alpha))**(1/(1-alpha)), 
                                                  lambda p: F_break*((p-1)*(1-beta)/(f_0*F_break))**(1/(1-beta))])
 
+
+
 def generate_peak_counts(generated_fluence, k_values):
     """This function turn fluence into peak counts through a conversion factor
     that depends on the selected instrument. Each time, the function randomly 
@@ -162,14 +163,36 @@ def generate_peak_counts(generated_fluence, k_values):
     counts    = (10.**(-k_sampled))*fluence
     return counts 
 
-path_k_values_file_batse = "../lc_pulse_avalanche/log10_fluence_over_counts_CGRO_BATSE.txt"
-k_values_batse = np.loadtxt(path_k_values_file_batse, unpack = True)
 
-path_k_values_file_swift = "../lc_pulse_avalanche/log10_fluence_over_counts_Swift_BAT.txt"
-k_values_swift = np.loadtxt(path_k_values_file_swift, unpack = True)
+def sample_power_law(x_min, alpha_pl):
+    """
+    Generate a random number sampled from a power-law distribution.
 
-path_k_values_file_fermi = "../lc_pulse_avalanche/log10_fluence_over_counts_Fermi_GBM.txt"
-k_values_fermi = np.loadtxt(path_k_values_file_fermi, unpack = True)
+    Parameters:
+    x_min (float): Minimum value of the distribution (must be > 0).
+    alpha (float): Power-law exponent (must be > 1).
+
+    Returns:
+    float: A randomly sampled value from the power-law distribution.
+    """
+    if x_min <= 0 or alpha_pl <= 1:
+        raise ValueError("x_min must be > 0 and alpha must be > 1.")
+
+    # Inverse transform sampling method
+    u = np.random.uniform(0, 1)  # Uniform random number in [0,1]
+    x = x_min * (1 - u) ** (-1 / (alpha_pl - 1))
+    return x
+
+
+
+# path_k_values_file_batse = "../lc_pulse_avalanche/log10_fluence_over_counts_CGRO_BATSE.txt"
+# k_values_batse = np.loadtxt(path_k_values_file_batse, unpack = True)
+
+# path_k_values_file_swift = "../lc_pulse_avalanche/log10_fluence_over_counts_Swift_BAT.txt"
+# k_values_swift = np.loadtxt(path_k_values_file_swift, unpack = True)
+
+# path_k_values_file_fermi = "../lc_pulse_avalanche/log10_fluence_over_counts_Fermi_GBM.txt"
+# k_values_fermi = np.loadtxt(path_k_values_file_fermi, unpack = True)
 
 # path_k_values_file_batse = "../lc_pulse_avalanche/log10_fluence_over_counts_CGRO_BATSE.txt"
 # k_values_batse = np.loadtxt(path_k_values_file_batse, unpack = True)
@@ -208,22 +231,14 @@ for key in dict_errs_swift.keys():
 
 class LC(object):
     """
-    A class to generate gamma-ray burst light curves (GRB LCs) using a pulse
-    avalanche model ('chain reaction') proposed by Stern & Svensson, ApJ, 
-    469: L109 (1996).
-    
-    :mu: average value of the Poisson distribution that samples the 
-         number of child pulses, which is mu_b; average number of baby pulses
-    :mu0: average value of the Poisson distribution that samples the 
-          number of primary pulses, which is mu_s; average number of spontaneous
-          (initial) pulses per GRB
-    :alpha: delay parameter
-    :delta1: lower boundary of log-normal probability distribution of tau
-             (time constant of baby pulse)
-    :delta2: upper boundary of log-normal probability distribution of tau
-    :tau_min: lower boundary of log-normal probability distribution of tau_0 
-              (time constant of spontaneous pulse); should be smaller than res
-    :tau_max: upper boundary of log-normal probability distribution of tau_0
+    A class to generate gamma-ray burst light curves (GRB LCs) using a stochastic
+    differential equation
+    :tau_i: timescale over which a random instability leads to change in Xt comparable with itself
+    :tau_d: timescale over which the exponential damping takes place
+    :alpha: exponent of the power-law
+    :tau_se: timescale of the stretched-exponential 
+    :x_min: minimum value of the normalization distribution
+    :alpha_pl: PL exponent of the normalization distribution
     :t_min: GRB LC start time
     :t_max: GRB LC stop time
     :res: GRB LC time resolution (s) (i.e., bin time)
@@ -232,26 +247,22 @@ class LC(object):
     :min_photon_rate: left  boundary of -3/2 log N - log S distribution (ph/cm2/s)
     :max_photon_rate: right boundary of -3/2 log N - log S distribution (ph/cm2/s)
     :sigma: signal above background level
-    :n_cut: maximum number of pulses in avalanche (useful to speed up the 
-            simulations but in odds with the "classic" approach)
     :with_bg: boolean flag for keeping or removing the background level at the 
               end of the generation
     :use_poisson: boolean flag for using the Poisson or the (rounded) 
                   exponential for sampling the number of initial pulses and child
     """
     
-    def __init__(self, q,a,alpha, k, t_0,norm_A,t_min=+0.1, t_max=1000, res=0.256, 
+    def __init__(self,tau_i,tau_d,alpha,tau_se,x_min,alpha_pl,t_min=+0.1, t_max=1000, res=0.256, 
                  eff_area=3600, bg_level=10.67, with_bg=True, use_poisson=True,
-                 min_photon_rate=1.3, max_photon_rate=1300, sigma=5, 
-                 n_cut=None, instrument='batse', verbose=False): #New parameters of the BPL count distrib
+                 min_photon_rate=1.3, max_photon_rate=1300, sigma=5, instrument='batse', verbose=False): #New parameters of the BPL count distrib
         
-        #self._mu      = mu # mu~1 --> critical runaway regime
-        self._q =q
-        self._a = a
+        self._tau_i =tau_i
+        self._tau_d = tau_d
         self._alpha = alpha
-        self._k = k
-        self._t_0 = t_0
-        self._norm_A = norm_A
+        self._tau_se = tau_se
+        self._x_min= x_min
+        self._alpha_pl = alpha_pl
         self._eff_area = eff_area 
         self._bg = bg_level * self._eff_area # cnt/s
         self._min_photon_rate = min_photon_rate  
@@ -264,7 +275,6 @@ class LC(object):
         self._times, self._step = np.linspace(self._t_min, self._t_max, self._n, retstep=True)
         # Arrays of COUNT RATES
         self._rates       = np.zeros(len(self._times))
-        self._sp_pulse    = np.zeros(len(self._times))
         self._total_rates = np.zeros(len(self._times))
         
         # Arrays of COUNTS
@@ -275,31 +285,29 @@ class LC(object):
         self._lc_params   = list()
         
         self._sigma       = sigma
-        self._n_cut       = n_cut
-        self._n_pulses    = 0
         self._with_bg     = with_bg
         self._use_poisson = use_poisson
         self._instrument  = instrument
 
-        if self._instrument == 'batse':
+        #if self._instrument == 'batse':
             #self._peak_count_rate_sample = peak_count_rate_batse_sample
-            self.k_values_path           = path_k_values_file_batse
-            self.k_values                = k_values_batse
-        elif self._instrument == 'swift':
-            #self._peak_count_rate_sample = peak_count_rate_swift_sample
-            self.k_values_path           = path_k_values_file_swift
-            self.k_values                = k_values_swift
-        elif self._instrument == 'sax_lr':
-            pass
-            #self._peak_count_rate_sample = peak_count_rate_sax_lr_sample
-        elif self._instrument == 'sax':
-            pass
-            #self._peak_count_rate_sample = peak_count_rate_sax_sample
-        elif self._instrument == 'fermi':
-            self.k_values_path           = path_k_values_file_fermi
-            self.k_values                = k_values_fermi
-        else:
-            raise ValueError("Instrument not recognized...")
+            #self.k_values_path           = path_k_values_file_batse
+            #self.k_values                = k_values_batse
+        # elif self._instrument == 'swift':
+        #     #self._peak_count_rate_sample = peak_count_rate_swift_sample
+        #     self.k_values_path           = path_k_values_file_swift
+        #     self.k_values                = k_values_swift
+        # elif self._instrument == 'sax_lr':
+        #     pass
+        #     #self._peak_count_rate_sample = peak_count_rate_sax_lr_sample
+        # elif self._instrument == 'sax':
+        #     pass
+        #     #self._peak_count_rate_sample = peak_count_rate_sax_sample
+        # elif self._instrument == 'fermi':
+        #     self.k_values_path           = path_k_values_file_fermi
+        #     self.k_values                = k_values_fermi
+        # else:
+        #     raise ValueError("Instrument not recognized...")
         
         # self.alpha_bpl = alpha_bpl
         # self.beta_bpl  = beta_bpl
@@ -313,7 +321,7 @@ class LC(object):
              print("Time resolution: ", self._step)
     #--------------------------------------------------------------------------#
 
-    def generate_LC_from_sde(self,q,a,alpha,k,t_0,norm_A):
+    def generate_LC_from_sde(self,tau_i,tau_d,alpha,tau_se,x_min,alpha_pl):
 
         # def sde_euler_maruyama(times, mu, sigma, n_paths):
         #     N = len(times)
@@ -346,17 +354,14 @@ class LC(object):
         #     beta = brownian(n,dt,q)
         #     return x00*times**(alpha)*np.exp(-a*times)*np.exp(-k*(times/t_0)**(1./3.))*np.exp(beta)
         
-        def generale_lc_from_solution_SDE(q,a,alpha,k,t_0,norm_A,times):
-            #norm_A = generate_peak_counts(self.generated_fluence, self.k_values)
-            #norm_A = np.float64(norm_A)
-            #print("norm=",norm_B)
-            #print("q=",q,"a=",a,"alpha=",alpha,"k=",k)
+        def generale_lc_from_solution_SDE(tau_i,tau_d,alpha,tau_se,x_min,alpha_pl,times):
+            norm_A = sample_power_law(x_min,alpha_pl)
             n=len(times)
             dt=times[1]-times[0]
-            beta = brownian(n,dt,q)
-            return norm_A*(times/t_0)**(alpha)*np.exp(-a*times-k*(times/t_0)**(1./3.)+beta)  
+            beta = brownian(n,dt,1/tau_i)
+            return norm_A*(times/tau_se)**(alpha)*np.exp(-times/tau_d-(times/tau_se)**(1./3.)+beta)  
         
-        self._rates = generale_lc_from_solution_SDE(q,a,alpha,k,t_0,norm_A,self._times)
+        self._rates = generale_lc_from_solution_SDE(tau_i,tau_d,alpha,tau_se,x_min,alpha_pl,self._times)
         self._max_raw_pc = self._rates.max()
         self._peak_value = self._max_raw_pc
 
@@ -372,8 +377,8 @@ class LC(object):
         else:
             self.check=1
         
-        if (self._max_raw_pc>1.e17):
-            print('PEAK>1e16')
+        #if (self._max_raw_pc>1.e17):
+        #    print('PEAK>1e16')
             #return 0
 
         #if (self._max_raw_pc<1.e16) and (self._max_raw_pc>1e-12):

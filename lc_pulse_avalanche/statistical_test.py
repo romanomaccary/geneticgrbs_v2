@@ -79,8 +79,7 @@ class GRB:
                  minimum_peak_rate_list=[],
                  peak_rate_list=[],
                  current_delay_list=[],
-                 minimum_pulse_delay_list=[],
-                 n_pls=-1):
+                 minimum_pulse_delay_list=[]):
 
         self.name                     = grb_name
         self.times                    = times
@@ -97,7 +96,6 @@ class GRB:
         self.minimum_pulse_delay_list = minimum_pulse_delay_list
         self.grb_data_file_path       = grb_data_file_path
         self.num_of_sig_pulses        = num_of_sig_pulses
-        self.n_pls                    = n_pls
 
     def copy(self):
         copy_grb = GRB(grb_name=self.name, times=self.times, counts=self.counts, 
@@ -106,8 +104,7 @@ class GRB:
                        minimum_peak_rate_list=self.minimum_peak_rate_list, 
                        peak_rate_list=self.peak_rate_list, 
                        current_delay_list=self.current_delay_list, 
-                       minimum_pulse_delay_list=self.minimum_pulse_delay_list,
-                       n_pls=self.n_pls)
+                       minimum_pulse_delay_list=self.minimum_pulse_delay_list)
         return copy_grb
 
 ################################################################################
@@ -134,14 +131,17 @@ bg_level_batse      = 2.8 # see `statistical_test.ipynb` for the computation
 t90_threshold_batse = 2
 #sn_threshold_batse  = 70 # Old version
 sn_threshold_batse  = 15
+sn_threshold_sup = 1385.5025634765625*3
 instr_batse         = {
     "name"         : name_batse,
     "res"          : res_batse,
     "eff_area"     : eff_area_batse,
     "bg_level"     : bg_level_batse,
     "t90_threshold": t90_threshold_batse,
-    "sn_threshold" : sn_threshold_batse
+    "sn_threshold" : sn_threshold_batse,
+    "sn_threshold_sup" : sn_threshold_sup
 }
+
 
 #------------------------------------------------------------------------------#
 # BATSE WRONG --> Galileo (counts)
@@ -329,6 +329,10 @@ def evaluateDuration20(times, counts, t90=None, t90_frac=15, bin_time=None, filt
     c_max           = np.max(counts)
     c_threshold     = c_max * threshold_level
     selected_times  = times[ np.where(counts>=c_threshold)[0] ]
+    # check that selected_times is not empty
+    if len(selected_times)==0:
+        # return null duration if selected_times is empty
+        return np.array( [0, 0, 0] )
     #selected_times = times[counts >= c_threshold]
     tstart          = selected_times[ 0]
     tstop           = selected_times[-1]
@@ -861,8 +865,7 @@ def load_lc_sim(path):
                        modelbkg=modelbkg,
                        bg=bg[0],
                        grb_data_file_path=path+grb_file, 
-                       num_of_sig_pulses=n_sig_pulses[0],
-                       n_pls=n_pls)
+                       num_of_sig_pulses=n_sig_pulses[0])
         grb_list_sim.append(grb)
 
     print("Total number of simulated GRBs: ", len(grb_sim_names))
@@ -870,7 +873,7 @@ def load_lc_sim(path):
 
 ################################################################################
 
-def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f, 
+def apply_constraints(grb_list, t90_threshold, sn_threshold, sn_threshold_sup,bin_time, t_f, 
                       t90_frac=15, sn_distr=False, filter=True, 
                       zero_padding=False, t_cut=200., verbose=True):
     """
@@ -882,6 +885,7 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
     Input:
     - t90_threshold [s];
     - sn_threshold;
+    - sn_threshold_sup: upper limit on the S2N;
     - bin_time: temporal bin size of the instrument [s];
     - t_f: time after the peak that we need the signal to last [s];
     - sn_distr: if True, returns and export also the distribution of the s2n 
@@ -944,7 +948,13 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
         cond_2 = s_n>sn_threshold
         #cond_2 = s_n_peak>sn_threshold
         cond_3 = len(counts[i_c_max:])>=(t_f/bin_time)
-        if ( cond_1 and cond_2 and cond_3 ):
+        cond_4 = s_n<sn_threshold_sup
+        #if not(cond_4):
+        #    print('sn too high',s_n)
+        #if not(cond_2):
+        #    print('sn too low',s_n)        
+    
+        if ( cond_1 and cond_2 and cond_3 and cond_4 ):
             grb.t20 = T20
             good_grb_list.append(grb)
             if sn_distr:
@@ -962,10 +972,10 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, bin_time, t_f,
             print("# grb_name    s2n    total_cnts", file=f)
             for key in sn_levels:
                 print(f"{key}    {sn_levels[key]}    {total_cnts[key]}", file=f)
-    print("percentage of good GRBs",100*(len(good_grb_list)/len(grb_list)),"%")
+    #print("percentage of good GRBs",100*(len(good_grb_list)/len(grb_list)),"%")
 
-    #if 100*(len(good_grb_list)/len(grb_list)) <1e-6:
-    #    return 'err'
+    # if 100*(len(good_grb_list)/len(grb_list)) <1e-6:
+    #    print('0 GRB')
     if sn_distr:
         return good_grb_list, sn_levels
     else:
@@ -1159,6 +1169,9 @@ def compute_autocorrelation(grb_list, N_lim, t_min=0, t_max=150,
         
         if mode=='scipy':
             counts = np.array(grb.model)
+            
+            #print('max counts',np.max(counts))
+            
             # errs = np.array(grb.errs)
             # Compute the ACF using the `scipy.signal.correlate` function
             acf   = signal.correlate(in1=counts, in2=counts, method='auto')
@@ -1322,7 +1335,8 @@ def compute_loss(averaged_fluxes,      averaged_fluxes_sim,
     w2 = 1.
     w3 = 1.
     w4 = 1.
-    w5 = 1.
+    #w5 = 1.
+    w5 = 2.
     w6 = 0.
 
     l2_loss_fluxes      = np.sqrt( np.sum(np.power((averaged_fluxes-averaged_fluxes_sim),2)) )
@@ -2751,30 +2765,27 @@ def readMEPSAres(mepsa_out_file_list, maximum_reb_factor = np.inf, sn_level = 5)
 ################################################################################
 
 def generate_GRBs(N_grb,                                                              # number of simulated GRBs to produce
-                  q, a, alpha, k, t_0,norm_A,                                                # 7 parameters
+                  tau_i,tau_d,alpha,tau_se,x_min,alpha_pl,                                                # 7 parameters
                   instrument, bin_time, eff_area, bg_level,                           # instrument parameters
-                  sn_threshold, t_f,                                                  # constraint parameters 
+                  sn_threshold, sn_threshold_sup,t_f,                                                  # constraint parameters 
                   t90_threshold, t90_frac=15, filter=True,                            # constraint parameters
                   export_files=False, export_path='None',                             # other parameters
-                  n_cut=2500, with_bg=False, seed=None,                               # other parameters
+                  with_bg=False, seed=None,                               # other parameters
                   remove_instrument_path=False, test_pulse_distr=False):               # other parameters         
     """
-    This function generates a list of GRBs using the pulse-avalanche stochastic
-    model by Stern+96. As input it takes the 7 parameters needed for the avalance 
-    model, and the parameters of the instrument considered. As output it returns 
+    This function generates a list of GRBs using the stochastic differential equation. As input it takes the X parameters needed for the SDE, and the parameters of the instrument considered. As output it returns 
     a list, where each element of the list is an GRB object, which has successfully 
     passed the constraints selection (see "apply_constraints()" function). 
 
     Input:
     - N_grb: total number of simulated GRBs to produce in output;
-    ### 5 parameters
-    - q:
-    - a:
+    ### X parameters
+    - tau_i:
+    - tau_d:
     - alpha:
-    - k:
-    - t0:
-    - tau_min:
-    - tau_max:
+    - tau_se:
+    - x_0:
+    - alpha_pl:
     ### instrument parameters
     - instrument:
     - res:
@@ -2790,7 +2801,6 @@ def generate_GRBs(N_grb,                                                        
     - export_files: if True, every GRB that passed the constraint selection is
                     exorted into an external file. The file contains 8 columns.
     - export_path
-    - n_cut:
     - with_bg:
     - seed:
     - test_pulse_distr: if True, it appends to each GRB object also the info
@@ -2826,7 +2836,8 @@ def generate_GRBs(N_grb,                                                        
         bg           = grb.bg
         T90          = grb.t90
         n_sig_pulses = grb.num_of_sig_pulses # N of significative pulses
-        n_pls        = int(grb.n_pls)        # total number of pulses composing the GRB (only for simulated ones)
+        n_pls = 1
+        #n_pls        = int(grb.n_pls)        # total number of pulses composing the GRB (only for simulated ones)
         savefile.write('# times    lc    err_lc    model    modelbkg    bg    T90    n_sig_pulses    n_pls\n')
         for i in range(len(times)):
             savefile.write('{0} {1} {2} {3} {4} {5} {6} {7} {8}\n'.format(times[i], lc[i], err_lc[i], model[i], modelbkg[i], bg, T90, n_sig_pulses, n_pls))
@@ -3145,22 +3156,21 @@ def generate_GRBs(N_grb,                                                        
         #RM: raise an error if too many trials are made to generate grbs
         #####################################
         lc = LC(### 5 parameters defining the SDE
-                q=q,
-                a=a,
+                tau_i=tau_i,
+                tau_d=tau_d,
                 alpha=alpha,
-                k=k,
-                t_0=t_0, 
-                norm_A=norm_A,
+                tau_se=tau_se,
+                x_min=x_min,
+                alpha_pl=alpha_pl,
                 ### instrument parameters:
                 res=bin_time,
                 eff_area=eff_area,
                 bg_level=bg_level,
                 ### other parameters:
                 instrument=instrument,
-                n_cut=n_cut,
                 with_bg=with_bg)
         #lc.generate_avalanche(seed=None)
-        lc.generate_LC_from_sde(q,a,alpha,k,t_0,norm_A)
+        lc.generate_LC_from_sde(tau_i,tau_d,alpha,tau_se,x_min,alpha_pl)
         #if lc.check==0:
             # check that we have generated a lc with non-zero values; otherwise,
             # skip it and continue in the generation process
@@ -3208,8 +3218,8 @@ def generate_GRBs(N_grb,                                                        
                   minimum_peak_rate_list=lc._minimum_peak_rate_list,
                   peak_rate_list=lc._peak_rate_list,
                   current_delay_list=lc._current_delay_list,
-                  minimum_pulse_delay_list=lc._minimum_pulse_delay_list,
-                  n_pls=lc._n_pulses) # total number of pulses composing the GRB
+                  minimum_pulse_delay_list=lc._minimum_pulse_delay_list
+                  ) # total number of pulses composing the GRB
                   
         # we use a temporary list that contains only _one_ lc, then we
         # check if that GRB satisfies the constraints imposed, ad if that is
@@ -3229,12 +3239,13 @@ def generate_GRBs(N_grb,                                                        
                                               t90_threshold=t90_threshold, 
                                               t90_frac=t90_frac,
                                               sn_threshold=sn_threshold, 
+                                              sn_threshold_sup=sn_threshold_sup,
                                               t_f=t_f,
                                               filter=filter,
                                               verbose=False)
         # save the GRB into the final list _only_ if it passed the constraints selection
         if (len(grb_list_sim_temp)==1):
-            assert lc._n_pulses == len(lc._lc_params)
+            #assert lc._n_pulses == len(lc._lc_params)
             #print('Total number of pulses: ', lc._n_pulses)
             if export_files:
                 export_grb(grb=grb, 
@@ -3243,12 +3254,12 @@ def generate_GRBs(N_grb,                                                        
                            remove_instrument_path=remove_instrument_path,
                            path=export_path)
                 export_grb_parameters=True
-                if export_grb_parameters:
-                    export_lc_params(LC=lc, 
-                                     idx=cnt, 
-                                     instrument=instrument, 
-                                     remove_instrument_path=remove_instrument_path,
-                                     path=export_path)
+                # if export_grb_parameters:
+                #     export_lc_params(LC=lc, 
+                #                      idx=cnt, 
+                #                      instrument=instrument, 
+                #                      remove_instrument_path=remove_instrument_path,
+                #                      path=export_path)
                 # export_lc(LC=lc, 
                 #           idx=cnt, 
                 #           instrument=instrument,

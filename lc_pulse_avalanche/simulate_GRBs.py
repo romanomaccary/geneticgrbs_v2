@@ -58,7 +58,7 @@ elif user=='MM':
 elif user == 'romano':
     sys.path.append('/astrodata/romain/sde_GA/geneticgrbs_v2/statistical_test')
     sys.path.append('/astrodata/romain/sde_GA/geneticgrbs_v2/lc_pulse_avalanche')
-    export_path='/astrodata/romain/sde_GA/geneticgrbs_simulations2/'
+    export_path='/astrodata/romain/geneticgrbs_simulations_new_formulation_v4/'
 elif user=='external_user':
     sys.path.append('../statistical_test')
     sys.path.append('../lc_pulse_avalanche')
@@ -90,12 +90,12 @@ if __name__ == '__main__':
         # Assign the variables to the corresponding values
         instrument  = variables['instrument']
         N_grb       = variables['N_grb']
-        q          = variables['q']
-        a         = variables['a']
+        tau_i          = variables['tau_i']
+        tau_d         = variables['tau_d']
         alpha       = variables['alpha']
-        k          = variables['k']
-        t_0       = variables['t_0']
-        nomr_A    = variables['norm_A']
+        tau_se          = variables['tau_se']
+        x_min       = variables['x_min']
+        alpha_pl    = variables['alpha_pl']
         export_path = variables['dir']
         # Print the variables and their values
         print('==============================================')
@@ -126,13 +126,20 @@ if __name__ == '__main__':
             # Train average loss (last gen): 
             # sde Best parameters 10 gen
             #----------------------------------------------------------------------#
-            q      = 0.33
-            a     = 0.14
-            alpha   = 2.71
-            k  = 3.02
-            t_0  = 37.6
-            norm_A  = 156.24
-        #----------------------------------------------------------------------#
+            tau_i       = 2.16
+            tau_d       = 46.27  
+            alpha     = 1.26   
+            tau_se    = 3.52  
+            x_min    = 196.34  
+            alpha_pl     = 2.42   
+            
+#             tau_i       = 2.16   ( +  0.07 , -  0.02 )
+# tau_d       = 46.27   ( +  0.0 , -  8.71 )
+# alpha     = 1.26   ( +  0.4 , -  0.19 )
+# tau_se    = 3.52   ( +  4.13 , -  2.28 )
+# x_min    = 196.34   ( +  773.94 , -  167.7 )
+# alpha_pl     = 2.42   ( +  1.46 , -  0.67 )
+#         #----------------------------------------------------------------------#
         # Swift 
         #----------------------------------------------------------------------#
         elif instrument=='swift':
@@ -181,7 +188,7 @@ if __name__ == '__main__':
     # other parameters
     t_i   = 0    # [s]
     t_f   = 150  # [s]
-    n_cut = 2500 # maximum number of pulses to consider in the avalanche model
+
 
     if instrument=='batse':
         res           = instr_batse['res']
@@ -189,6 +196,7 @@ if __name__ == '__main__':
         bg_level      = instr_batse['bg_level']
         t90_threshold = instr_batse['t90_threshold']
         sn_threshold  = instr_batse['sn_threshold']
+        sn_threshold_sup = instr_batse['sn_threshold_sup']
     elif instrument=='swift':
         res           = instr_swift['res']
         eff_area      = instr_swift['eff_area']
@@ -227,12 +235,12 @@ if __name__ == '__main__':
     test  = generate_GRBs(# number of simulated GRBs to produce
                           N_grb=N_grb,
                           # 7 parameters
-                          q=q,
-                          a=a,
+                          tau_i=tau_i,
+                          tau_d=tau_d,
                           alpha=alpha,
-                          k=k,
-                          t_0=t_0,
-                          norm_A=norm_A,
+                          tau_se=tau_se,
+                          x_min=x_min,
+                          alpha_pl=alpha_pl,
                           # instrument parameters
                           instrument=instrument,
                           bin_time=res,
@@ -241,12 +249,12 @@ if __name__ == '__main__':
                           # constraint parameters
                           t90_threshold=t90_threshold,
                           sn_threshold=sn_threshold,
+                          sn_threshold_sup=sn_threshold_sup,
                           t_f=t_f,
                           filter=True,
                           # other parameters
                           export_files=True,
                           export_path=export_path,
-                          n_cut=n_cut,
                           with_bg=False,
                           remove_instrument_path=remove_instrument_path,
                           test_pulse_distr=test_pulse_distr,
@@ -278,3 +286,20 @@ if __name__ == '__main__':
 # norm_A = 1.157e+06 
 ################################################################################
 ################################################################################
+
+################################################################################
+################################################################################
+# The 6 values obtained from v2 optimization are (after having change the lower bound on A from 1e4 to 1e2)
+# * Parameters of the BEST solution:
+#     - q      = 0.30526957851320435
+#     -  a     = 0.15263478925660218
+#     - alpha   = 2.7080590009905228
+#     - k  = 3.235686888523361
+#     - t_0  = 32.73763035698295
+#     - norm_A  = 164.98492999980897
+# * Loss value of the best solution    : 1.521938741334827
+# * Fitness value of the best solution : 0.6570566691291023
+# * Best fitness value reached after N = 9 generations.
+################################################################################
+################################################################################
+
