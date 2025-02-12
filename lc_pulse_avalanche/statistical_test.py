@@ -20,7 +20,7 @@ from tqdm import tqdm
 #import seaborn as sns
 #sns.set_style('darkgrid')
 ################################################################################
-SEED=None
+#SEED=None
 #SEED=42
 #np.random.seed(SEED)
 

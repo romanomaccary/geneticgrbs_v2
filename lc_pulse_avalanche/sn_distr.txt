@@ -1,2 +1,2 @@
 # grb_name    s2n    total_cnts
-lc_candidate.txt    48.977142333984375    20220.6796875
+lc_candidate.txt    49.9847297668457    42377.6796875

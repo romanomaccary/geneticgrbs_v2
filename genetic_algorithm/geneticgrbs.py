@@ -294,7 +294,7 @@ range_tau_i      = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log
 range_tau_d     = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log scale
 range_alpha      = {"low": 1,                        "high": 8}  # linear scale
 range_tau_se     = {"low": np.log10(1e-2),             "high": np.log10(1e3)}
-range_x0      = {"low":np.log10(1e0),           "high":np.log10(1e6)}
+range_x0      = {"low":np.log10(1e0),           "high":np.log10(1e4)}
 
 #range_x_min      = {"low":np.log10(1e0),           "high":np.log10(1e4)}
 #range_alpha_pl   = {"low":1,                         "high":5}
@@ -484,6 +484,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
     
     ## if the solution extremely violates the condition tau_d <= 2tau_i, (like tau_d> 3*tau_i), we assign to this solution a fitness of 1e-9.
     if 10**solution[1] > 3*(10**solution[0]):
+        print('conditioln not satisfied')
         return 1e-9
     
     if nparams==5:
@@ -515,7 +516,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                                  )
         except Exception:
             #n_discarded += 1
-            print("we can't generate good GRBs with these parameters",[10**solution[0],10**solution[1],solution[2],10**solution[3],10**solution[4]])
+            print("we can't generate good GRBs with these parameters",["%1.3f"%10**solution[0],"%1.3f"%10**solution[1],"%1.3f"%solution[2],"%1.3f"%10**solution[3],"%1.3f"%10**solution[4]])
             #print("fufa")
             return 1e-9
 
@@ -619,7 +620,7 @@ def fitness_func(ga_instance, solution, solution_idx=None):
                            test_pulse_distr=test_pulse_distr,
                            test_sn_distr=test_sn_distr)
     fitness = 1.0 / (l2_loss + 1.e-9)
-    print('fitness=',fitness)
+    print('fitness=',"%1.3f"%fitness)
     return fitness
 
 ################################################################################
