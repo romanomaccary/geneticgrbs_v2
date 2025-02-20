@@ -36,7 +36,7 @@ if sys.getrecursionlimit()<rec_lim:
 #rc('text', usetex=True)
 save_plot=0
 
-save_folder='/astrodata/romain/sde_GA/geneticgrbs_v2/genetic_algorithm/RESULT/result_sde_new_sde_formulation_x0/'
+save_folder='/astrodata/romain/sde_GA/geneticgrbs_v2/genetic_algorithm/RESULT/result_sde_new_sde_formulation_x0_v2/'
 
 random_seed=777
 print(random_seed)
@@ -224,10 +224,10 @@ crossover_probability = 1                      # 'None' means couples parent k w
 initial_population    = None                   # if 'None', the initial population is randomly chosen using the 'sol_per_pop; and 'num_genes' parameters
 mutation_type         = "random"
 crossover_type        = "scattered"
-num_generations       = 20                     # Number of generations.
-sol_per_pop           = 2000                # Number of solutions in the population (i.e., number of different sets per generation).
+num_generations       = 30                     # Number of generations.
+sol_per_pop           = 5000                # Number of solutions in the population (i.e., number of different sets per generation).
 num_parents_mating    = int(0.15*sol_per_pop)  # Number of solutions to be selected as parents in the mating pool.
-keep_parents          = 10                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
+keep_parents          = 100                      # if 0, keep NO parents (the ones selected for mating in the current population) in the next population
 keep_elitism          = 0                      # keep in the next generation the best N solution of the current generation
 mutation_probability  = 0.04                   # by default is 'None', otherwise it selects a value randomly from the current gene's space (each gene is changed with probability 'mutation_probability')
 #mutation_probability=0.1
@@ -290,23 +290,21 @@ epsilon = 1.e-6
 ## NEW FORMULATION OF THE SDE
 ## NEW RUN WITH BROADER RANGE OF PARAMS (last time some params reach upper bounds)
 
+## first run with x0
+
+# range_tau_i      = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log scale
+# range_tau_d     = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log scale
+# range_alpha      = {"low": 1,                        "high": 8}  # linear scale
+# range_tau_se     = {"low": np.log10(1e-2),             "high": np.log10(1e3)}
+# range_x0      = {"low":np.log10(1e0),           "high":np.log10(1e4)}
+
+## second run with x0
+
 range_tau_i      = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log scale
 range_tau_d     = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log scale
-range_alpha      = {"low": 1,                        "high": 8}  # linear scale
+range_alpha      = {"low": 0,                        "high": 8}  # linear scale
 range_tau_se     = {"low": np.log10(1e-2),             "high": np.log10(1e3)}
-range_x0      = {"low":np.log10(1e0),           "high":np.log10(1e4)}
-
-#range_x_min      = {"low":np.log10(1e0),           "high":np.log10(1e4)}
-#range_alpha_pl   = {"low":1,                         "high":5}
-
-# q=0.1
-# a=q/2
-# alpha=2.5
-# k=0.1
-# t_0=0.1
-
-
-#Range of the 4 parameters of the SDE model
+range_x0      = {"low":np.log10(1e-1),           "high":np.log10(1e2)}
 
 range_constraints = [range_tau_i,range_tau_d,range_alpha,range_tau_se,range_x0]
 

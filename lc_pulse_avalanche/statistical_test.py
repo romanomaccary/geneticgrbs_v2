@@ -973,7 +973,6 @@ def apply_constraints(grb_list, t90_threshold, sn_threshold, sn_threshold_sup,bi
             for key in sn_levels:
                 print(f"{key}    {sn_levels[key]}    {total_cnts[key]}", file=f)
     #print("percentage of good GRBs",100*(len(good_grb_list)/len(grb_list)),"%")
-
     # if 100*(len(good_grb_list)/len(grb_list)) <1e-6:
     #    print('0 GRB')
     if sn_distr:

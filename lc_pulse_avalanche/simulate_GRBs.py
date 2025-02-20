@@ -58,7 +58,7 @@ elif user=='MM':
 elif user == 'romano':
     sys.path.append('/astrodata/romain/sde_GA/geneticgrbs_v2/statistical_test')
     sys.path.append('/astrodata/romain/sde_GA/geneticgrbs_v2/lc_pulse_avalanche')
-    export_path='/astrodata/romain/GA_SIMULATIONS/geneticgrbs_simulations_new_formulation_x0/'
+    export_path='/astrodata/romain/GA_SIMULATIONS/geneticgrbs_simulations_new_formulation_x0_v2_best/'
 elif user=='external_user':
     sys.path.append('../statistical_test')
     sys.path.append('../lc_pulse_avalanche')
@@ -125,12 +125,20 @@ if __name__ == '__main__':
             # Train average loss (last gen): 
             # sde Best parameters 10 gen
             #----------------------------------------------------------------------#
+            # avgd loss last gen
+            # tau_i       = 3.1
+            # tau_d       = 7.89   
+            # alpha     = 1.11   
+            # tau_se    = 3.79  
+            # x0    = 1.04  
             
-            tau_i       = 3.52  
-            tau_d       = 8.05   
-            alpha     = 1.48   
-            tau_se    = 22.61  
-            x0    = 3.67  
+            # best loss
+            tau_i       = 3.1
+            tau_d       = 8.64
+            alpha     = 0.15
+            tau_se    = 43.54
+            x0    = 1.04            
+            
          #----------------------------------------------------------------------#
         # Swift 
         #----------------------------------------------------------------------#
@@ -222,7 +230,7 @@ if __name__ == '__main__':
     ################################################################################
     from datetime import datetime
     start = datetime.now()
-
+    print("here")
     test_pulse_distr = False # True
     test  = generate_GRBs(# number of simulated GRBs to produce
                           N_grb=N_grb,
