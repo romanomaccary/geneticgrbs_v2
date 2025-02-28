@@ -3,9 +3,6 @@
 # # IMPORT LiBRARIES
 ################################################################################
 
-#import os
-
-
 from ast import If
 import sys
 import time
@@ -15,6 +12,8 @@ import pandas as pd
 import random
 import os
 import matplotlib.pyplot as plt
+import uuid
+
 #comment2
 
 print(1)
@@ -34,9 +33,9 @@ if sys.getrecursionlimit()<rec_lim:
 #from matplotlib import rc
 #rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 #rc('text', usetex=True)
-save_plot=0
 
-save_folder='/astrodata/romain/sde_GA/geneticgrbs_v2/genetic_algorithm/RESULT/result_sde_new_sde_formulation_x0_v2/'
+save_plot=0
+save_folder='/astrodata/romain/sde_GA/geneticgrbs_v2/genetic_algorithm/RESULT/result_sde_new_sde_formulation_x0_v3/'
 
 random_seed=777
 print(random_seed)
@@ -242,6 +241,7 @@ if user=='pleiadi':
     n_processes = int(os.environ['OMP_NUM_THREADS'])
 else:
     n_processes = 100
+    
 parallel_processing  = ["process", n_processes]  # USE THIS ONE!  
 #parallel_processing = ["thread", n_processes]   # this is slower
 #parallel_processing = None                      # single thread
@@ -300,11 +300,11 @@ epsilon = 1.e-6
 
 ## second run with x0
 
-range_tau_i      = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log scale
-range_tau_d     = {"low": np.log10(1e0),            "high": np.log10(1e2)} #log scale
-range_alpha      = {"low": 0,                        "high": 8}  # linear scale
-range_tau_se     = {"low": np.log10(1e-2),             "high": np.log10(1e3)}
-range_x0      = {"low":np.log10(1e-1),           "high":np.log10(1e2)}
+range_tau_i      = {"low": np.log10(3),            "high": np.log10(3.2)} #log scale
+range_tau_d     = {"low": np.log10(7.60),            "high": np.log10(9)} #log scale
+range_alpha      = {"low": 0.7,                        "high": 1.4}  # linear scale
+range_tau_se     = {"low": np.log10(0.5),             "high": np.log10(40)}
+range_x0      = {"low":np.log10(1e-1),           "high":np.log10(1e1)}
 
 range_constraints = [range_tau_i,range_tau_d,range_alpha,range_tau_se,range_x0]
 
@@ -1066,8 +1066,8 @@ if __name__ == '__main__':
         avg_loss  = np.zeros(len(best_loss))
         std_loss  = np.zeros(len(best_loss))
         for i in range(len(best_loss)):
-            avg_loss[i] = np.mean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
-            std_loss[i] = np.std(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
+            avg_loss[i] = np.nanmean( loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
+            std_loss[i] = np.nanstd(  loss_list[i*sol_per_pop:(i+1)*sol_per_pop] )
         #print('best_loss[-1] =', best_loss[-1])
 
         datafile = save_folder+'datafile.txt'
